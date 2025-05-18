@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Proje Takip Sistemi</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 40px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #222;
+    }
+    input, button {
+      padding: 8px;
+      margin: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .btn-danger {
+      color: white;
+      background-color: #c0392b;
+      border: none;
+    }
+    .btn-primary {
+      background-color: #3498db;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Proje Takip Sistemi</h1>
+
+  <h3>➕ Yeni Proje Ekle</h3>
+  <input id="projectName" placeholder="Proje Adı" />
+  <input id="clientName" placeholder="Müşteri Adı" />
+  <input id="startDate" type="date" />
+  <input id="endDate" type="date" />
+  <button class="btn-primary" onclick="addProject()">Ekle</button>
+
+  <h3>📋 Proje Listesi</h3>
+  <table id="projectTable">
+    <thead>
+      <tr>
+        <th>Proje Adı</th>
+        <th>Müşteri</th>
+        <th>Başlangıç</th>
+        <th>Bitiş</th>
+        <th>Süre (gün)</th>
+        <th>İşlem</th>
+      </tr>
+    </thead>
+    <tbody id="projectBody"></tbody>
+  </table>
+
+  <script>
+    function loadProjects() {
+      const data = JSON.parse(localStorage.getItem("projects") || "[]");
+      const tbody = document.getElementById("projectBody");
+      tbody.innerHTML = "";
+
+      data.forEach((proj, index) => {
+        const tr = document.createElement("tr");
+        const duration = getDuration(proj.startDate, proj.endDate);
+
+        tr.innerHTML = `
+          <td>${proj.name}</td>
+          <td>${proj.client}</td>
+          <td>${proj.startDate}</td>
+          <td>${proj.endDate}</td>
+          <td>${duration} gün</td>
+          <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function addProject() {
+      const name = document.getElementById("projectName").value.trim();
+      const client = document.getElementById("clientName").value.trim();
+      const startDate = document.getElementById("startDate").value;
+      const endDate = document.getElementById("endDate").value;
+
+      if (!name || !client || !startDate || !endDate) {
+        alert("Tüm alanları doldurmalısınız!");
+        return;
+      }
+
+      const project = { name, client, startDate, endDate };
+      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
+      projects.push(project);
+      localStorage.setItem("projects", JSON.stringify(projects));
+
+      document.getElementById("projectName").value = "";
+      document.getElementById("clientName").value = "";
+      document.getElementById("startDate").value = "";
+      document.getElementById("endDate").value = "";
+
+      loadProjects();
+    }
+
+    function deleteProject(index) {
+      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
+      projects.splice(index, 1);
+      localStorage.setItem("projects", JSON.stringify(projects));
+      loadProjects();
+    }
+
+    function getDuration(start, end) {
+      const s = new Date(start);
+      const e = new Date(end);
+      const diffTime = Math.abs(e - s);
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    // İlk yükleme
+    loadProjects();
+  </script>
+</body>
+</html>
