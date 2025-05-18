@@ -6,30 +6,38 @@
   <style>
     body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
     label { display: block; margin-top: 10px; }
-    input, textarea, select {
-      width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;
+    input, textarea {
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
     }
     button {
-      margin-top: 10px;
-      padding: 8px 16px;
+      margin-top: 20px;
+      padding: 10px 20px;
       background-color: #3498db;
       color: white;
       border: none;
       cursor: pointer;
-    }
-    .milestone-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .milestone-row > input {
-      flex: 1;
-    }
-    .milestone-row button {
-      background-color: #c0392b;
-      width: 40px;
-      padding: 0;
-      font-weight: bold;
+      font-size: 16px;
     }
   </style>
 </head>
@@ -42,8 +50,19 @@
     <label>Bitiş Tarihi<input type="date" id="endDate" required /></label>
 
     <h3>Aşamalar & Sorumlular</h3>
-    <div id="milestonesContainer"></div>
-    <button type="button" onclick="addMilestone()">+ Aşama Ekle</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Aşama</th>
+          <th>Sorumlu</th>
+          <th>Planlanan Süre (gün)</th>
+          <th>Tamamlandı mı?</th>
+        </tr>
+      </thead>
+      <tbody id="milestonesTableBody">
+        <!-- Satırlar JS ile doldurulacak -->
+      </tbody>
+    </table>
 
     <h3>Bütçe Yönetimi</h3>
     <label>Tahmini Bütçe (TL)<input type="number" id="estimatedBudget" min="0" /></label>
@@ -53,81 +72,108 @@
   </form>
 
   <script>
+    const fixedMilestones = [
+      "Keşif / Ön görüşme",
+      "Teklif oluşturma",
+      "Onay – sözleşme",
+      "Malzeme temini",
+      "Uygulama",
+      "Test ve devreye alma",
+      "Teslimat"
+    ];
+
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
     const projects = JSON.parse(localStorage.getItem('projects') || '[]');
 
-    function createMilestoneRow(step = '', responsible = '') {
-      const container = document.createElement('div');
-      container.className = 'milestone-row';
+    function createMilestoneRow(milestoneData = {}) {
+      const tr = document.createElement('tr');
 
-      const stepInput = document.createElement('input');
-      stepInput.type = 'text';
-      stepInput.placeholder = 'Aşama';
-      stepInput.value = step;
+      // Aşama adı (sabit, input değil)
+      const tdStage = document.createElement('td');
+      tdStage.textContent = milestoneData.step || '';
+      tr.appendChild(tdStage);
 
-      const responsibleInput = document.createElement('input');
-      responsibleInput.type = 'text';
-      responsibleInput.placeholder = 'Sorumlu';
-      responsibleInput.value = responsible;
+      // Sorumlu kişi input
+      const tdResponsible = document.createElement('td');
+      const inputResponsible = document.createElement('input');
+      inputResponsible.type = 'text';
+      inputResponsible.value = milestoneData.responsible || '';
+      tdResponsible.appendChild(inputResponsible);
+      tr.appendChild(tdResponsible);
 
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.textContent = '×';
-      removeBtn.title = 'Kaldır';
-      removeBtn.onclick = () => container.remove();
+      // Planlanan süre input (gün)
+      const tdDuration = document.createElement('td');
+      const inputDuration = document.createElement('input');
+      inputDuration.type = 'number';
+      inputDuration.min = 0;
+      inputDuration.value = milestoneData.duration || '';
+      tdDuration.appendChild(inputDuration);
+      tr.appendChild(tdDuration);
 
-      container.appendChild(stepInput);
-      container.appendChild(responsibleInput);
-      container.appendChild(removeBtn);
+      // Tamamlandı checkbox
+      const tdCompleted = document.createElement('td');
+      const inputCompleted = document.createElement('input');
+      inputCompleted.type = 'checkbox';
+      inputCompleted.checked = milestoneData.completed || false;
+      tdCompleted.style.textAlign = 'center';
+      tdCompleted.appendChild(inputCompleted);
+      tr.appendChild(tdCompleted);
 
-      return container;
+      return tr;
     }
 
-    function addMilestone(step = '', responsible = '') {
-      const container = document.getElementById('milestonesContainer');
-      const row = createMilestoneRow(step, responsible);
-      container.appendChild(row);
-    }
+    function loadMilestones() {
+      const tbody = document.getElementById('milestonesTableBody');
+      tbody.innerHTML = '';
 
-    if (id !== null && projects[id]) {
-      const proj = projects[id];
-      document.getElementById('name').value = proj.name;
-      document.getElementById('client').value = proj.client;
-      document.getElementById('startDate').value = proj.startDate;
-      document.getElementById('endDate').value = proj.endDate;
-      document.getElementById('estimatedBudget').value = proj.estimatedBudget || '';
-      document.getElementById('actualBudget').value = proj.actualBudget || '';
+      // Eğer proje varsa ve milestones verisi varsa
+      if (id !== null && projects[id] && projects[id].milestones) {
+        const savedMilestones = projects[id].milestones;
 
-      // Aşamalar & sorumlular
-      if (proj.milestones && Array.isArray(proj.milestones)) {
-        proj.milestones.forEach(milestone => {
-          addMilestone(milestone.step, milestone.responsible);
+        fixedMilestones.forEach(stage => {
+          // Kayıtta varsa eşleşeni al, yoksa boş doldur
+          const saved = savedMilestones.find(m => m.step === stage) || {};
+          const milestoneData = {
+            step: stage,
+            responsible: saved.responsible || '',
+            duration: saved.duration || '',
+            completed: saved.completed || false
+          };
+          tbody.appendChild(createMilestoneRow(milestoneData));
         });
       } else {
-        // Boşsa en az bir satır göster
-        addMilestone();
+        // Yeni proje, boş satırlar oluştur
+        fixedMilestones.forEach(stage => {
+          tbody.appendChild(createMilestoneRow({step: stage}));
+        });
       }
-    } else {
-      addMilestone(); // Yeni proje için boş satır
     }
 
     function saveProject() {
-      if (id === null) return alert('Geçersiz proje!');
+      if (id === null) {
+        alert('Geçersiz proje!');
+        return;
+      }
 
-      // Aşamalar & sorumluları topla
-      const milestonesDiv = document.getElementById('milestonesContainer');
-      const rows = milestonesDiv.querySelectorAll('.milestone-row');
+      const tbody = document.getElementById('milestonesTableBody');
+      const rows = tbody.querySelectorAll('tr');
+
       const milestonesArr = [];
 
-      for (const row of rows) {
-        const inputs = row.querySelectorAll('input');
-        const stepVal = inputs[0].value.trim();
-        const respVal = inputs[1].value.trim();
-        if (stepVal || respVal) { // en az biri dolu ise ekle
-          milestonesArr.push({ step: stepVal, responsible: respVal });
-        }
-      }
+      rows.forEach(tr => {
+        const step = tr.children[0].textContent;
+        const responsible = tr.children[1].querySelector('input').value.trim();
+        const duration = tr.children[2].querySelector('input').value.trim();
+        const completed = tr.children[3].querySelector('input').checked;
+
+        milestonesArr.push({
+          step,
+          responsible,
+          duration,
+          completed
+        });
+      });
 
       projects[id] = {
         name: document.getElementById('name').value.trim(),
@@ -143,6 +189,20 @@
       alert('Proje güncellendi!');
       window.location.href = 'index.html';
     }
+
+    // Sayfa yüklenince verileri yükle
+    window.onload = () => {
+      if (id !== null && projects[id]) {
+        const proj = projects[id];
+        document.getElementById('name').value = proj.name;
+        document.getElementById('client').value = proj.client;
+        document.getElementById('startDate').value = proj.startDate;
+        document.getElementById('endDate').value = proj.endDate;
+        document.getElementById('estimatedBudget').value = proj.estimatedBudget || '';
+        document.getElementById('actualBudget').value = proj.actualBudget || '';
+      }
+      loadMilestones();
+    };
   </script>
 </body>
 </html>
