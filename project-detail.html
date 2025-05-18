@@ -2,29 +2,39 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <title>Proje Detayları</title>
+  <title>Proje Detayı</title>
   <style>
     body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
     label { display: block; margin-top: 10px; }
-    input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #eee; }
-    input[type="text"], input[type="number"], input[type="date"] {
-      width: 95%;
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+    input[readonly] {
+      background-color: #eee;
+      border: 1px solid #ccc;
+      color: #555;
     }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
     .profit-positive { color: green; font-weight: bold; }
     .profit-negative { color: red; font-weight: bold; }
+    input[type=number] { width: 80px; }
   </style>
 </head>
 <body>
   <h1>Proje Detayları</h1>
   <form id="projectForm">
-    <label>Proje Adı<input type="text" id="name" /></label>
-    <label>Müşteri Adı<input type="text" id="client" /></label>
-    <label>Başlangıç Tarihi<input type="date" id="startDate" /></label>
-    <label>Bitiş Tarihi<input type="date" id="endDate" /></label>
+    <label>Proje Adı
+      <input type="text" id="name" readonly />
+    </label>
+    <label>Müşteri Adı
+      <input type="text" id="client" readonly />
+    </label>
+    <label>Başlangıç Tarihi
+      <input type="date" id="startDate" readonly />
+    </label>
+    <label>Bitiş Tarihi
+      <input type="date" id="endDate" readonly />
+    </label>
 
     <h3>Aşamalar & Sorumlular</h3>
     <table id="milestonesTable">
@@ -40,10 +50,18 @@
     </table>
 
     <h3>Bütçe Yönetimi</h3>
-    <label>Tahmini Bütçe (₺)<input type="number" id="estimatedBudget" min="0" step="0.01" /></label>
-    <label>Gerçekleşen Bütçe (₺)<input type="number" id="actualBudget" min="0" step="0.01" /></label>
-    <label>Gerçekleşen Kar (₺) <span id="profit" style="font-weight:bold;">-</span></label>
-    <label>Kar Marjı (%) <span id="profitMargin" style="font-weight:bold;">-</span></label>
+    <label>Tahmini Bütçe (₺)
+      <input type="number" id="estimatedBudget" min="0" step="0.01" />
+    </label>
+    <label>Gerçekleşen Bütçe (₺)
+      <input type="number" id="actualBudget" min="0" step="0.01" />
+    </label>
+    <label>Gerçekleşen Kar (₺)
+      <input type="text" id="profit" readonly />
+    </label>
+    <label>Kar Marjı (%)
+      <input type="text" id="profitMargin" readonly />
+    </label>
 
     <button type="button" onclick="saveProject()">Kaydet</button>
   </form>
@@ -63,112 +81,86 @@
     const id = urlParams.get('id');
     const projects = JSON.parse(localStorage.getItem('projects') || '[]');
 
-    const tbody = document.querySelector("#milestonesTable tbody");
-
-    function createMilestonesTable(milestonesData) {
-      tbody.innerHTML = "";
-      stages.forEach((stage, i) => {
-        const row = document.createElement("tr");
-
-        const milestone = milestonesData && milestonesData[i] ? milestonesData[i] : {
-          responsible: "",
-          plannedDuration: "",
-          completed: false
-        };
-
-        row.innerHTML = `
-          <td>${stage}</td>
-          <td><input type="text" class="responsible" value="${milestone.responsible || ''}" /></td>
-          <td><input type="number" min="0" class="plannedDuration" value="${milestone.plannedDuration || ''}" /></td>
-          <td style="text-align:center;"><input type="checkbox" class="completed" ${milestone.completed ? "checked" : ""} /></td>
-        `;
-        tbody.appendChild(row);
-      });
+    if (id === null || !projects[id]) {
+      alert('Geçersiz proje!');
+      window.location.href = 'index.html';
     }
 
-    function updateProfit() {
+    const proj = projects[id];
+
+    // Proje temel bilgilerini doldur (readonly)
+    document.getElementById('name').value = proj.name;
+    document.getElementById('client').value = proj.client;
+    document.getElementById('startDate').value = proj.startDate;
+    document.getElementById('endDate').value = proj.endDate;
+
+    // Aşamalar tablosunu oluştur
+    const tbody = document.querySelector("#milestonesTable tbody");
+    const milestones = proj.milestones || {};
+    stages.forEach(stage => {
+      const data = milestones[stage] || {};
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${stage}</td>
+        <td><input type="text" class="responsible" value="${data.responsible || ''}" /></td>
+        <td><input type="number" class="duration" min="0" value="${data.duration || ''}" /></td>
+        <td style="text-align:center;"><input type="checkbox" class="completed" ${data.completed ? 'checked' : ''} /></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Bütçe alanlarını doldur
+    document.getElementById('estimatedBudget').value = proj.estimatedBudget || '';
+    document.getElementById('actualBudget').value = proj.actualBudget || '';
+
+    // Kar ve marj hesapla ve göster
+    function calculateProfit() {
       const estimated = parseFloat(document.getElementById('estimatedBudget').value) || 0;
       const actual = parseFloat(document.getElementById('actualBudget').value) || 0;
-      const profitSpan = document.getElementById('profit');
-      const marginSpan = document.getElementById('profitMargin');
-
-      if (estimated === 0) {
-        profitSpan.textContent = "-";
-        marginSpan.textContent = "-";
-        profitSpan.className = "";
-        marginSpan.className = "";
-        return;
-      }
-
       const profit = estimated - actual;
-      const margin = (profit / estimated) * 100;
+      const profitMargin = estimated ? (profit / estimated) * 100 : 0;
 
-      profitSpan.textContent = profit.toFixed(2) + " ₺";
-      marginSpan.textContent = margin.toFixed(2) + " %";
+      const profitField = document.getElementById('profit');
+      const marginField = document.getElementById('profitMargin');
+
+      profitField.value = profit.toFixed(2);
+      marginField.value = profitMargin.toFixed(2);
 
       if (profit >= 0) {
-        profitSpan.className = "profit-positive";
-        marginSpan.className = "profit-positive";
+        profitField.className = 'profit-positive';
+        marginField.className = 'profit-positive';
       } else {
-        profitSpan.className = "profit-negative";
-        marginSpan.className = "profit-negative";
+        profitField.className = 'profit-negative';
+        marginField.className = 'profit-negative';
       }
     }
 
-    document.getElementById('estimatedBudget').addEventListener('input', updateProfit);
-    document.getElementById('actualBudget').addEventListener('input', updateProfit);
-
-    // Yükleme - formu doldur
-    if (id !== null && projects[id]) {
-      const proj = projects[id];
-      document.getElementById('name').value = proj.name;
-      document.getElementById('client').value = proj.client;
-      document.getElementById('startDate').value = proj.startDate;
-      document.getElementById('endDate').value = proj.endDate;
-
-      createMilestonesTable(proj.milestones);
-
-      document.getElementById('estimatedBudget').value = proj.estimatedBudget || "";
-      document.getElementById('actualBudget').value = proj.actualBudget || "";
-      updateProfit();
-    } else {
-      createMilestonesTable();
-    }
+    document.getElementById('estimatedBudget').addEventListener('input', calculateProfit);
+    document.getElementById('actualBudget').addEventListener('input', calculateProfit);
+    calculateProfit();
 
     function saveProject() {
-      if (id === null) {
-        alert('Geçersiz proje!');
-        return;
-      }
+      const updatedMilestones = {};
+      const rows = tbody.querySelectorAll('tr');
 
-      // Aşamalar verisini al
-      const milestonesData = [];
-      tbody.querySelectorAll('tr').forEach(tr => {
-        const responsible = tr.querySelector('.responsible').value.trim();
-        const plannedDuration = tr.querySelector('.plannedDuration').value.trim();
-        const completed = tr.querySelector('.completed').checked;
+      rows.forEach(row => {
+        const stageName = row.cells[0].textContent;
+        const responsible = row.querySelector('.responsible').value.trim();
+        const duration = parseInt(row.querySelector('.duration').value) || 0;
+        const completed = row.querySelector('.completed').checked;
 
-        milestonesData.push({
-          responsible,
-          plannedDuration,
-          completed
-        });
+        updatedMilestones[stageName] = { responsible, duration, completed };
       });
 
-      const projectData = {
-        name: document.getElementById('name').value.trim(),
-        client: document.getElementById('client').value.trim(),
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        milestones: milestonesData,
+      projects[id] = {
+        ...projects[id],  // mevcut diğer verileri koru
+        milestones: updatedMilestones,
         estimatedBudget: parseFloat(document.getElementById('estimatedBudget').value) || 0,
-        actualBudget: parseFloat(document.getElementById('actualBudget').value) || 0
+        actualBudget: parseFloat(document.getElementById('actualBudget').value) || 0,
       };
 
-      projects[id] = projectData;
       localStorage.setItem('projects', JSON.stringify(projects));
-
-      alert('Proje kaydedildi!');
+      alert('Proje güncellendi!');
       window.location.href = 'index.html';
     }
   </script>
