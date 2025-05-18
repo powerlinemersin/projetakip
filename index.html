@@ -31,24 +31,17 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
-    a {
-      color: #3498db;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
     .btn-danger {
       color: white;
       background-color: #c0392b;
       border: none;
-      cursor: pointer;
-      padding: 6px 10px;
     }
     .btn-primary {
       background-color: #3498db;
       color: white;
       border: none;
+    }
+    tr.clickable {
       cursor: pointer;
     }
   </style>
@@ -88,18 +81,26 @@
 
       data.forEach((proj, index) => {
         const tr = document.createElement("tr");
+        tr.classList.add("clickable");
+
         const duration = getDuration(proj.startDate, proj.endDate);
 
         tr.innerHTML = `
-          <td><a href="project-detail.html?id=${index}">${proj.name}</a></td>
+          <td>${proj.name}</td>
           <td>${proj.client}</td>
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>${proj.estimatedBudget ? Number(proj.estimatedBudget).toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '-'}</td>
-          <td>${proj.actualBudget ? Number(proj.actualBudget).toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '-'}</td>
-          <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
+          <td>${proj.estimatedBudget ? Number(proj.estimatedBudget).toFixed(2) : '-'}</td>
+          <td>${proj.actualBudget ? Number(proj.actualBudget).toFixed(2) : '-'}</td>
+          <td><button class="btn-danger" onclick="deleteProject(event, ${index})">Sil</button></td>
         `;
+
+        // Satır tıklayınca detay sayfasına git
+        tr.addEventListener('click', () => {
+          window.location.href = `project-detail.html?id=${index}`;
+        });
+
         tbody.appendChild(tr);
       });
     }
@@ -115,7 +116,7 @@
         return;
       }
 
-      const project = { name, client, startDate, endDate, estimatedBudget: '', actualBudget: '' };
+      const project = { name, client, startDate, endDate, estimatedBudget: "", actualBudget: "" };
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.push(project);
       localStorage.setItem("projects", JSON.stringify(projects));
@@ -128,7 +129,8 @@
       loadProjects();
     }
 
-    function deleteProject(index) {
+    function deleteProject(event, index) {
+      event.stopPropagation(); // Satır tıklama olayını engelle
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.splice(index, 1);
       localStorage.setItem("projects", JSON.stringify(projects));
