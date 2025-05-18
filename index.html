@@ -31,9 +31,6 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
-    tr.late {
-      background-color: #f8d7da !important; /* kırmızımsı */
-    }
     .btn-danger {
       color: white;
       background-color: #c0392b;
@@ -46,8 +43,8 @@
       border: none;
       cursor: pointer;
     }
-    tr:hover {
-      background-color: #d6eaf8;
+    tr.clickable:hover {
+      background-color: #d0e7ff;
       cursor: pointer;
     }
   </style>
@@ -60,6 +57,9 @@
   <input id="clientName" placeholder="Müşteri Adı" />
   <input id="startDate" type="date" />
   <input id="endDate" type="date" />
+  <input id="estimatedBudget" type="number" placeholder="Tahmini Bütçe (TL)" min="0" step="0.01" />
+  <input id="actualCost" type="number" placeholder="Gerçekleşen Maliyet (TL)" min="0" step="0.01" />
+  <input id="profitMargin" type="number" placeholder="Kar Marjı (%)" min="0" step="0.01" />
   <button class="btn-primary" onclick="addProject()">Ekle</button>
 
   <h3>📋 Proje Listesi</h3>
@@ -71,7 +71,9 @@
         <th>Başlangıç</th>
         <th>Bitiş</th>
         <th>Süre (gün)</th>
-        <th>Kalan Gün</th>
+        <th>Tahmini Bütçe (TL)</th>
+        <th>Gerçekleşen Maliyet (TL)</th>
+        <th>Kar Marjı (%)</th>
         <th>İşlem</th>
       </tr>
     </thead>
@@ -84,16 +86,13 @@
       const tbody = document.getElementById("projectBody");
       tbody.innerHTML = "";
 
-      const today = new Date();
-
       data.forEach((proj, index) => {
-        const tr = document.createElement("tr");
         const duration = getDuration(proj.startDate, proj.endDate);
-        const daysLeft = getDaysLeft(proj.endDate, today);
-
-        if (daysLeft < 0) {
-          tr.classList.add("late");
-        }
+        const tr = document.createElement("tr");
+        tr.classList.add("clickable");
+        tr.onclick = () => {
+          window.location.href = `project-detail.html?id=${index}`;
+        };
 
         tr.innerHTML = `
           <td>${proj.name}</td>
@@ -101,18 +100,11 @@
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>${daysLeft >= 0 ? daysLeft + " gün" : "Gecikti"}</td>
-          <td>
-            <button class="btn-danger" onclick="deleteProject(${index})">Sil</button>
-          </td>
+          <td>${proj.estimatedBudget ? proj.estimatedBudget.toFixed(2) : '-'}</td>
+          <td>${proj.actualCost ? proj.actualCost.toFixed(2) : '-'}</td>
+          <td>${proj.profitMargin ? proj.profitMargin.toFixed(2) : '-'}</td>
+          <td><button class="btn-danger" onclick="deleteProject(event, ${index})">Sil</button></td>
         `;
-
-        tr.addEventListener('click', (e) => {
-          if(e.target.tagName !== 'BUTTON') { // Butona tıklanmadıysa detay sayfasına git
-            window.location.href = `project-detail.html?id=${index}`;
-          }
-        });
-
         tbody.appendChild(tr);
       });
     }
@@ -122,26 +114,35 @@
       const client = document.getElementById("clientName").value.trim();
       const startDate = document.getElementById("startDate").value;
       const endDate = document.getElementById("endDate").value;
+      const estimatedBudget = parseFloat(document.getElementById("estimatedBudget").value) || 0;
+      const actualCost = parseFloat(document.getElementById("actualCost").value) || 0;
+      const profitMargin = parseFloat(document.getElementById("profitMargin").value) || 0;
 
       if (!name || !client || !startDate || !endDate) {
-        alert("Tüm alanları doldurmalısınız!");
+        alert("Lütfen tüm zorunlu alanları doldurun!");
         return;
       }
 
-      const project = { name, client, startDate, endDate };
+      const project = { name, client, startDate, endDate, estimatedBudget, actualCost, profitMargin };
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.push(project);
       localStorage.setItem("projects", JSON.stringify(projects));
 
+      // Formu temizle
       document.getElementById("projectName").value = "";
       document.getElementById("clientName").value = "";
       document.getElementById("startDate").value = "";
       document.getElementById("endDate").value = "";
+      document.getElementById("estimatedBudget").value = "";
+      document.getElementById("actualCost").value = "";
+      document.getElementById("profitMargin").value = "";
 
       loadProjects();
     }
 
-    function deleteProject(index) {
+    function deleteProject(event, index) {
+      event.stopPropagation(); // Satır tıklama olayını iptal et (detaya gitmesin)
+      if (!confirm("Projeyi silmek istediğinizden emin misiniz?")) return;
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.splice(index, 1);
       localStorage.setItem("projects", JSON.stringify(projects));
@@ -151,17 +152,11 @@
     function getDuration(start, end) {
       const s = new Date(start);
       const e = new Date(end);
-      const diffTime = Math.abs(e - s);
+      const diffTime = e - s;
+      if (diffTime < 0) return 0;
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    function getDaysLeft(endDate, today) {
-      const e = new Date(endDate);
-      const diffTime = e - today;
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    // İlk yükleme
     loadProjects();
   </script>
 </body>
