@@ -6,20 +6,44 @@
   <style>
     body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
     label { display: block; margin-top: 10px; }
-    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
-    button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
+    input, textarea, select {
+      width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .milestone-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .milestone-row > input {
+      flex: 1;
+    }
+    .milestone-row button {
+      background-color: #c0392b;
+      width: 40px;
+      padding: 0;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h1>Proje Detayları</h1>
   <form id="projectForm">
-    <label>Proje Adı<input type="text" id="name" /></label>
-    <label>Müşteri Adı<input type="text" id="client" /></label>
-    <label>Başlangıç Tarihi<input type="date" id="startDate" /></label>
-    <label>Bitiş Tarihi<input type="date" id="endDate" /></label>
+    <label>Proje Adı<input type="text" id="name" required /></label>
+    <label>Müşteri Adı<input type="text" id="client" required /></label>
+    <label>Başlangıç Tarihi<input type="date" id="startDate" required /></label>
+    <label>Bitiş Tarihi<input type="date" id="endDate" required /></label>
 
     <h3>Aşamalar & Sorumlular</h3>
-    <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
+    <div id="milestonesContainer"></div>
+    <button type="button" onclick="addMilestone()">+ Aşama Ekle</button>
 
     <h3>Bütçe Yönetimi</h3>
     <label>Tahmini Bütçe (TL)<input type="number" id="estimatedBudget" min="0" /></label>
@@ -33,26 +57,84 @@
     const id = urlParams.get('id');
     const projects = JSON.parse(localStorage.getItem('projects') || '[]');
 
+    function createMilestoneRow(step = '', responsible = '') {
+      const container = document.createElement('div');
+      container.className = 'milestone-row';
+
+      const stepInput = document.createElement('input');
+      stepInput.type = 'text';
+      stepInput.placeholder = 'Aşama';
+      stepInput.value = step;
+
+      const responsibleInput = document.createElement('input');
+      responsibleInput.type = 'text';
+      responsibleInput.placeholder = 'Sorumlu';
+      responsibleInput.value = responsible;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = '×';
+      removeBtn.title = 'Kaldır';
+      removeBtn.onclick = () => container.remove();
+
+      container.appendChild(stepInput);
+      container.appendChild(responsibleInput);
+      container.appendChild(removeBtn);
+
+      return container;
+    }
+
+    function addMilestone(step = '', responsible = '') {
+      const container = document.getElementById('milestonesContainer');
+      const row = createMilestoneRow(step, responsible);
+      container.appendChild(row);
+    }
+
     if (id !== null && projects[id]) {
       const proj = projects[id];
       document.getElementById('name').value = proj.name;
       document.getElementById('client').value = proj.client;
       document.getElementById('startDate').value = proj.startDate;
       document.getElementById('endDate').value = proj.endDate;
-      document.getElementById('milestones').value = proj.milestones || '';
       document.getElementById('estimatedBudget').value = proj.estimatedBudget || '';
       document.getElementById('actualBudget').value = proj.actualBudget || '';
+
+      // Aşamalar & sorumlular
+      if (proj.milestones && Array.isArray(proj.milestones)) {
+        proj.milestones.forEach(milestone => {
+          addMilestone(milestone.step, milestone.responsible);
+        });
+      } else {
+        // Boşsa en az bir satır göster
+        addMilestone();
+      }
+    } else {
+      addMilestone(); // Yeni proje için boş satır
     }
 
     function saveProject() {
       if (id === null) return alert('Geçersiz proje!');
+
+      // Aşamalar & sorumluları topla
+      const milestonesDiv = document.getElementById('milestonesContainer');
+      const rows = milestonesDiv.querySelectorAll('.milestone-row');
+      const milestonesArr = [];
+
+      for (const row of rows) {
+        const inputs = row.querySelectorAll('input');
+        const stepVal = inputs[0].value.trim();
+        const respVal = inputs[1].value.trim();
+        if (stepVal || respVal) { // en az biri dolu ise ekle
+          milestonesArr.push({ step: stepVal, responsible: respVal });
+        }
+      }
 
       projects[id] = {
         name: document.getElementById('name').value.trim(),
         client: document.getElementById('client').value.trim(),
         startDate: document.getElementById('startDate').value,
         endDate: document.getElementById('endDate').value,
-        milestones: document.getElementById('milestones').value.trim(),
+        milestones: milestonesArr,
         estimatedBudget: document.getElementById('estimatedBudget').value.trim(),
         actualBudget: document.getElementById('actualBudget').value.trim()
       };
