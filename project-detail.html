@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Proje Detayı</title>
+  <style>
+    body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
+    label { display: block; margin-top: 10px; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Proje Detayları</h1>
+  <form id="projectForm">
+    <label>Proje Adı<input type="text" id="name" /></label>
+    <label>Müşteri Adı<input type="text" id="client" /></label>
+    <label>Başlangıç Tarihi<input type="date" id="startDate" /></label>
+    <label>Bitiş Tarihi<input type="date" id="endDate" /></label>
+
+    <h3>Aşamalar & Sorumlular</h3>
+    <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
+
+    <button type="button" onclick="saveProject()">Kaydet</button>
+  </form>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+
+    if (id !== null && projects[id]) {
+      const proj = projects[id];
+      document.getElementById('name').value = proj.name;
+      document.getElementById('client').value = proj.client;
+      document.getElementById('startDate').value = proj.startDate;
+      document.getElementById('endDate').value = proj.endDate;
+      document.getElementById('milestones').value = proj.milestones || '';
+    }
+
+    function saveProject() {
+      if (id === null) return alert('Geçersiz proje!');
+
+      projects[id] = {
+        name: document.getElementById('name').value.trim(),
+        client: document.getElementById('client').value.trim(),
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        milestones: document.getElementById('milestones').value.trim()
+      };
+
+      localStorage.setItem('projects', JSON.stringify(projects));
+      alert('Proje güncellendi!');
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
