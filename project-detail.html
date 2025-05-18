@@ -8,7 +8,6 @@
     label { display: block; margin-top: 10px; }
     input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
     button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
-    .budget-group { margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -22,12 +21,9 @@
     <h3>Aşamalar & Sorumlular</h3>
     <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
 
-    <div class="budget-group">
-      <h3>💰 Bütçe Yönetimi</h3>
-      <label>Tahmini Bütçe (₺)<input type="number" id="estimatedBudget" min="0" step="0.01" /></label>
-      <label>Gerçekleşen Maliyet (₺)<input type="number" id="actualCost" min="0" step="0.01" /></label>
-      <label>Kar Marjı (%)<input type="number" id="profitMargin" min="0" step="0.01" readonly /></label>
-    </div>
+    <h3>💰 Bütçe Yönetimi</h3>
+    <label>Tahmini Bütçe (TL)<input type="number" id="estimatedBudget" min="0" step="0.01" /></label>
+    <label>Gerçekleşen Bütçe (TL)<input type="number" id="actualBudget" min="0" step="0.01" /></label>
 
     <button type="button" onclick="saveProject()">Kaydet</button>
   </form>
@@ -44,24 +40,8 @@
       document.getElementById('startDate').value = proj.startDate;
       document.getElementById('endDate').value = proj.endDate;
       document.getElementById('milestones').value = proj.milestones || '';
-
       document.getElementById('estimatedBudget').value = proj.estimatedBudget || '';
-      document.getElementById('actualCost').value = proj.actualCost || '';
-      updateProfitMargin();
-    }
-
-    document.getElementById('estimatedBudget').addEventListener('input', updateProfitMargin);
-    document.getElementById('actualCost').addEventListener('input', updateProfitMargin);
-
-    function updateProfitMargin() {
-      const est = parseFloat(document.getElementById('estimatedBudget').value);
-      const act = parseFloat(document.getElementById('actualCost').value);
-      let profit = '';
-      if (!isNaN(est) && !isNaN(act) && est > 0) {
-        profit = ((est - act) / est) * 100;
-        profit = profit.toFixed(2);
-      }
-      document.getElementById('profitMargin').value = profit;
+      document.getElementById('actualBudget').value = proj.actualBudget || '';
     }
 
     function saveProject() {
@@ -73,8 +53,8 @@
         startDate: document.getElementById('startDate').value,
         endDate: document.getElementById('endDate').value,
         milestones: document.getElementById('milestones').value.trim(),
-        estimatedBudget: parseFloat(document.getElementById('estimatedBudget').value) || 0,
-        actualCost: parseFloat(document.getElementById('actualCost').value) || 0
+        estimatedBudget: document.getElementById('estimatedBudget').value,
+        actualBudget: document.getElementById('actualBudget').value
       };
 
       localStorage.setItem('projects', JSON.stringify(projects));
