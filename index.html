@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Proje Takip Sistemi</title>
   <style>
     body {
@@ -31,15 +31,23 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    tr:hover {
+      background-color: #d0e7fd;
+      cursor: pointer;
+    }
     .btn-danger {
       color: white;
       background-color: #c0392b;
       border: none;
+      padding: 6px 12px;
+      cursor: pointer;
     }
     .btn-primary {
       background-color: #3498db;
       color: white;
       border: none;
+      padding: 8px 16px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -77,13 +85,8 @@
       tbody.innerHTML = "";
 
       data.forEach((proj, index) => {
-        const duration = getDuration(proj.startDate, proj.endDate);
-
         const tr = document.createElement("tr");
-        tr.style.cursor = "pointer";
-        tr.onclick = () => {
-          window.location.href = `project-detail.html?id=${index}`;
-        };
+        const duration = getDuration(proj.startDate, proj.endDate);
 
         tr.innerHTML = `
           <td>${proj.name}</td>
@@ -91,10 +94,20 @@
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>${proj.estimatedBudget ? Number(proj.estimatedBudget).toFixed(2) : ""}</td>
-          <td>${proj.actualBudget ? Number(proj.actualBudget).toFixed(2) : ""}</td>
-          <td><button class="btn-danger" onclick="event.stopPropagation(); deleteProject(${index})">Sil</button></td>
+          <td>${proj.estimatedBudget || '-'}</td>
+          <td>${proj.actualBudget || '-'}</td>
+          <td>
+            <button class="btn-danger" onclick="deleteProject(${index}, event)">Sil</button>
+          </td>
         `;
+
+        tr.addEventListener('click', () => {
+          window.location.href = `project-detail.html?id=${index}`;
+        });
+
+        // Sil butonunun satır tıklamasını engellemesi için:
+        tr.querySelector('button').addEventListener('click', (e) => e.stopPropagation());
+
         tbody.appendChild(tr);
       });
     }
@@ -110,7 +123,16 @@
         return;
       }
 
-      const project = { name, client, startDate, endDate };
+      const project = { 
+        name, 
+        client, 
+        startDate, 
+        endDate,
+        estimatedBudget: '',
+        actualBudget: '',
+        milestones: ''
+      };
+
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.push(project);
       localStorage.setItem("projects", JSON.stringify(projects));
@@ -123,7 +145,9 @@
       loadProjects();
     }
 
-    function deleteProject(index) {
+    function deleteProject(index, event) {
+      event.stopPropagation();
+      if (!confirm("Projeyi silmek istediğinizden emin misiniz?")) return;
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.splice(index, 1);
       localStorage.setItem("projects", JSON.stringify(projects));
