@@ -84,8 +84,14 @@
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
+          <td><button class="btn-danger" onclick="event.stopPropagation(); deleteProject(${index})">Sil</button></td>
         `;
+
+        tr.style.cursor = "pointer";
+        tr.onclick = () => {
+          window.location.href = `project-detail.html?id=${index}`;
+        };
+
         tbody.appendChild(tr);
       });
     }
