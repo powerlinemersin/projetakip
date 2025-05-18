@@ -31,23 +31,21 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    tr.late {
+      background-color: #f8d7da !important;
+    }
     .btn-danger {
       color: white;
       background-color: #c0392b;
       border: none;
-      cursor: pointer;
     }
     .btn-primary {
       background-color: #3498db;
       color: white;
       border: none;
-      cursor: pointer;
     }
-    .btn-detail {
-      background-color: #2ecc71;
-      color: white;
-      border: none;
-      padding: 6px 12px;
+    tr:hover {
+      background-color: #d0e7ff;
       cursor: pointer;
     }
   </style>
@@ -71,9 +69,7 @@
         <th>Başlangıç</th>
         <th>Bitiş</th>
         <th>Süre (gün)</th>
-        <th>Tahmini Bütçe (TL)</th>
-        <th>Gerçekleşen Maliyet (TL)</th>
-        <th>Kar Marjı (%)</th>
+        <th>Uygulama Bitiş</th>
         <th>İşlem</th>
       </tr>
     </thead>
@@ -86,28 +82,38 @@
       const tbody = document.getElementById("projectBody");
       tbody.innerHTML = "";
 
+      const today = new Date();
+
       data.forEach((proj, index) => {
+        const tr = document.createElement("tr");
         const duration = getDuration(proj.startDate, proj.endDate);
 
-        // Boş bütçe alanları için 0 veya '-' gösterimi
-        const estimatedBudget = proj.estimatedBudget ? proj.estimatedBudget.toFixed(2) : "-";
-        const actualCost = proj.actualCost ? proj.actualCost.toFixed(2) : "-";
-        const profitMargin = proj.profitMargin ? proj.profitMargin.toFixed(2) : "-";
+        // Uygulama aşamasının bitiş tarihi (4. indeks)
+        let uygulamaEnd = "";
+        if(proj.milestoneDates && proj.milestoneDates[4]){
+          uygulamaEnd = proj.milestoneDates[4].end || "";
+        }
 
-        const tr = document.createElement("tr");
+        // Gecikme kontrolü (Uygulama bitiş tarihi geçmiş ve proje bitiş tarihi de geçmiş değilse)
+        let isLate = false;
+        if (uygulamaEnd) {
+          const uygulamaEndDate = new Date(uygulamaEnd);
+          const projeBitisDate = new Date(proj.endDate);
+          if (uygulamaEndDate < today && projeBitisDate >= today) {
+            isLate = true;
+          }
+        }
+
+        tr.className = isLate ? "late" : "";
+
         tr.innerHTML = `
-          <td>${proj.name}</td>
+          <td><a href="project-detail.html?id=${index}">${proj.name}</a></td>
           <td>${proj.client}</td>
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>${estimatedBudget}</td>
-          <td>${actualCost}</td>
-          <td>${profitMargin}</td>
-          <td>
-            <button class="btn-detail" onclick="goToDetail(${index})">Detay</button>
-            <button class="btn-danger" onclick="deleteProject(${index})">Sil</button>
-          </td>
+          <td>${uygulamaEnd || '-'}</td>
+          <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -124,16 +130,7 @@
         return;
       }
 
-      const project = { 
-        name, 
-        client, 
-        startDate, 
-        endDate,
-        estimatedBudget: 0,
-        actualCost: 0,
-        profitMargin: 0,
-        milestones: ""
-      };
+      const project = { name, client, startDate, endDate };
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.push(project);
       localStorage.setItem("projects", JSON.stringify(projects));
@@ -147,7 +144,6 @@
     }
 
     function deleteProject(index) {
-      if (!confirm("Projeyi silmek istediğinize emin misiniz?")) return;
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.splice(index, 1);
       localStorage.setItem("projects", JSON.stringify(projects));
@@ -161,10 +157,7 @@
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    function goToDetail(index) {
-      window.location.href = `project-detail.html?id=${index}`;
-    }
-
+    // İlk yükleme
     loadProjects();
   </script>
 </body>
