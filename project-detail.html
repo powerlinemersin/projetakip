@@ -8,6 +8,21 @@
     label { display: block; margin-top: 10px; }
     input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
     button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
+    .milestone-group {
+      background: white; 
+      padding: 10px; 
+      margin-top: 15px; 
+      border-radius: 5px; 
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .milestone-group label {
+      display: inline-block;
+      width: 48%;
+      margin-right: 4%;
+    }
+    .milestone-group label:last-child {
+      margin-right: 0;
+    }
   </style>
 </head>
 <body>
@@ -38,7 +53,39 @@
     </label>
 
     <h3>Aşamalar & Sorumlular</h3>
-    <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
+    <textarea id="milestones" rows="4" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
+
+    <h3>Aşama Tarihleri</h3>
+    
+    <div class="milestone-group">
+      <strong>Keşif</strong><br/>
+      <label>Başlangıç: <input type="date" id="milestone_0_start" /></label>
+      <label>Bitiş: <input type="date" id="milestone_0_end" /></label>
+    </div>
+
+    <div class="milestone-group">
+      <strong>Teklif</strong><br/>
+      <label>Başlangıç: <input type="date" id="milestone_1_start" /></label>
+      <label>Bitiş: <input type="date" id="milestone_1_end" /></label>
+    </div>
+
+    <div class="milestone-group">
+      <strong>Onay</strong><br/>
+      <label>Başlangıç: <input type="date" id="milestone_2_start" /></label>
+      <label>Bitiş: <input type="date" id="milestone_2_end" /></label>
+    </div>
+
+    <div class="milestone-group">
+      <strong>Malzeme Temini</strong><br/>
+      <label>Başlangıç: <input type="date" id="milestone_3_start" /></label>
+      <label>Bitiş: <input type="date" id="milestone_3_end" /></label>
+    </div>
+
+    <div class="milestone-group">
+      <strong>Uygulama</strong><br/>
+      <label>Başlangıç: <input type="date" id="milestone_4_start" /></label>
+      <label>Bitiş: <input type="date" id="milestone_4_end" /></label>
+    </div>
 
     <button type="button" onclick="saveProject()">Kaydet</button>
   </form>
@@ -58,44 +105,6 @@
       document.getElementById('estimatedBudget').value = proj.estimatedBudget || 0;
       document.getElementById('actualCost').value = proj.actualCost || 0;
       updateProfitMargin();
-    }
 
-    // Kar marjını otomatik hesapla
-    function updateProfitMargin() {
-      const est = parseFloat(document.getElementById('estimatedBudget').value) || 0;
-      const act = parseFloat(document.getElementById('actualCost').value) || 0;
-      let margin = 0;
-      if (est > 0) {
-        margin = ((est - act) / est) * 100;
-      }
-      document.getElementById('profitMargin').value = margin.toFixed(2);
-    }
-
-    // Tahmini bütçe ve gerçekleşen maliyet değişince kar marjını güncelle
-    document.getElementById('estimatedBudget').addEventListener('input', updateProfitMargin);
-    document.getElementById('actualCost').addEventListener('input', updateProfitMargin);
-
-    function saveProject() {
-      if (id === null) {
-        alert('Geçersiz proje!');
-        return;
-      }
-
-      projects[id] = {
-        name: document.getElementById('name').value.trim(),
-        client: document.getElementById('client').value.trim(),
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        milestones: document.getElementById('milestones').value.trim(),
-        estimatedBudget: parseFloat(document.getElementById('estimatedBudget').value) || 0,
-        actualCost: parseFloat(document.getElementById('actualCost').value) || 0,
-        profitMargin: parseFloat(document.getElementById('profitMargin').value) || 0
-      };
-
-      localStorage.setItem('projects', JSON.stringify(projects));
-      alert('Proje güncellendi!');
-      window.location.href = 'index.html';
-    }
-  </script>
-</body>
-</html>
+      // Aşama tarihlerini doldur
+      if(pro
