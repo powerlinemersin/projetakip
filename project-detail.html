@@ -22,12 +22,9 @@
     <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
 
     <h3>💰 Bütçe Yönetimi</h3>
-    <label>Tahmini Malzeme Gideri (₺)<input type="number" id="budgetMaterial" /></label>
-    <label>Tahmini İşçilik Gideri (₺)<input type="number" id="budgetLabor" /></label>
-    <label>Tahmini Taşeron Gideri (₺)<input type="number" id="budgetSubcontractor" /></label>
-    <label>Gerçekleşen Toplam Maliyet (₺)<input type="number" id="actualCost" /></label>
-
-    <p><strong>Kâr Marjı:</strong> <span id="profitMargin">-</span></p>
+    <label>Tahmini Bütçe (TL)<input type="number" id="estimatedBudget" min="0" step="0.01" /></label>
+    <label>Gerçekleşen Maliyet (TL)<input type="number" id="actualCost" min="0" step="0.01" /></label>
+    <label>Kar Marjı (%)<input type="number" id="profitMargin" min="0" step="0.01" /></label>
 
     <button type="button" onclick="saveProject()">Kaydet</button>
   </form>
@@ -39,27 +36,18 @@
 
     if (id !== null && projects[id]) {
       const proj = projects[id];
-      document.getElementById('name').value = proj.name;
-      document.getElementById('client').value = proj.client;
-      document.getElementById('startDate').value = proj.startDate;
-      document.getElementById('endDate').value = proj.endDate;
+      document.getElementById('name').value = proj.name || '';
+      document.getElementById('client').value = proj.client || '';
+      document.getElementById('startDate').value = proj.startDate || '';
+      document.getElementById('endDate').value = proj.endDate || '';
       document.getElementById('milestones').value = proj.milestones || '';
-      document.getElementById('budgetMaterial').value = proj.budgetMaterial || '';
-      document.getElementById('budgetLabor').value = proj.budgetLabor || '';
-      document.getElementById('budgetSubcontractor').value = proj.budgetSubcontractor || '';
+      document.getElementById('estimatedBudget').value = proj.estimatedBudget || '';
       document.getElementById('actualCost').value = proj.actualCost || '';
-      document.getElementById('profitMargin').innerText = (proj.profit !== undefined) ? proj.profit + ' ₺' : '-';
+      document.getElementById('profitMargin').value = proj.profitMargin || '';
     }
 
     function saveProject() {
       if (id === null) return alert('Geçersiz proje!');
-
-      const budgetMaterial = Number(document.getElementById('budgetMaterial').value || 0);
-      const budgetLabor = Number(document.getElementById('budgetLabor').value || 0);
-      const budgetSubcontractor = Number(document.getElementById('budgetSubcontractor').value || 0);
-      const actualCost = Number(document.getElementById('actualCost').value || 0);
-      const totalBudget = budgetMaterial + budgetLabor + budgetSubcontractor;
-      const profit = totalBudget - actualCost;
 
       projects[id] = {
         name: document.getElementById('name').value.trim(),
@@ -67,12 +55,9 @@
         startDate: document.getElementById('startDate').value,
         endDate: document.getElementById('endDate').value,
         milestones: document.getElementById('milestones').value.trim(),
-        budgetMaterial,
-        budgetLabor,
-        budgetSubcontractor,
-        actualCost,
-        totalBudget,
-        profit
+        estimatedBudget: parseFloat(document.getElementById('estimatedBudget').value) || 0,
+        actualCost: parseFloat(document.getElementById('actualCost').value) || 0,
+        profitMargin: parseFloat(document.getElementById('profitMargin').value) || 0
       };
 
       localStorage.setItem('projects', JSON.stringify(projects));
