@@ -2,8 +2,14 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Proje Takip Sistemi</title>
+  
+  <!-- Cache önlemek için meta tagler -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  
   <style>
     body {
       font-family: sans-serif;
@@ -31,23 +37,18 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
-    tr:hover {
-      background-color: #d0e7fd;
+    tr.clickable-row {
       cursor: pointer;
     }
     .btn-danger {
       color: white;
       background-color: #c0392b;
       border: none;
-      padding: 6px 12px;
-      cursor: pointer;
     }
     .btn-primary {
       background-color: #3498db;
       color: white;
       border: none;
-      padding: 8px 16px;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -70,8 +71,6 @@
         <th>Başlangıç</th>
         <th>Bitiş</th>
         <th>Süre (gün)</th>
-        <th>Tahmini Bütçe (TL)</th>
-        <th>Gerçekleşen Bütçe (TL)</th>
         <th>İşlem</th>
       </tr>
     </thead>
@@ -88,26 +87,19 @@
         const tr = document.createElement("tr");
         const duration = getDuration(proj.startDate, proj.endDate);
 
+        tr.classList.add("clickable-row");
+        tr.onclick = () => {
+          window.location.href = `project-detail.html?id=${index}`;
+        };
+
         tr.innerHTML = `
           <td>${proj.name}</td>
           <td>${proj.client}</td>
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>${proj.estimatedBudget || '-'}</td>
-          <td>${proj.actualBudget || '-'}</td>
-          <td>
-            <button class="btn-danger" onclick="deleteProject(${index}, event)">Sil</button>
-          </td>
+          <td><button class="btn-danger" onclick="deleteProject(event, ${index})">Sil</button></td>
         `;
-
-        tr.addEventListener('click', () => {
-          window.location.href = `project-detail.html?id=${index}`;
-        });
-
-        // Sil butonunun satır tıklamasını engellemesi için:
-        tr.querySelector('button').addEventListener('click', (e) => e.stopPropagation());
-
         tbody.appendChild(tr);
       });
     }
@@ -123,16 +115,7 @@
         return;
       }
 
-      const project = { 
-        name, 
-        client, 
-        startDate, 
-        endDate,
-        estimatedBudget: '',
-        actualBudget: '',
-        milestones: ''
-      };
-
+      const project = { name, client, startDate, endDate };
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.push(project);
       localStorage.setItem("projects", JSON.stringify(projects));
@@ -145,9 +128,8 @@
       loadProjects();
     }
 
-    function deleteProject(index, event) {
-      event.stopPropagation();
-      if (!confirm("Projeyi silmek istediğinizden emin misiniz?")) return;
+    function deleteProject(event, index) {
+      event.stopPropagation(); // Satır tıklanmasını engelle
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.splice(index, 1);
       localStorage.setItem("projects", JSON.stringify(projects));
