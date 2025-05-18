@@ -41,10 +41,6 @@
       color: white;
       border: none;
     }
-    tr.clickable:hover {
-      cursor: pointer;
-      background-color: #d6eaf8;
-    }
   </style>
 </head>
 <body>
@@ -82,12 +78,9 @@
 
       data.forEach((proj, index) => {
         const duration = getDuration(proj.startDate, proj.endDate);
-        const estBudget = proj.estimatedBudget ? parseFloat(proj.estimatedBudget).toFixed(2) : "";
-        const actBudget = proj.actualBudget ? parseFloat(proj.actualBudget).toFixed(2) : "";
 
         const tr = document.createElement("tr");
-        tr.classList.add("clickable");
-        tr.title = "Detayları görmek için tıklayın";
+        tr.style.cursor = "pointer";
         tr.onclick = () => {
           window.location.href = `project-detail.html?id=${index}`;
         };
@@ -98,9 +91,9 @@
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>${estBudget}</td>
-          <td>${actBudget}</td>
-          <td><button class="btn-danger" onclick="event.stopPropagation(); deleteProject(${index});">Sil</button></td>
+          <td>${proj.estimatedBudget ? Number(proj.estimatedBudget).toFixed(2) : ""}</td>
+          <td>${proj.actualBudget ? Number(proj.actualBudget).toFixed(2) : ""}</td>
+          <td><button class="btn-danger" onclick="event.stopPropagation(); deleteProject(${index})">Sil</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -131,7 +124,6 @@
     }
 
     function deleteProject(index) {
-      if (!confirm("Projeyi silmek istediğinizden emin misiniz?")) return;
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.splice(index, 1);
       localStorage.setItem("projects", JSON.stringify(projects));
@@ -145,6 +137,7 @@
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
+    // İlk yükleme
     loadProjects();
   </script>
 </body>
