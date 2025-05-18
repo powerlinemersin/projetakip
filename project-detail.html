@@ -7,8 +7,6 @@
     body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
     label { display: block; margin-top: 10px; }
     input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
   </style>
 </head>
@@ -20,89 +18,61 @@
     <label>Başlangıç Tarihi<input type="date" id="startDate" /></label>
     <label>Bitiş Tarihi<input type="date" id="endDate" /></label>
 
-    <h3>Aşamalar & Takip</h3>
-    <table id="milestoneTable">
-      <thead>
-        <tr>
-          <th>Aşama</th>
-          <th>Sorumlu</th>
-          <th>Süre (gün)</th>
-          <th>Tamamlandı</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <h3>Aşamalar & Sorumlular</h3>
+    <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
+
+    <h3>💰 Bütçe Yönetimi</h3>
+    <label>Tahmini Malzeme Gideri (₺)<input type="number" id="budgetMaterial" /></label>
+    <label>Tahmini İşçilik Gideri (₺)<input type="number" id="budgetLabor" /></label>
+    <label>Tahmini Taşeron Gideri (₺)<input type="number" id="budgetSubcontractor" /></label>
+    <label>Gerçekleşen Toplam Maliyet (₺)<input type="number" id="actualCost" /></label>
+
+    <p><strong>Kâr Marjı:</strong> <span id="profitMargin">-</span></p>
 
     <button type="button" onclick="saveProject()">Kaydet</button>
   </form>
 
   <script>
-    const defaultMilestones = [
-      "Keşif / Ön görüşme",
-      "Teklif oluşturma",
-      "Onay – sözleşme",
-      "Malzeme temini",
-      "Uygulama",
-      "Test ve devreye alma",
-      "Teslimat"
-    ];
-
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
     const projects = JSON.parse(localStorage.getItem('projects') || '[]');
 
-    const nameInput = document.getElementById('name');
-    const clientInput = document.getElementById('client');
-    const startDateInput = document.getElementById('startDate');
-    const endDateInput = document.getElementById('endDate');
-    const milestoneTableBody = document.querySelector('#milestoneTable tbody');
-
-    let currentProject = null;
-
-    function loadMilestones(data = []) {
-      milestoneTableBody.innerHTML = '';
-      defaultMilestones.forEach((title, index) => {
-        const row = document.createElement('tr');
-        const existing = data[index] || {};
-
-        row.innerHTML = `
-          <td>${title}</td>
-          <td><input type="text" value="${existing.responsible || ''}" data-index="${index}" data-field="responsible" /></td>
-          <td><input type="number" value="${existing.duration || ''}" data-index="${index}" data-field="duration" /></td>
-          <td><input type="checkbox" ${existing.done ? 'checked' : ''} data-index="${index}" data-field="done" /></td>
-        `;
-        milestoneTableBody.appendChild(row);
-      });
-    }
-
     if (id !== null && projects[id]) {
-      currentProject = projects[id];
-      nameInput.value = currentProject.name;
-      clientInput.value = currentProject.client;
-      startDateInput.value = currentProject.startDate;
-      endDateInput.value = currentProject.endDate;
-      loadMilestones(currentProject.milestones || []);
-    } else {
-      loadMilestones();
+      const proj = projects[id];
+      document.getElementById('name').value = proj.name;
+      document.getElementById('client').value = proj.client;
+      document.getElementById('startDate').value = proj.startDate;
+      document.getElementById('endDate').value = proj.endDate;
+      document.getElementById('milestones').value = proj.milestones || '';
+      document.getElementById('budgetMaterial').value = proj.budgetMaterial || '';
+      document.getElementById('budgetLabor').value = proj.budgetLabor || '';
+      document.getElementById('budgetSubcontractor').value = proj.budgetSubcontractor || '';
+      document.getElementById('actualCost').value = proj.actualCost || '';
+      document.getElementById('profitMargin').innerText = (proj.profit !== undefined) ? proj.profit + ' ₺' : '-';
     }
 
     function saveProject() {
       if (id === null) return alert('Geçersiz proje!');
 
-      const updatedMilestones = defaultMilestones.map((title, index) => {
-        const responsible = document.querySelector(`input[data-index="${index}"][data-field="responsible"]`).value;
-        const duration = document.querySelector(`input[data-index="${index}"][data-field="duration"]`).value;
-        const done = document.querySelector(`input[data-index="${index}"][data-field="done"]`).checked;
-        return { title, responsible, duration, done };
-      });
+      const budgetMaterial = Number(document.getElementById('budgetMaterial').value || 0);
+      const budgetLabor = Number(document.getElementById('budgetLabor').value || 0);
+      const budgetSubcontractor = Number(document.getElementById('budgetSubcontractor').value || 0);
+      const actualCost = Number(document.getElementById('actualCost').value || 0);
+      const totalBudget = budgetMaterial + budgetLabor + budgetSubcontractor;
+      const profit = totalBudget - actualCost;
 
       projects[id] = {
-        ...projects[id],
-        name: nameInput.value.trim(),
-        client: clientInput.value.trim(),
-        startDate: startDateInput.value,
-        endDate: endDateInput.value,
-        milestones: updatedMilestones
+        name: document.getElementById('name').value.trim(),
+        client: document.getElementById('client').value.trim(),
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        milestones: document.getElementById('milestones').value.trim(),
+        budgetMaterial,
+        budgetLabor,
+        budgetSubcontractor,
+        actualCost,
+        totalBudget,
+        profit
       };
 
       localStorage.setItem('projects', JSON.stringify(projects));
