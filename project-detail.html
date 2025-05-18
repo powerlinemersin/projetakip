@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <title>Proje Detayları</title>
+  <title>Proje Detayı</title>
   <style>
     body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
     label { display: block; margin-top: 10px; }
@@ -13,17 +13,28 @@
 <body>
   <h1>Proje Detayları</h1>
   <form id="projectForm">
-    <label>Proje Adı<input type="text" id="name" /></label>
-    <label>Müşteri Adı<input type="text" id="client" /></label>
-    <label>Başlangıç Tarihi<input type="date" id="startDate" /></label>
-    <label>Bitiş Tarihi<input type="date" id="endDate" /></label>
+    <label>Proje Adı
+      <input type="text" id="name" />
+    </label>
+    <label>Müşteri Adı
+      <input type="text" id="client" />
+    </label>
+    <label>Başlangıç Tarihi
+      <input type="date" id="startDate" />
+    </label>
+    <label>Bitiş Tarihi
+      <input type="date" id="endDate" />
+    </label>
+
+    <label>Tahmini Bütçe (TL)
+      <input type="number" id="estimatedBudget" step="0.01" min="0" />
+    </label>
+    <label>Gerçekleşen Bütçe (TL)
+      <input type="number" id="actualBudget" step="0.01" min="0" />
+    </label>
 
     <h3>Aşamalar & Sorumlular</h3>
     <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
-
-    <h3>💰 Bütçe Yönetimi</h3>
-    <label>Tahmini Bütçe (TL)<input type="number" id="estimatedBudget" min="0" step="0.01" /></label>
-    <label>Gerçekleşen Bütçe (TL)<input type="number" id="actualBudget" min="0" step="0.01" /></label>
 
     <button type="button" onclick="saveProject()">Kaydet</button>
   </form>
@@ -45,7 +56,10 @@
     }
 
     function saveProject() {
-      if (id === null) return alert('Geçersiz proje!');
+      if (id === null) {
+        alert('Geçersiz proje!');
+        return;
+      }
 
       projects[id] = {
         name: document.getElementById('name').value.trim(),
@@ -54,7 +68,7 @@
         endDate: document.getElementById('endDate').value,
         milestones: document.getElementById('milestones').value.trim(),
         estimatedBudget: document.getElementById('estimatedBudget').value,
-        actualBudget: document.getElementById('actualBudget').value
+        actualBudget: document.getElementById('actualBudget').value,
       };
 
       localStorage.setItem('projects', JSON.stringify(projects));
