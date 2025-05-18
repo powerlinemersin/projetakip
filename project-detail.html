@@ -107,4 +107,58 @@
       updateProfitMargin();
 
       // Aşama tarihlerini doldur
-      if(pro
+      if(proj.milestoneDates){
+        proj.milestoneDates.forEach((ms,i) => {
+          document.getElementById(`milestone_${i}_start`).value = ms.start || '';
+          document.getElementById(`milestone_${i}_end`).value = ms.end || '';
+        });
+      }
+    }
+
+    function updateProfitMargin() {
+      const est = parseFloat(document.getElementById('estimatedBudget').value) || 0;
+      const act = parseFloat(document.getElementById('actualCost').value) || 0;
+      let margin = 0;
+      if (est > 0) {
+        margin = ((est - act) / est) * 100;
+      }
+      document.getElementById('profitMargin').value = margin.toFixed(2);
+    }
+
+    document.getElementById('estimatedBudget').addEventListener('input', updateProfitMargin);
+    document.getElementById('actualCost').addEventListener('input', updateProfitMargin);
+
+    function saveProject() {
+      if (id === null) {
+        alert('Geçersiz proje!');
+        return;
+      }
+
+      // Aşama tarihlerini oku
+      const milestoneDates = [];
+      for(let i=0; i<5; i++) {
+        milestoneDates.push({
+          start: document.getElementById(`milestone_${i}_start`).value,
+          end: document.getElementById(`milestone_${i}_end`).value
+        });
+      }
+
+      projects[id] = {
+        name: document.getElementById('name').value.trim(),
+        client: document.getElementById('client').value.trim(),
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        milestones: document.getElementById('milestones').value.trim(),
+        estimatedBudget: parseFloat(document.getElementById('estimatedBudget').value) || 0,
+        actualCost: parseFloat(document.getElementById('actualCost').value) || 0,
+        profitMargin: parseFloat(document.getElementById('profitMargin').value) || 0,
+        milestoneDates: milestoneDates
+      };
+
+      localStorage.setItem('projects', JSON.stringify(projects));
+      alert('Proje güncellendi!');
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
