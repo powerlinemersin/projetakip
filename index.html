@@ -31,15 +31,24 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    tr.late {
+      background-color: #f8d7da !important; /* kırmızımsı */
+    }
     .btn-danger {
       color: white;
       background-color: #c0392b;
       border: none;
+      cursor: pointer;
     }
     .btn-primary {
       background-color: #3498db;
       color: white;
       border: none;
+      cursor: pointer;
+    }
+    tr:hover {
+      background-color: #d6eaf8;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -62,6 +71,7 @@
         <th>Başlangıç</th>
         <th>Bitiş</th>
         <th>Süre (gün)</th>
+        <th>Kalan Gün</th>
         <th>İşlem</th>
       </tr>
     </thead>
@@ -74,9 +84,16 @@
       const tbody = document.getElementById("projectBody");
       tbody.innerHTML = "";
 
+      const today = new Date();
+
       data.forEach((proj, index) => {
         const tr = document.createElement("tr");
         const duration = getDuration(proj.startDate, proj.endDate);
+        const daysLeft = getDaysLeft(proj.endDate, today);
+
+        if (daysLeft < 0) {
+          tr.classList.add("late");
+        }
 
         tr.innerHTML = `
           <td>${proj.name}</td>
@@ -84,13 +101,17 @@
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td><button class="btn-danger" onclick="event.stopPropagation(); deleteProject(${index})">Sil</button></td>
+          <td>${daysLeft >= 0 ? daysLeft + " gün" : "Gecikti"}</td>
+          <td>
+            <button class="btn-danger" onclick="deleteProject(${index})">Sil</button>
+          </td>
         `;
 
-        tr.style.cursor = "pointer";
-        tr.onclick = () => {
-          window.location.href = `project-detail.html?id=${index}`;
-        };
+        tr.addEventListener('click', (e) => {
+          if(e.target.tagName !== 'BUTTON') { // Butona tıklanmadıysa detay sayfasına git
+            window.location.href = `project-detail.html?id=${index}`;
+          }
+        });
 
         tbody.appendChild(tr);
       });
@@ -131,6 +152,12 @@
       const s = new Date(start);
       const e = new Date(end);
       const diffTime = Math.abs(e - s);
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function getDaysLeft(endDate, today) {
+      const e = new Date(endDate);
+      const diffTime = e - today;
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
