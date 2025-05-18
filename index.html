@@ -31,11 +31,19 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
     .btn-danger {
       color: white;
       background-color: #c0392b;
       border: none;
       cursor: pointer;
+      padding: 6px 10px;
     }
     .btn-primary {
       background-color: #3498db;
@@ -64,6 +72,8 @@
         <th>Başlangıç</th>
         <th>Bitiş</th>
         <th>Süre (gün)</th>
+        <th>Tahmini Bütçe (TL)</th>
+        <th>Gerçekleşen Bütçe (TL)</th>
         <th>İşlem</th>
       </tr>
     </thead>
@@ -81,15 +91,14 @@
         const duration = getDuration(proj.startDate, proj.endDate);
 
         tr.innerHTML = `
-          <td>${proj.name}</td>
+          <td><a href="project-detail.html?id=${index}">${proj.name}</a></td>
           <td>${proj.client}</td>
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>
-            <button class="btn-primary" onclick="window.location.href='project-detail.html?id=${index}'">Detaylar</button>
-            <button class="btn-danger" onclick="deleteProject(${index})">Sil</button>
-          </td>
+          <td>${proj.estimatedBudget ? Number(proj.estimatedBudget).toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '-'}</td>
+          <td>${proj.actualBudget ? Number(proj.actualBudget).toLocaleString('tr-TR', {minimumFractionDigits: 2}) : '-'}</td>
+          <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -106,7 +115,7 @@
         return;
       }
 
-      const project = { name, client, startDate, endDate };
+      const project = { name, client, startDate, endDate, estimatedBudget: '', actualBudget: '' };
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.push(project);
       localStorage.setItem("projects", JSON.stringify(projects));
