@@ -6,7 +6,7 @@
   <style>
     body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
     label { display: block; margin-top: 10px; }
-    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
     button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
   </style>
 </head>
@@ -26,6 +26,7 @@
       <input type="date" id="endDate" />
     </label>
 
+    <h3>Bütçe Yönetimi</h3>
     <label>Tahmini Bütçe (TL)
       <input type="number" id="estimatedBudget" min="0" step="0.01" />
     </label>
@@ -33,7 +34,7 @@
       <input type="number" id="actualCost" min="0" step="0.01" />
     </label>
     <label>Kar Marjı (%)
-      <input type="number" id="profitMargin" min="0" step="0.01" />
+      <input type="number" id="profitMargin" min="0" step="0.01" readonly />
     </label>
 
     <h3>Aşamalar & Sorumlular</h3>
@@ -49,18 +50,36 @@
 
     if (id !== null && projects[id]) {
       const proj = projects[id];
-      document.getElementById('name').value = proj.name;
-      document.getElementById('client').value = proj.client;
-      document.getElementById('startDate').value = proj.startDate;
-      document.getElementById('endDate').value = proj.endDate;
+      document.getElementById('name').value = proj.name || '';
+      document.getElementById('client').value = proj.client || '';
+      document.getElementById('startDate').value = proj.startDate || '';
+      document.getElementById('endDate').value = proj.endDate || '';
       document.getElementById('milestones').value = proj.milestones || '';
-      document.getElementById('estimatedBudget').value = proj.estimatedBudget || '';
-      document.getElementById('actualCost').value = proj.actualCost || '';
-      document.getElementById('profitMargin').value = proj.profitMargin || '';
+      document.getElementById('estimatedBudget').value = proj.estimatedBudget || 0;
+      document.getElementById('actualCost').value = proj.actualCost || 0;
+      updateProfitMargin();
     }
 
+    // Kar marjını otomatik hesapla
+    function updateProfitMargin() {
+      const est = parseFloat(document.getElementById('estimatedBudget').value) || 0;
+      const act = parseFloat(document.getElementById('actualCost').value) || 0;
+      let margin = 0;
+      if (est > 0) {
+        margin = ((est - act) / est) * 100;
+      }
+      document.getElementById('profitMargin').value = margin.toFixed(2);
+    }
+
+    // Tahmini bütçe ve gerçekleşen maliyet değişince kar marjını güncelle
+    document.getElementById('estimatedBudget').addEventListener('input', updateProfitMargin);
+    document.getElementById('actualCost').addEventListener('input', updateProfitMargin);
+
     function saveProject() {
-      if (id === null) return alert('Geçersiz proje!');
+      if (id === null) {
+        alert('Geçersiz proje!');
+        return;
+      }
 
       projects[id] = {
         name: document.getElementById('name').value.trim(),
