@@ -6,35 +6,24 @@
   <style>
     body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
     label { display: block; margin-top: 10px; }
-    input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
     button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
   </style>
 </head>
 <body>
   <h1>Proje Detayları</h1>
   <form id="projectForm">
-    <label>Proje Adı
-      <input type="text" id="name" />
-    </label>
-    <label>Müşteri Adı
-      <input type="text" id="client" />
-    </label>
-    <label>Başlangıç Tarihi
-      <input type="date" id="startDate" />
-    </label>
-    <label>Bitiş Tarihi
-      <input type="date" id="endDate" />
-    </label>
-
-    <label>Tahmini Bütçe (TL)
-      <input type="number" id="estimatedBudget" step="0.01" min="0" />
-    </label>
-    <label>Gerçekleşen Bütçe (TL)
-      <input type="number" id="actualBudget" step="0.01" min="0" />
-    </label>
+    <label>Proje Adı<input type="text" id="name" /></label>
+    <label>Müşteri Adı<input type="text" id="client" /></label>
+    <label>Başlangıç Tarihi<input type="date" id="startDate" /></label>
+    <label>Bitiş Tarihi<input type="date" id="endDate" /></label>
 
     <h3>Aşamalar & Sorumlular</h3>
     <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
+
+    <h3>Bütçe Yönetimi</h3>
+    <label>Tahmini Bütçe (TL)<input type="number" id="estimatedBudget" min="0" /></label>
+    <label>Gerçekleşen Bütçe (TL)<input type="number" id="actualBudget" min="0" /></label>
 
     <button type="button" onclick="saveProject()">Kaydet</button>
   </form>
@@ -56,10 +45,7 @@
     }
 
     function saveProject() {
-      if (id === null) {
-        alert('Geçersiz proje!');
-        return;
-      }
+      if (id === null) return alert('Geçersiz proje!');
 
       projects[id] = {
         name: document.getElementById('name').value.trim(),
@@ -67,8 +53,8 @@
         startDate: document.getElementById('startDate').value,
         endDate: document.getElementById('endDate').value,
         milestones: document.getElementById('milestones').value.trim(),
-        estimatedBudget: document.getElementById('estimatedBudget').value,
-        actualBudget: document.getElementById('actualBudget').value,
+        estimatedBudget: document.getElementById('estimatedBudget').value.trim(),
+        actualBudget: document.getElementById('actualBudget').value.trim()
       };
 
       localStorage.setItem('projects', JSON.stringify(projects));
