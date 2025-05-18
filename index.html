@@ -43,10 +43,10 @@
       margin: 30px auto;
       padding: 0 20px;
     }
-    h3 {
-      margin-top: 40px;
+    label {
+      display: block;
+      margin: 12px 0 6px;
       font-weight: 600;
-      color: #34495e;
     }
     input, button {
       padding: 10px 12px;
@@ -67,21 +67,11 @@
       cursor: pointer;
       font-weight: 600;
       transition: background-color 0.3s ease;
+      margin-top: 10px;
       border-radius: 6px;
     }
     button:hover {
       background-color: #1c5980;
-    }
-    .input-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .input-group input {
-      flex: 1;
-      min-width: 160px;
     }
     table {
       width: 100%;
@@ -104,6 +94,7 @@
     }
     tr:hover {
       background-color: #ecf6fc;
+      cursor: pointer;
     }
     .btn-danger {
       background-color: #e74c3c;
@@ -117,13 +108,19 @@
     .btn-danger:hover {
       background-color: #c0392b;
     }
-    a {
-      color: #2980b9;
-      text-decoration: none;
+    .btn-primary {
+      margin-left: 10px;
       font-weight: 600;
     }
-    a:hover {
-      text-decoration: underline;
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .input-group input {
+      flex: 1;
+      min-width: 160px;
     }
 
     /* Responsive */
@@ -172,11 +169,11 @@
       <input id="clientName" placeholder="Müşteri Adı" />
       <input id="startDate" type="date" />
       <input id="endDate" type="date" />
-      <button onclick="addProject()">Ekle</button>
+      <button class="btn-primary" onclick="addProject()">Ekle</button>
     </div>
 
     <h3>📋 Proje Listesi</h3>
-    <table id="projectTable" aria-label="Proje listesi">
+    <table id="projectTable">
       <thead>
         <tr>
           <th>Proje Adı</th>
@@ -184,6 +181,7 @@
           <th>Başlangıç</th>
           <th>Bitiş</th>
           <th>Süre (gün)</th>
+          <th>Kar</th>
           <th>İşlem</th>
         </tr>
       </thead>
@@ -198,16 +196,19 @@
       tbody.innerHTML = "";
 
       data.forEach((proj, index) => {
-        const tr = document.createElement("tr");
         const duration = getDuration(proj.startDate, proj.endDate);
+        const profit = calculateProfit(proj.budget, proj.cost, proj.profitMargin);
+
+        const tr = document.createElement("tr");
 
         tr.innerHTML = `
-          <td><a href="project-detail.html?id=${index}" title="Detayları görüntüle">${proj.name}</a></td>
+          <td><a href="project-detail.html?id=${index}" style="color:#2980b9; text-decoration:none;">${proj.name}</a></td>
           <td>${proj.client}</td>
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td><button class="btn-danger" onclick="deleteProject(${index})" aria-label="Projeyi sil">Sil</button></td>
+          <td>${profit.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'})}</td>
+          <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -224,12 +225,21 @@
         return;
       }
 
-      const project = { name, client, startDate, endDate, milestones: [] };
+      // Yeni projede bütçe, maliyet ve kar marjı için default boş değerler verelim
+      const project = {
+        name,
+        client,
+        startDate,
+        endDate,
+        budget: 0,
+        cost: 0,
+        profitMargin: 0
+      };
+
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.push(project);
       localStorage.setItem("projects", JSON.stringify(projects));
 
-      // Temizle
       document.getElementById("projectName").value = "";
       document.getElementById("clientName").value = "";
       document.getElementById("startDate").value = "";
@@ -239,7 +249,6 @@
     }
 
     function deleteProject(index) {
-      if (!confirm("Projeyi silmek istediğinize emin misiniz?")) return;
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
       projects.splice(index, 1);
       localStorage.setItem("projects", JSON.stringify(projects));
@@ -249,12 +258,16 @@
     function getDuration(start, end) {
       const s = new Date(start);
       const e = new Date(end);
-      const diffTime = e - s;
-      if (diffTime < 0) return 0;
+      const diffTime = Math.abs(e - s);
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    // Sayfa yüklendiğinde projeleri yükle
+    function calculateProfit(budget, cost, margin) {
+      // Basit kar hesaplama: (bütçe - maliyet) * kar marjı (yüzde)
+      if (!budget || !cost || !margin) return 0;
+      return (budget - cost) * (margin / 100);
+    }
+
     loadProjects();
   </script>
 </body>
