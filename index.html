@@ -31,21 +31,16 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
-    tr.late {
-      background-color: #f8d7da !important;
-    }
     .btn-danger {
       color: white;
       background-color: #c0392b;
       border: none;
+      cursor: pointer;
     }
     .btn-primary {
       background-color: #3498db;
       color: white;
       border: none;
-    }
-    tr:hover {
-      background-color: #d0e7ff;
       cursor: pointer;
     }
   </style>
@@ -69,7 +64,6 @@
         <th>Başlangıç</th>
         <th>Bitiş</th>
         <th>Süre (gün)</th>
-        <th>Uygulama Bitiş</th>
         <th>İşlem</th>
       </tr>
     </thead>
@@ -82,38 +76,20 @@
       const tbody = document.getElementById("projectBody");
       tbody.innerHTML = "";
 
-      const today = new Date();
-
       data.forEach((proj, index) => {
         const tr = document.createElement("tr");
         const duration = getDuration(proj.startDate, proj.endDate);
 
-        // Uygulama aşamasının bitiş tarihi (4. indeks)
-        let uygulamaEnd = "";
-        if(proj.milestoneDates && proj.milestoneDates[4]){
-          uygulamaEnd = proj.milestoneDates[4].end || "";
-        }
-
-        // Gecikme kontrolü (Uygulama bitiş tarihi geçmiş ve proje bitiş tarihi de geçmiş değilse)
-        let isLate = false;
-        if (uygulamaEnd) {
-          const uygulamaEndDate = new Date(uygulamaEnd);
-          const projeBitisDate = new Date(proj.endDate);
-          if (uygulamaEndDate < today && projeBitisDate >= today) {
-            isLate = true;
-          }
-        }
-
-        tr.className = isLate ? "late" : "";
-
         tr.innerHTML = `
-          <td><a href="project-detail.html?id=${index}">${proj.name}</a></td>
+          <td>${proj.name}</td>
           <td>${proj.client}</td>
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>${uygulamaEnd || '-'}</td>
-          <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
+          <td>
+            <button class="btn-primary" onclick="window.location.href='project-detail.html?id=${index}'">Detaylar</button>
+            <button class="btn-danger" onclick="deleteProject(${index})">Sil</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
