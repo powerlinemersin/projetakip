@@ -6,85 +6,27 @@
   <style>
     body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
     label { display: block; margin-top: 10px; }
-    input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
     button { margin-top: 20px; padding: 10px 20px; background-color: #3498db; color: white; border: none; cursor: pointer; }
-    .milestone-group {
-      background: white; 
-      padding: 10px; 
-      margin-top: 15px; 
-      border-radius: 5px; 
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    .milestone-group label {
-      display: inline-block;
-      width: 48%;
-      margin-right: 4%;
-    }
-    .milestone-group label:last-child {
-      margin-right: 0;
-    }
+    .budget-group { margin-top: 20px; }
   </style>
 </head>
 <body>
   <h1>Proje Detayları</h1>
   <form id="projectForm">
-    <label>Proje Adı
-      <input type="text" id="name" />
-    </label>
-    <label>Müşteri Adı
-      <input type="text" id="client" />
-    </label>
-    <label>Başlangıç Tarihi
-      <input type="date" id="startDate" />
-    </label>
-    <label>Bitiş Tarihi
-      <input type="date" id="endDate" />
-    </label>
-
-    <h3>Bütçe Yönetimi</h3>
-    <label>Tahmini Bütçe (TL)
-      <input type="number" id="estimatedBudget" min="0" step="0.01" />
-    </label>
-    <label>Gerçekleşen Maliyet (TL)
-      <input type="number" id="actualCost" min="0" step="0.01" />
-    </label>
-    <label>Kar Marjı (%)
-      <input type="number" id="profitMargin" min="0" step="0.01" readonly />
-    </label>
+    <label>Proje Adı<input type="text" id="name" /></label>
+    <label>Müşteri Adı<input type="text" id="client" /></label>
+    <label>Başlangıç Tarihi<input type="date" id="startDate" /></label>
+    <label>Bitiş Tarihi<input type="date" id="endDate" /></label>
 
     <h3>Aşamalar & Sorumlular</h3>
-    <textarea id="milestones" rows="4" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
+    <textarea id="milestones" rows="6" placeholder="Örnek: Keşif, Teklif, Onay, Malzeme, Uygulama..."></textarea>
 
-    <h3>Aşama Tarihleri</h3>
-    
-    <div class="milestone-group">
-      <strong>Keşif</strong><br/>
-      <label>Başlangıç: <input type="date" id="milestone_0_start" /></label>
-      <label>Bitiş: <input type="date" id="milestone_0_end" /></label>
-    </div>
-
-    <div class="milestone-group">
-      <strong>Teklif</strong><br/>
-      <label>Başlangıç: <input type="date" id="milestone_1_start" /></label>
-      <label>Bitiş: <input type="date" id="milestone_1_end" /></label>
-    </div>
-
-    <div class="milestone-group">
-      <strong>Onay</strong><br/>
-      <label>Başlangıç: <input type="date" id="milestone_2_start" /></label>
-      <label>Bitiş: <input type="date" id="milestone_2_end" /></label>
-    </div>
-
-    <div class="milestone-group">
-      <strong>Malzeme Temini</strong><br/>
-      <label>Başlangıç: <input type="date" id="milestone_3_start" /></label>
-      <label>Bitiş: <input type="date" id="milestone_3_end" /></label>
-    </div>
-
-    <div class="milestone-group">
-      <strong>Uygulama</strong><br/>
-      <label>Başlangıç: <input type="date" id="milestone_4_start" /></label>
-      <label>Bitiş: <input type="date" id="milestone_4_end" /></label>
+    <div class="budget-group">
+      <h3>💰 Bütçe Yönetimi</h3>
+      <label>Tahmini Bütçe (₺)<input type="number" id="estimatedBudget" min="0" step="0.01" /></label>
+      <label>Gerçekleşen Maliyet (₺)<input type="number" id="actualCost" min="0" step="0.01" /></label>
+      <label>Kar Marjı (%)<input type="number" id="profitMargin" min="0" step="0.01" readonly /></label>
     </div>
 
     <button type="button" onclick="saveProject()">Kaydet</button>
@@ -97,51 +39,33 @@
 
     if (id !== null && projects[id]) {
       const proj = projects[id];
-      document.getElementById('name').value = proj.name || '';
-      document.getElementById('client').value = proj.client || '';
-      document.getElementById('startDate').value = proj.startDate || '';
-      document.getElementById('endDate').value = proj.endDate || '';
+      document.getElementById('name').value = proj.name;
+      document.getElementById('client').value = proj.client;
+      document.getElementById('startDate').value = proj.startDate;
+      document.getElementById('endDate').value = proj.endDate;
       document.getElementById('milestones').value = proj.milestones || '';
-      document.getElementById('estimatedBudget').value = proj.estimatedBudget || 0;
-      document.getElementById('actualCost').value = proj.actualCost || 0;
+
+      document.getElementById('estimatedBudget').value = proj.estimatedBudget || '';
+      document.getElementById('actualCost').value = proj.actualCost || '';
       updateProfitMargin();
-
-      // Aşama tarihlerini doldur
-      if(proj.milestoneDates){
-        proj.milestoneDates.forEach((ms,i) => {
-          document.getElementById(`milestone_${i}_start`).value = ms.start || '';
-          document.getElementById(`milestone_${i}_end`).value = ms.end || '';
-        });
-      }
-    }
-
-    function updateProfitMargin() {
-      const est = parseFloat(document.getElementById('estimatedBudget').value) || 0;
-      const act = parseFloat(document.getElementById('actualCost').value) || 0;
-      let margin = 0;
-      if (est > 0) {
-        margin = ((est - act) / est) * 100;
-      }
-      document.getElementById('profitMargin').value = margin.toFixed(2);
     }
 
     document.getElementById('estimatedBudget').addEventListener('input', updateProfitMargin);
     document.getElementById('actualCost').addEventListener('input', updateProfitMargin);
 
-    function saveProject() {
-      if (id === null) {
-        alert('Geçersiz proje!');
-        return;
+    function updateProfitMargin() {
+      const est = parseFloat(document.getElementById('estimatedBudget').value);
+      const act = parseFloat(document.getElementById('actualCost').value);
+      let profit = '';
+      if (!isNaN(est) && !isNaN(act) && est > 0) {
+        profit = ((est - act) / est) * 100;
+        profit = profit.toFixed(2);
       }
+      document.getElementById('profitMargin').value = profit;
+    }
 
-      // Aşama tarihlerini oku
-      const milestoneDates = [];
-      for(let i=0; i<5; i++) {
-        milestoneDates.push({
-          start: document.getElementById(`milestone_${i}_start`).value,
-          end: document.getElementById(`milestone_${i}_end`).value
-        });
-      }
+    function saveProject() {
+      if (id === null) return alert('Geçersiz proje!');
 
       projects[id] = {
         name: document.getElementById('name').value.trim(),
@@ -150,9 +74,7 @@
         endDate: document.getElementById('endDate').value,
         milestones: document.getElementById('milestones').value.trim(),
         estimatedBudget: parseFloat(document.getElementById('estimatedBudget').value) || 0,
-        actualCost: parseFloat(document.getElementById('actualCost').value) || 0,
-        profitMargin: parseFloat(document.getElementById('profitMargin').value) || 0,
-        milestoneDates: milestoneDates
+        actualCost: parseFloat(document.getElementById('actualCost').value) || 0
       };
 
       localStorage.setItem('projects', JSON.stringify(projects));
