@@ -9,7 +9,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -98,12 +98,6 @@
     tr:hover {
       background-color: #ecf6fc;
     }
-    .readonly {
-      background-color: #e1e1e1;
-      border: none;
-      cursor: default;
-      color: #555;
-    }
     .input-group {
       display: flex;
       flex-wrap: wrap;
@@ -125,7 +119,7 @@
 </head>
 <body>
   <header>
-    <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" />
+    <img src="https://via.placeholder.com/150x40?text=Logo   " alt="Şirket Logosu" />
     <h1>Proje Detayları</h1>
   </header>
   <main>
@@ -135,29 +129,7 @@
       <input type="text" id="projectName" class="readonly" readonly />
       <label>Müşteri Adı</label>
       <input type="text" id="clientName" class="readonly" readonly />
-      <div class="input-group">
-        <div>
-          <label>Başlangıç Tarihi</label>
-          <input type="date" id="startDate" class="readonly" readonly />
-        </div>
-        <div>
-          <label>Bitiş Tarihi</label>
-          <input type="date" id="endDate" class="readonly" readonly />
-        </div>
-      </div>
-    </section>
-    <section style="margin-top: 30px;">
-      <h3>Sözleşme ve Kar Hesapları</h3>
-      <label>Sözleşme Tutarı (TL)</label>
-      <input type="number" id="contractValue" min="0" step="0.01" />
-      <label>Toplam Harcama (TL)</label>
-      <input type="text" id="totalExpenses" class="readonly" readonly />
-      <label>Gerçekleşen Kar (TL)</label>
-      <input type="text" id="realizedProfit" class="readonly" readonly />
-      <label>Gerçekleşen Kar Marjı (%)</label>
-      <input type="text" id="realizedProfitMargin" class="readonly" readonly />
-    </section>
-    <section style="margin-top: 30px;">
+      
       <h3>Aşamalar & Sorumlular</h3>
       <table id="stagesTable">
         <thead>
@@ -170,7 +142,31 @@
         </thead>
         <tbody></tbody>
       </table>
+      
+      <div class="input-group">
+        <div>
+          <label>Sözleşme Başlangıcı</label>
+          <input type="date" id="startDate" />
+        </div>
+        <div>
+          <label>Sözleşme Bitişi</label>
+          <input type="date" id="endDate" />
+        </div>
+      </div>
     </section>
+
+    <section style="margin-top: 30px;">
+      <h3>Sözleşme ve Kar Hesapları</h3>
+      <label>Sözleşme Tutarı (TL)</label>
+      <input type="number" id="contractValue" min="0" step="0.01" />
+      <label>Toplam Harcama (TL)</label>
+      <input type="text" id="totalExpenses" class="readonly" readonly />
+      <label>Gerçekleşen Kar (TL)</label>
+      <input type="text" id="realizedProfit" class="readonly" readonly />
+      <label>Gerçekleşen Kar Marjı (%)</label>
+      <input type="text" id="realizedProfitMargin" class="readonly" readonly />
+    </section>
+
     <section style="margin-top: 30px;">
       <h3>Harcama Kalemleri</h3>
       <table id="expensesTable">
@@ -189,6 +185,7 @@
         <div><button onclick="addExpense()">Ekle</button></div>
       </div>
     </section>
+
     <button onclick="saveDetails()">Kaydet</button>
     <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
   </main>
@@ -206,8 +203,8 @@
       if (!p) return;
       document.getElementById("projectName").value = p.name;
       document.getElementById("clientName").value = p.client;
-      document.getElementById("startDate").value = p.startDate;
-      document.getElementById("endDate").value = p.endDate;
+      document.getElementById("startDate").value = p.startDate || "";
+      document.getElementById("endDate").value = p.endDate || "";
       document.getElementById("contractValue").value = p.contractValue || 0;
       p.expenses = p.expenses || [];
       renderExpenses(p.expenses);
@@ -280,6 +277,8 @@
     }
 
     function saveDetails() {
+      projects[projectId].startDate = document.getElementById("startDate").value;
+      projects[projectId].endDate = document.getElementById("endDate").value;
       projects[projectId].contractValue = parseFloat(document.getElementById("contractValue").value) || 0;
       localStorage.setItem("projects", JSON.stringify(projects));
       alert("Değişiklikler kaydedildi.");
