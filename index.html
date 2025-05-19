@@ -165,6 +165,7 @@
   <header>
     <img src="https://via.placeholder.com/150x40?text=Logo   " alt="Şirket Logosu" />
     <h1>Proje Takip Sistemi</h1>
+    <button onclick="logout()" style="margin-left:auto; background:#e74c3c; color:white;">Çıkış Yap</button>
   </header>
 
   <main>
@@ -203,13 +204,26 @@
     // Firebase uygulamasını başlat
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    // Projeleri Firestore'dan yükle
+    let userId = null;
+
+    // Oturum kontrolü
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "login.html"; // Giriş yapılmamışsa login sayfasına yönlendir
+      } else {
+        userId = user.uid; // Kullanıcı ID'sini al
+        loadProjects();
+      }
+    });
+
+    // Projeleri yükle
     async function loadProjects() {
       const tbody = document.getElementById("projectBody");
       tbody.innerHTML = "";
 
-      const projectsSnapshot = await db.collection("projects").get();
+      const projectsSnapshot = await db.collection("projects").where("userId", "==", userId).get();
       projectsSnapshot.forEach(doc => {
         const proj = doc.data();
         const tr = document.createElement("tr");
@@ -235,6 +249,7 @@
       }
 
       const project = {
+        userId: userId, // Kullanıcıya özel proje
         name,
         client,
         contractValue: null,
@@ -254,8 +269,12 @@
       loadProjects();
     }
 
-    // Sayfa yüklendiğinde projeleri yükle
-    window.onload = loadProjects;
+    // Çıkış yap
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "login.html"; // Çıkış yapıldığında login sayfasına yönlendir
+      });
+    }
   </script>
 </body>
 </html>
