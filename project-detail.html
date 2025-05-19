@@ -80,8 +80,9 @@
       border-collapse: collapse;
       background: white;
       margin-top: 25px;
+      border: 1px solid #ddd;
       border-radius: 8px;
-      overflow: hidden;
+      overflow: visible;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     th, td {
@@ -211,7 +212,7 @@
       p.expenses = p.expenses || [];
       renderExpenses(p.expenses);
       p.stages = p.stages || stages.map(name => ({ name, responsible: "", plannedDays: "", completed: false }));
-      renderStages(p.stages);
+      setTimeout(() => renderStages(p.stages), 0);
       updateCalculations();
     }
 
@@ -228,15 +229,17 @@
         tbody.insertAdjacentHTML("beforeend", row);
       });
       tbody.querySelectorAll("input").forEach(input => {
-        input.addEventListener("input", e => {
-          const idx = e.target.dataset.idx;
-          const field = e.target.dataset.field;
-          if (field === "completed") {
+        const idx = input.dataset.idx;
+        const field = input.dataset.field;
+        if (field === "completed") {
+          input.addEventListener("change", e => {
             projects[projectId].stages[idx][field] = e.target.checked;
-          } else {
+          });
+        } else {
+          input.addEventListener("input", e => {
             projects[projectId].stages[idx][field] = e.target.value;
-          }
-        });
+          });
+        }
       });
     }
 
