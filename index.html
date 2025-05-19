@@ -167,8 +167,6 @@
     <div class="input-group">
       <input id="projectName" placeholder="Proje Adı" />
       <input id="clientName" placeholder="Müşteri Adı" />
-      <input id="startDate" type="date" />
-      <input id="endDate" type="date" />
       <button class="btn-primary" onclick="addProject()">Ekle</button>
     </div>
 
@@ -178,9 +176,6 @@
         <tr>
           <th>Proje Adı</th>
           <th>Müşteri</th>
-          <th>Başlangıç</th>
-          <th>Bitiş</th>
-          <th>Süre (gün)</th>
           <th>Sözleşme Bedeli</th>
           <th>İşlem</th>
         </tr>
@@ -196,16 +191,11 @@
       tbody.innerHTML = "";
 
       data.forEach((proj, index) => {
-        const duration = getDuration(proj.startDate, proj.endDate);
-
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
           <td><a href="project-detail.html?id=${index}" style="color:#2980b9; text-decoration:none;">${proj.name}</a></td>
           <td>${proj.client}</td>
-          <td>${proj.startDate}</td>
-          <td>${proj.endDate}</td>
-          <td>${duration} gün</td>
           <td>${proj.contractValue ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'}) : 'Belirtilmemiş'}</td>
           <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
         `;
@@ -216,10 +206,8 @@
     function addProject() {
       const name = document.getElementById("projectName").value.trim();
       const client = document.getElementById("clientName").value.trim();
-      const startDate = document.getElementById("startDate").value;
-      const endDate = document.getElementById("endDate").value;
 
-      if (!name || !client || !startDate || !endDate) {
+      if (!name || !client) {
         alert("Tüm alanları doldurmalısınız!");
         return;
       }
@@ -227,8 +215,6 @@
       const project = {
         name,
         client,
-        startDate,
-        endDate,
         contractValue: null // Sözleşme bedeli başlangıçta boş olacak
       };
 
@@ -238,8 +224,6 @@
 
       document.getElementById("projectName").value = "";
       document.getElementById("clientName").value = "";
-      document.getElementById("startDate").value = "";
-      document.getElementById("endDate").value = "";
 
       loadProjects();
     }
@@ -249,13 +233,6 @@
       projects.splice(index, 1);
       localStorage.setItem("projects", JSON.stringify(projects));
       loadProjects();
-    }
-
-    function getDuration(start, end) {
-      const s = new Date(start);
-      const e = new Date(end);
-      const diffTime = Math.abs(e - s);
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
     loadProjects();
