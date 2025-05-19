@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Giriş Yap</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js "></script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background-color: #f9fbfd;
+      color: #2c3e50;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 {
+      margin-bottom: 20px;
+      font-weight: 600;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+    }
+    input {
+      padding: 10px 12px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: border-color 0.3s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input:focus {
+      border-color: #2980b9;
+      box-shadow: 0 0 5px #2980b9;
+    }
+    button {
+      background-color: #2980b9;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+      margin-top: 10px;
+      border-radius: 6px;
+      width: 100%;
+      padding: 10px;
+    }
+    button:hover {
+      background-color: #1c5980;
+    }
+    .signup-link {
+      margin-top: 15px;
+      text-align: center;
+    }
+    .signup-link a {
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .error-message {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Giriş Yap</h2>
+    <label>E-posta</label>
+    <input type="email" id="email" placeholder="E-posta adresinizi girin" />
+    <label>Şifre</label>
+    <input type="password" id="password" placeholder="Şifrenizi girin" />
+    <button onclick="login()">Giriş Yap</button>
+    <div class="signup-link">
+      Hesabınız yok mu? <a href="signup.html">Kayıt Ol</a>
+    </div>
+    <div class="error-message" id="error-message"></div>
+  </div>
+
+  <script>
+    // Firebase yapılandırması
+    const firebaseConfig = {
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
+      authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
+      projectId: "projetakipsistemi-fbabd",
+      storageBucket: "projetakipsistemi-fbabd.firebasestorage.app",
+      messagingSenderId: "335282912485",
+      appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
+    };
+
+    // Firebase uygulamasını başlat
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Giriş yapma fonksiyonu
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        document.getElementById("error-message").innerText = "Lütfen tüm alanları doldurun.";
+        return;
+      }
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        window.location.href = "index.html"; // Giriş başarılıysa ana sayfaya yönlendir
+      } catch (error) {
+        document.getElementById("error-message").innerText = "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.";
+      }
+    }
+
+    // Oturum kontrolü
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        window.location.href = "index.html"; // Oturum açıksa ana sayfaya yönlendir
+      }
+    });
+  </script>
+</body>
+</html>
