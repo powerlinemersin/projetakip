@@ -4,143 +4,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Proje Detayları</title>
-
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      background-color: #f9fbfd;
-      color: #2c3e50;
-    }
-    header {
-      background-color: #34495e;
-      color: white;
-      padding: 15px 30px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    header img {
-      height: 40px;
-      width: auto;
-    }
-    header h1 {
-      font-weight: 600;
-      font-size: 1.6rem;
-      margin: 0;
-      user-select: none;
-    }
-    main {
-      max-width: 1100px;
-      margin: 30px auto;
-      padding: 0 20px;
-    }
-    label {
-      display: block;
-      margin: 12px 0 6px;
-      font-weight: 600;
-    }
-    input, button, select {
-      padding: 10px 12px;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      outline: none;
-      transition: border-color 0.3s ease;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    input:focus, select:focus {
-      border-color: #2980b9;
-      box-shadow: 0 0 5px #2980b9;
-    }
-    button {
-      background-color: #2980b9;
-      border: none;
-      color: white;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-      margin-top: 10px;
-      border-radius: 6px;
-      width: auto;
-      padding: 10px 20px;
-    }
-    button:hover {
-      background-color: #1c5980;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      margin-top: 25px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    th, td {
-      padding: 14px 18px;
-      border-bottom: 1px solid #e3e6ea;
-      text-align: left;
-    }
-    thead {
-      background-color: #2980b9;
-      color: white;
-      font-weight: 600;
-    }
-    tr:hover {
-      background-color: #ecf6fc;
-    }
-    .readonly {
-      background-color: #e1e1e1;
-      border: none;
-      cursor: default;
-      color: #555;
-    }
-    .input-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-    }
-    .input-group > div {
-      flex: 1;
-      min-width: 150px;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      header {
-        flex-direction: column;
-        gap: 10px;
-        padding: 20px;
-      }
-    }
+    body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f9fbfd; color: #2c3e50; }
+    header { background-color: #34495e; color: white; padding: 15px 30px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    header img { height: 40px; width: auto; }
+    header h1 { font-weight: 600; font-size: 1.6rem; margin: 0; user-select: none; }
+    main { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+    label { display: block; margin: 12px 0 6px; font-weight: 600; }
+    input, button, select { padding: 10px 12px; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc; outline: none; transition: border-color 0.3s ease; width: 100%; box-sizing: border-box; }
+    input:focus, select:focus { border-color: #2980b9; box-shadow: 0 0 5px #2980b9; }
+    button { background-color: #2980b9; border: none; color: white; cursor: pointer; font-weight: 600; transition: background-color 0.3s ease; margin-top: 10px; border-radius: 6px; width: auto; padding: 10px 20px; }
+    button:hover { background-color: #1c5980; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 25px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    th, td { padding: 14px 18px; border-bottom: 1px solid #e3e6ea; text-align: left; }
+    thead { background-color: #2980b9; color: white; font-weight: 600; }
+    tr:hover { background-color: #ecf6fc; }
+    .readonly { background-color: #e1e1e1; border: none; cursor: default; color: #555; }
+    .input-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .input-group > div { flex: 1; min-width: 150px; }
+    @media (max-width: 768px) { header { flex-direction: column; gap: 10px; padding: 20px; } }
   </style>
 </head>
 <body>
   <header>
-    <img src="https://via.placeholder.com/150x40?text=Logo " alt="Şirket Logosu" />
+    <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" />
     <h1>Proje Detayları</h1>
   </header>
-
   <main>
     <section>
       <h3>Genel Bilgiler</h3>
       <label>Proje Adı</label>
       <input type="text" id="projectName" class="readonly" readonly />
-
       <label>Müşteri Adı</label>
       <input type="text" id="clientName" class="readonly" readonly />
-
       <div class="input-group">
         <div>
           <label>Başlangıç Tarihi</label>
@@ -152,40 +52,33 @@
         </div>
       </div>
     </section>
-
     <section style="margin-top: 30px;">
-      <h3>Sözleşme & Maliyetler</h3>
-
-      <label>Sözleşme Tutarı (TL)</label>
-      <input type="number" id="contractAmount" min="0" step="0.01" />
-
+      <h3>Bütçe, Maliyet ve Kar Marjı</h3>
+      <label>Bütçe (TL)</label>
+      <input type="number" id="budget" min="0" step="0.01" />
+      <label>Maliyet (TL)</label>
+      <input type="number" id="cost" min="0" step="0.01" />
       <label>Kar Marjı (%)</label>
       <input type="number" id="profitMargin" min="0" max="100" step="0.01" />
-
       <label>Gerçekleşen Kar (TL)</label>
       <input type="text" id="realizedProfit" readonly class="readonly" />
-
-      <h4>Harcamalar</h4>
+    </section>
+    <section style="margin-top: 30px;">
+      <h3>Harcamalar / Satın Almalar</h3>
       <table id="expensesTable">
         <thead>
           <tr>
-            <th>Açıklama</th>
+            <th>Kalem</th>
             <th>Tutar (TL)</th>
-            <th>İşlem</th>
+            <th>Açıklama</th>
+            <th>Tarih</th>
+            <th>Sil</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Harcamalar buraya eklenecek -->
-        </tbody>
+        <tbody></tbody>
       </table>
-
-      <div class="input-group" style="margin-top: 15px;">
-        <input type="text" id="expenseDescription" placeholder="Harcama Açıklaması" />
-        <input type="number" id="expenseAmount" placeholder="Tutar (TL)" min="0" step="0.01" />
-        <button onclick="addExpense()">Ekle</button>
-      </div>
+      <button onclick="addExpense()">+ Yeni Harcama Ekle</button>
     </section>
-
     <section style="margin-top: 30px;">
       <h3>Aşamalar & Sorumlular</h3>
       <table id="stagesTable">
@@ -197,199 +90,114 @@
             <th>Tamamlandı mı?</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Aşamalar buraya eklenecek -->
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
-
     <button onclick="saveDetails()">Kaydet</button>
     <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
   </main>
-
   <script>
-    const stages = [
-      "Keşif / Ön görüşme",
-      "Teklif oluşturma",
-      "Onay – sözleşme",
-      "Malzeme temini",
-      "Uygulama",
-      "Test ve devreye alma",
-      "Teslimat"
-    ];
-
+    const stages = ["Keşif / Ön görüşme", "Teklif oluşturma", "Onay – sözleşme", "Malzeme temini", "Uygulama", "Test ve devreye alma", "Teslimat"];
     let projectId = null;
     let projects = [];
-
     function loadProject() {
       const params = new URLSearchParams(window.location.search);
       projectId = params.get("id");
-      if (projectId === null) {
-        alert("Proje bulunamadı!");
-        window.location.href = "index.html";
-        return;
-      }
-
+      if (!projectId) return;
       projects = JSON.parse(localStorage.getItem("projects") || "[]");
       const project = projects[projectId];
-      if (!project) {
-        alert("Proje bulunamadı!");
-        window.location.href = "index.html";
-        return;
-      }
-
-      // Genel bilgileri yükle
+      if (!project) return;
       document.getElementById("projectName").value = project.name;
       document.getElementById("clientName").value = project.client;
       document.getElementById("startDate").value = project.startDate;
       document.getElementById("endDate").value = project.endDate;
-
-      // Sözleşme tutarı ve kar marjını yükle
-      document.getElementById("contractAmount").value = project.contractAmount || 0;
+      document.getElementById("budget").value = project.budget || 0;
+      document.getElementById("cost").value = project.cost || 0;
       document.getElementById("profitMargin").value = project.profitMargin || 0;
-
+      if (!project.stages) project.stages = stages.map(s => ({ name: s, responsible: "", plannedDays: "", completed: false }));
+      if (!project.expenses) project.expenses = [];
+      renderStages();
+      renderExpenses();
       updateRealizedProfit();
-
-      // Harcamaları yükle
-      const expensesBody = document.querySelector("#expensesTable tbody");
-      expensesBody.innerHTML = "";
-      if (!project.expenses) {
-        project.expenses = [];
-      }
-      project.expenses.forEach((expense, idx) => {
-        addExpenseRow(expense.description, expense.amount, idx);
-      });
-
-      // Aşamaları yükle veya oluştur
-      const stagesBody = document.querySelector("#stagesTable tbody");
-      stagesBody.innerHTML = "";
-
-      if (!project.stages) {
-        project.stages = stages.map(stage => ({
-          name: stage,
-          responsible: "",
-          plannedDays: "",
-          completed: false
-        }));
-      }
-
-      project.stages.forEach((stage, idx) => {
+    }
+    function renderStages() {
+      const tbody = document.querySelector("#stagesTable tbody");
+      tbody.innerHTML = "";
+      projects[projectId].stages.forEach((stage, idx) => {
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
           <td>${stage.name}</td>
           <td><input type="text" value="${stage.responsible}" data-index="${idx}" data-field="responsible" /></td>
           <td><input type="number" min="0" value="${stage.plannedDays}" data-index="${idx}" data-field="plannedDays" /></td>
-          <td style="text-align:center;"><input type="checkbox" ${stage.completed ? "checked" : ""} data-index="${idx}" data-field="completed" /></td>
-        `;
-
-        stagesBody.appendChild(tr);
+          <td style="text-align:center;"><input type="checkbox" ${stage.completed ? "checked" : ""} data-index="${idx}" data-field="completed" /></td>`;
+        tbody.appendChild(tr);
       });
-
-      // Input eventları ekle
-      stagesBody.querySelectorAll("input").forEach(input => {
-        input.addEventListener("input", handleStageInput);
-      });
+      tbody.querySelectorAll("input").forEach(input => input.addEventListener("input", handleStageInput));
     }
-
-    function addExpenseRow(description, amount, index) {
+    function handleStageInput(e) {
+      const idx = e.target.dataset.index;
+      const field = e.target.dataset.field;
+      projects[projectId].stages[idx][field] = field === "completed" ? e.target.checked : e.target.value;
+    }
+    function renderExpenses() {
       const tbody = document.querySelector("#expensesTable tbody");
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${description}</td>
-        <td>${amount.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'})}</td>
-        <td style="text-align:center;"><button class="btn-danger" onclick="deleteExpense(${index})">Sil</button></td>
-      `;
-
-      tbody.appendChild(tr);
-    }
-
-    function addExpense() {
-      const description = document.getElementById("expenseDescription").value.trim();
-      const amount = Number(document.getElementById("expenseAmount").value);
-
-      if (!description || amount <= 0) {
-        alert("Lütfen geçerli bir açıklama ve tutar girin.");
-        return;
-      }
-
-      const project = projects[projectId];
-      if (!project.expenses) {
-        project.expenses = [];
-      }
-
-      project.expenses.push({ description, amount });
-      addExpenseRow(description, amount, project.expenses.length - 1);
-
-      document.getElementById("expenseDescription").value = "";
-      document.getElementById("expenseAmount").value = "";
-
-      calculateTotalCost();
-    }
-
-    function deleteExpense(index) {
-      const project = projects[projectId];
-      project.expenses.splice(index, 1);
-
-      const expensesBody = document.querySelector("#expensesTable tbody");
-      expensesBody.innerHTML = "";
-      project.expenses.forEach((expense, idx) => {
-        addExpenseRow(expense.description, expense.amount, idx);
+      tbody.innerHTML = "";
+      projects[projectId].expenses.forEach((exp, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="text" value="${exp.item}" onchange="updateExpense(${idx}, 'item', this.value)" /></td>
+          <td><input type="number" min="0" value="${exp.amount}" onchange="updateExpense(${idx}, 'amount', this.value)" /></td>
+          <td><input type="text" value="${exp.note}" onchange="updateExpense(${idx}, 'note', this.value)" /></td>
+          <td><input type="date" value="${exp.date}" onchange="updateExpense(${idx}, 'date', this.value)" /></td>
+          <td><button onclick="deleteExpense(${idx})">Sil</button></td>`;
+        tbody.appendChild(tr);
       });
-
-      calculateTotalCost();
+      updateCostFromExpenses();
     }
-
-    function calculateTotalCost() {
-      const project = projects[projectId];
-      const totalCost = project.expenses.reduce((sum, expense) => sum + expense.amount, 0);
-      document.getElementById("cost").value = totalCost.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'});
+    function addExpense() {
+      projects[projectId].expenses.push({ item: "", amount: 0, note: "", date: "" });
+      renderExpenses();
+    }
+    function updateExpense(idx, field, value) {
+      projects[projectId].expenses[idx][field] = field === "amount" ? Number(value) : value;
+      updateCostFromExpenses();
+    }
+    function deleteExpense(idx) {
+      projects[projectId].expenses.splice(idx, 1);
+      renderExpenses();
+    }
+    function updateCostFromExpenses() {
+      const total = projects[projectId].expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+      document.getElementById("cost").value = total;
       updateRealizedProfit();
     }
-
     function updateRealizedProfit() {
-      const contractAmount = Number(document.getElementById("contractAmount").value);
-      const cost = Number(document.getElementById("cost").value.replace(/\D/g, '')) || 0;
+      const budget = Number(document.getElementById("budget").value);
+      const cost = Number(document.getElementById("cost").value);
       const margin = Number(document.getElementById("profitMargin").value);
-      let profit = 0;
-      if (contractAmount && cost && margin) {
-        profit = (contractAmount - cost) * (margin / 100);
-      }
+      const profit = budget > 0 && margin > 0 ? (budget - cost) * (margin / 100) : 0;
       document.getElementById("realizedProfit").value = profit.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'});
     }
-
-    document.getElementById("contractAmount").addEventListener("input", updateRealizedProfit);
+    document.getElementById("budget").addEventListener("input", updateRealizedProfit);
+    document.getElementById("cost").addEventListener("input", updateRealizedProfit);
     document.getElementById("profitMargin").addEventListener("input", updateRealizedProfit);
-
-    function handleStageInput(e) {
-      const index = e.target.getAttribute("data-index");
-      const field = e.target.getAttribute("data-field");
-
-      if (!projects[projectId].stages) return;
-      if (field === "completed") {
-        projects[projectId].stages[index][field] = e.target.checked;
-      } else if (field === "plannedDays") {
-        projects[projectId].stages[index][field] = e.target.value ? Number(e.target.value) : "";
-      } else {
-        projects[projectId].stages[index][field] = e.target.value;
-      }
-    }
-
     function saveDetails() {
-      const project = projects[projectId];
-
-      project.contractAmount = Number(document.getElementById("contractAmount").value);
-      project.profitMargin = Number(document.getElementById("profitMargin").value);
-
+      const budget = Number(document.getElementById("budget").value);
+      const cost = Number(document.getElementById("cost").value);
+      const margin = Number(document.getElementById("profitMargin").value);
+      if (budget < 0 || cost < 0 || margin < 0 || margin > 100) {
+        alert("Lütfen geçerli değerler girin. Kar marjı %0 - %100 arası olmalıdır.");
+        return;
+      }
+      projects[projectId].budget = budget;
+      projects[projectId].cost = cost;
+      projects[projectId].profitMargin = margin;
       localStorage.setItem("projects", JSON.stringify(projects));
       alert("Proje detayları başarıyla kaydedildi!");
     }
-
     function goBack() {
       window.location.href = "index.html";
     }
-
     loadProject();
   </script>
 </body>
