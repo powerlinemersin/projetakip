@@ -136,7 +136,7 @@
           <tr>
             <th>Aşama</th>
             <th>Sorumlu Kişi</th>
-            <th>Planlanan Süre (gün)</th>
+            <th>Tarih</th>
             <th>Tamamlandı mı?</th>
           </tr>
         </thead>
@@ -208,7 +208,7 @@
       document.getElementById("contractValue").value = p.contractValue || 0;
       p.expenses = p.expenses || [];
       renderExpenses(p.expenses);
-      p.stages = p.stages || stages.map(name => ({ name, responsible: "", plannedDays: "", completed: false }));
+      p.stages = p.stages || stages.map(name => ({ name, responsible: "", date: "", completed: false }));
       setTimeout(() => renderStages(p.stages), 0);
       updateCalculations();
     }
@@ -220,7 +220,7 @@
         const row = `<tr>
           <td>${s.name}</td>
           <td><input type="text" value="${s.responsible}" data-idx="${i}" data-field="responsible"></td>
-          <td><input type="number" value="${s.plannedDays}" data-idx="${i}" data-field="plannedDays"></td>
+          <td><input type="date" value="${s.date}" data-idx="${i}" data-field="date"></td>
           <td><input type="checkbox" ${s.completed ? "checked" : ""} data-idx="${i}" data-field="completed"></td>
         </tr>`;
         tbody.insertAdjacentHTML("beforeend", row);
