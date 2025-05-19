@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js "></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js "></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js "></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Proje Takip Sistemi</title>
@@ -15,6 +11,11 @@
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js "></script>
 
   <style>
     body {
@@ -189,25 +190,42 @@
   </main>
 
   <script>
-    function loadProjects() {
-      const data = JSON.parse(localStorage.getItem("projects") || "[]");
+    // Firebase yapılandırması
+    const firebaseConfig = {
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
+      authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
+      projectId: "projetakipsistemi-fbabd",
+      storageBucket: "projetakipsistemi-fbabd.firebasestorage.app",
+      messagingSenderId: "335282912485",
+      appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
+    };
+
+    // Firebase uygulamasını başlat
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Projeleri Firestore'dan yükle
+    async function loadProjects() {
       const tbody = document.getElementById("projectBody");
       tbody.innerHTML = "";
 
-      data.forEach((proj, index) => {
+      const projectsSnapshot = await db.collection("projects").get();
+      projectsSnapshot.forEach(doc => {
+        const proj = doc.data();
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-          <td><a href="project-detail.html?id=${index}" style="color:#2980b9; text-decoration:none;">${proj.name}</a></td>
+          <td><a href="project-detail.html?id=${doc.id}" style="color:#2980b9; text-decoration:none;">${proj.name}</a></td>
           <td>${proj.client}</td>
           <td>${proj.contractValue ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'}) : 'Belirtilmemiş'}</td>
-          <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
+          <td><button class="btn-danger" onclick="deleteProject('${doc.id}')">Sil</button></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function addProject() {
+    // Yeni proje ekle
+    async function addProject() {
       const name = document.getElementById("projectName").value.trim();
       const client = document.getElementById("clientName").value.trim();
 
@@ -219,27 +237,25 @@
       const project = {
         name,
         client,
-        contractValue: null // Sözleşme bedeli başlangıçta boş olacak
+        contractValue: null,
+        expenses: [],
+        stages: []
       };
 
-      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
-      projects.push(project);
-      localStorage.setItem("projects", JSON.stringify(projects));
-
+      await db.collection("projects").add(project);
       document.getElementById("projectName").value = "";
       document.getElementById("clientName").value = "";
-
       loadProjects();
     }
 
-    function deleteProject(index) {
-      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
-      projects.splice(index, 1);
-      localStorage.setItem("projects", JSON.stringify(projects));
+    // Proje sil
+    async function deleteProject(id) {
+      await db.collection("projects").doc(id).delete();
       loadProjects();
     }
 
-    loadProjects();
+    // Sayfa yüklendiğinde projeleri yükle
+    window.onload = loadProjects;
   </script>
 </body>
 </html>
