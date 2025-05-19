@@ -238,11 +238,13 @@
         return;
       }
 
+      // Genel bilgileri yükle
       document.getElementById("projectName").value = project.name;
       document.getElementById("clientName").value = project.client;
       document.getElementById("startDate").value = project.startDate;
       document.getElementById("endDate").value = project.endDate;
 
+      // Sözleşme tutarı ve kar marjını yükle
       document.getElementById("contractAmount").value = project.contractAmount || 0;
       document.getElementById("profitMargin").value = project.profitMargin || 0;
 
@@ -359,6 +361,20 @@
 
     document.getElementById("contractAmount").addEventListener("input", updateRealizedProfit);
     document.getElementById("profitMargin").addEventListener("input", updateRealizedProfit);
+
+    function handleStageInput(e) {
+      const index = e.target.getAttribute("data-index");
+      const field = e.target.getAttribute("data-field");
+
+      if (!projects[projectId].stages) return;
+      if (field === "completed") {
+        projects[projectId].stages[index][field] = e.target.checked;
+      } else if (field === "plannedDays") {
+        projects[projectId].stages[index][field] = e.target.value ? Number(e.target.value) : "";
+      } else {
+        projects[projectId].stages[index][field] = e.target.value;
+      }
+    }
 
     function saveDetails() {
       const project = projects[projectId];
