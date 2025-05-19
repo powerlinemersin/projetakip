@@ -10,7 +10,6 @@
   <meta http-equiv="Expires" content="0" />
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -47,7 +46,7 @@
       margin: 12px 0 6px;
       font-weight: 600;
     }
-    input, button, select {
+    input, button, select, textarea {
       padding: 10px 12px;
       font-size: 1rem;
       border-radius: 6px;
@@ -57,7 +56,7 @@
       width: 100%;
       box-sizing: border-box;
     }
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: #2980b9;
       box-shadow: 0 0 5px #2980b9;
     }
@@ -128,16 +127,13 @@
     <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" />
     <h1>Proje Detayları</h1>
   </header>
-
   <main>
     <section>
       <h3>Genel Bilgiler</h3>
       <label>Proje Adı</label>
       <input type="text" id="projectName" class="readonly" readonly />
-
       <label>Müşteri Adı</label>
       <input type="text" id="clientName" class="readonly" readonly />
-
       <div class="input-group">
         <div>
           <label>Başlangıç Tarihi</label>
@@ -149,45 +145,54 @@
         </div>
       </div>
     </section>
-
     <section style="margin-top: 30px;">
-      <h3>Harcama Kalemleri</h3>
-      <table id="expenseTable">
+      <h3>Sözleşme ve Kar Hesapları</h3>
+      <label>Sözleşme Tutarı (TL)</label>
+      <input type="number" id="contractValue" min="0" step="0.01" />
+      <label>Toplam Harcama (TL)</label>
+      <input type="text" id="totalExpenses" class="readonly" readonly />
+      <label>Gerçekleşen Kar (TL)</label>
+      <input type="text" id="realizedProfit" class="readonly" readonly />
+      <label>Gerçekleşen Kar Marjı (%)</label>
+      <input type="text" id="realizedProfitMargin" class="readonly" readonly />
+    </section>
+    <section style="margin-top: 30px;">
+      <h3>Aşamalar & Sorumlular</h3>
+      <table id="stagesTable">
         <thead>
           <tr>
-            <th>Açıklama</th>
-            <th>Tutar (TL)</th>
-            <th>Sil</th>
+            <th>Aşama</th>
+            <th>Sorumlu Kişi</th>
+            <th>Planlanan Süre (gün)</th>
+            <th>Tamamlandı mı?</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-      <button onclick="addExpense()">Yeni Harcama Ekle</button>
     </section>
-
     <section style="margin-top: 30px;">
-      <h3>Bütçe, Maliyet ve Kar</h3>
-      <label>Bütçe (TL)</label>
-      <input type="number" id="budget" min="0" step="0.01" />
-
-      <label>Toplam Maliyet (TL)</label>
-      <input type="text" id="cost" readonly class="readonly" />
-
-      <label>Kar Marjı (%)</label>
-      <input type="number" id="profitMargin" min="0" max="100" step="0.01" />
-
-      <label>Gerçekleşen Kar (TL)</label>
-      <input type="text" id="realizedProfit" readonly class="readonly" />
-
-      <label>Gerçekleşen Kar Marjı (%)</label>
-      <input type="text" id="realizedProfitMargin" readonly class="readonly" />
+      <h3>Harcama Kalemleri</h3>
+      <table id="expensesTable">
+        <thead>
+          <tr>
+            <th>Açıklama</th>
+            <th>Tutar (TL)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="input-group" style="margin-top: 15px;">
+        <div><input type="text" id="expenseDesc" placeholder="Açıklama" /></div>
+        <div><input type="number" id="expenseAmount" placeholder="Tutar" /></div>
+        <div><button onclick="addExpense()">Ekle</button></div>
+      </div>
     </section>
-
     <button onclick="saveDetails()">Kaydet</button>
     <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
   </main>
-
   <script>
+    const stages = ["Keşif / Ön görüşme", "Teklif oluşturma", "Onay – sözleşme", "Malzeme temini", "Uygulama", "Test ve devreye alma", "Teslimat"];
     let projectId = null;
     let projects = [];
 
@@ -195,87 +200,94 @@
       const params = new URLSearchParams(window.location.search);
       projectId = params.get("id");
       if (!projectId) return;
-
       projects = JSON.parse(localStorage.getItem("projects") || "[]");
-      const project = projects[projectId];
-      if (!project) return;
-
-      document.getElementById("projectName").value = project.name;
-      document.getElementById("clientName").value = project.client;
-      document.getElementById("startDate").value = project.startDate;
-      document.getElementById("endDate").value = project.endDate;
-      document.getElementById("budget").value = project.budget || 0;
-      document.getElementById("profitMargin").value = project.profitMargin || 0;
-
-      if (!project.expenses) project.expenses = [];
-      renderExpenses(project.expenses);
-      updateRealizedProfit();
+      const p = projects[projectId];
+      if (!p) return;
+      document.getElementById("projectName").value = p.name;
+      document.getElementById("clientName").value = p.client;
+      document.getElementById("startDate").value = p.startDate;
+      document.getElementById("endDate").value = p.endDate;
+      document.getElementById("contractValue").value = p.contractValue || 0;
+      p.expenses = p.expenses || [];
+      renderExpenses(p.expenses);
+      p.stages = p.stages || stages.map(name => ({ name, responsible: "", plannedDays: "", completed: false }));
+      renderStages(p.stages);
+      updateCalculations();
     }
 
-    function renderExpenses(expenses) {
-      const tbody = document.querySelector("#expenseTable tbody");
+    function renderStages(data) {
+      const tbody = document.querySelector("#stagesTable tbody");
       tbody.innerHTML = "";
-      expenses.forEach((exp, idx) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="text" value="${exp.name}" onchange="updateExpense(${idx}, 'name', this.value)" /></td>
-          <td><input type="number" min="0" step="0.01" value="${exp.amount}" onchange="updateExpense(${idx}, 'amount', parseFloat(this.value) || 0)" /></td>
-          <td><button onclick="deleteExpense(${idx})">🗑️</button></td>
-        `;
-        tbody.appendChild(tr);
+      data.forEach((s, i) => {
+        const row = `<tr>
+          <td>${s.name}</td>
+          <td><input type="text" value="${s.responsible}" data-idx="${i}" data-field="responsible"></td>
+          <td><input type="number" value="${s.plannedDays}" data-idx="${i}" data-field="plannedDays"></td>
+          <td><input type="checkbox" ${s.completed ? "checked" : ""} data-idx="${i}" data-field="completed"></td>
+        </tr>`;
+        tbody.insertAdjacentHTML("beforeend", row);
+      });
+      tbody.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", e => {
+          const idx = e.target.dataset.idx;
+          const field = e.target.dataset.field;
+          if (field === "completed") {
+            projects[projectId].stages[idx][field] = e.target.checked;
+          } else {
+            projects[projectId].stages[idx][field] = e.target.value;
+          }
+        });
+      });
+    }
+
+    function renderExpenses(list) {
+      const tbody = document.querySelector("#expensesTable tbody");
+      tbody.innerHTML = "";
+      list.forEach((item, idx) => {
+        const row = `<tr><td>${item.desc}</td><td>${item.amount.toFixed(2)}</td><td><button onclick="removeExpense(${idx})">Sil</button></td></tr>`;
+        tbody.insertAdjacentHTML("beforeend", row);
       });
     }
 
     function addExpense() {
-      projects[projectId].expenses.push({ name: "", amount: 0 });
+      const desc = document.getElementById("expenseDesc").value.trim();
+      const amount = parseFloat(document.getElementById("expenseAmount").value);
+      if (!desc || isNaN(amount) || amount <= 0) return;
+      projects[projectId].expenses.push({ desc, amount });
       renderExpenses(projects[projectId].expenses);
-      updateRealizedProfit();
+      document.getElementById("expenseDesc").value = "";
+      document.getElementById("expenseAmount").value = "";
+      updateCalculations();
     }
 
-    function updateExpense(index, field, value) {
-      projects[projectId].expenses[index][field] = value;
-      updateRealizedProfit();
-    }
-
-    function deleteExpense(index) {
-      projects[projectId].expenses.splice(index, 1);
+    function removeExpense(i) {
+      projects[projectId].expenses.splice(i, 1);
       renderExpenses(projects[projectId].expenses);
-      updateRealizedProfit();
+      updateCalculations();
     }
 
-    function calculateTotalCost() {
-      return projects[projectId].expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
+    function updateCalculations() {
+      const contract = parseFloat(document.getElementById("contractValue").value) || 0;
+      const totalCost = projects[projectId].expenses.reduce((a, b) => a + b.amount, 0);
+      const profit = contract - totalCost;
+      const margin = contract > 0 ? (profit / contract) * 100 : 0;
+      document.getElementById("totalExpenses").value = totalCost.toFixed(2);
+      document.getElementById("realizedProfit").value = profit.toFixed(2);
+      document.getElementById("realizedProfitMargin").value = margin.toFixed(2);
     }
-
-    function updateRealizedProfit() {
-      const budget = Number(document.getElementById("budget").value);
-      const totalCost = calculateTotalCost();
-      const margin = Number(document.getElementById("profitMargin").value);
-
-      document.getElementById("cost").value = totalCost.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
-
-      let profit = budget - totalCost;
-      let realizedMargin = (budget > 0) ? (profit / budget) * 100 : 0;
-
-      document.getElementById("realizedProfit").value = profit.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
-      document.getElementById("realizedProfitMargin").value = realizedMargin.toFixed(2) + " %";
-    }
-
-    document.getElementById("budget").addEventListener("input", updateRealizedProfit);
-    document.getElementById("profitMargin").addEventListener("input", updateRealizedProfit);
 
     function saveDetails() {
-      projects[projectId].budget = Number(document.getElementById("budget").value);
-      projects[projectId].profitMargin = Number(document.getElementById("profitMargin").value);
+      projects[projectId].contractValue = parseFloat(document.getElementById("contractValue").value) || 0;
       localStorage.setItem("projects", JSON.stringify(projects));
-      alert("Proje detayları kaydedildi!");
+      alert("Değişiklikler kaydedildi.");
     }
 
     function goBack() {
       window.location.href = "index.html";
     }
 
-    loadProject();
+    document.getElementById("contractValue").addEventListener("input", updateCalculations);
+    window.onload = loadProject;
   </script>
 </body>
 </html>
