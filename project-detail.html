@@ -10,7 +10,7 @@
   <meta http-equiv="Expires" content="0" />
 
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
 
   <style>
     body {
@@ -128,7 +128,7 @@
 </head>
 <body>
   <header>
-    <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" />
+    <img src="https://via.placeholder.com/150x40?text=Logo " alt="Şirket Logosu" />
     <h1>Proje Detayları</h1>
   </header>
 
@@ -154,19 +154,36 @@
     </section>
 
     <section style="margin-top: 30px;">
-      <h3>Bütçe, Maliyet ve Kar Marjı</h3>
+      <h3>Sözleşme & Maliyetler</h3>
 
-      <label>Bütçe (TL)</label>
-      <input type="number" id="budget" min="0" step="0.01" />
-
-      <label>Maliyet (TL)</label>
-      <input type="number" id="cost" min="0" step="0.01" />
+      <label>Sözleşme Tutarı (TL)</label>
+      <input type="number" id="contractAmount" min="0" step="0.01" />
 
       <label>Kar Marjı (%)</label>
       <input type="number" id="profitMargin" min="0" max="100" step="0.01" />
 
       <label>Gerçekleşen Kar (TL)</label>
       <input type="text" id="realizedProfit" readonly class="readonly" />
+
+      <h4>Harcamalar</h4>
+      <table id="expensesTable">
+        <thead>
+          <tr>
+            <th>Açıklama</th>
+            <th>Tutar (TL)</th>
+            <th>İşlem</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Harcamalar buraya eklenecek -->
+        </tbody>
+      </table>
+
+      <div class="input-group" style="margin-top: 15px;">
+        <input type="text" id="expenseDescription" placeholder="Harcama Açıklaması" />
+        <input type="number" id="expenseAmount" placeholder="Tutar (TL)" min="0" step="0.01" />
+        <button onclick="addExpense()">Ekle</button>
+      </div>
     </section>
 
     <section style="margin-top: 30px;">
@@ -226,15 +243,24 @@
       document.getElementById("startDate").value = project.startDate;
       document.getElementById("endDate").value = project.endDate;
 
-      document.getElementById("budget").value = project.budget || 0;
-      document.getElementById("cost").value = project.cost || 0;
+      document.getElementById("contractAmount").value = project.contractAmount || 0;
       document.getElementById("profitMargin").value = project.profitMargin || 0;
 
       updateRealizedProfit();
 
+      // Harcamaları yükle
+      const expensesBody = document.querySelector("#expensesTable tbody");
+      expensesBody.innerHTML = "";
+      if (!project.expenses) {
+        project.expenses = [];
+      }
+      project.expenses.forEach((expense, idx) => {
+        addExpenseRow(expense.description, expense.amount, idx);
+      });
+
       // Aşamaları yükle veya oluştur
-      const tbody = document.querySelector("#stagesTable tbody");
-      tbody.innerHTML = "";
+      const stagesBody = document.querySelector("#stagesTable tbody");
+      stagesBody.innerHTML = "";
 
       if (!project.stages) {
         project.stages = stages.map(stage => ({
@@ -255,60 +281,90 @@
           <td style="text-align:center;"><input type="checkbox" ${stage.completed ? "checked" : ""} data-index="${idx}" data-field="completed" /></td>
         `;
 
-        tbody.appendChild(tr);
+        stagesBody.appendChild(tr);
       });
 
       // Input eventları ekle
-      tbody.querySelectorAll("input").forEach(input => {
+      stagesBody.querySelectorAll("input").forEach(input => {
         input.addEventListener("input", handleStageInput);
       });
     }
 
-    function handleStageInput(e) {
-      const index = e.target.getAttribute("data-index");
-      const field = e.target.getAttribute("data-field");
+    function addExpenseRow(description, amount, index) {
+      const tbody = document.querySelector("#expensesTable tbody");
+      const tr = document.createElement("tr");
 
-      if (!projects[projectId].stages) return;
-      if (field === "completed") {
-        projects[projectId].stages[index][field] = e.target.checked;
-      } else if (field === "plannedDays") {
-        projects[projectId].stages[index][field] = e.target.value ? Number(e.target.value) : "";
-      } else {
-        projects[projectId].stages[index][field] = e.target.value;
+      tr.innerHTML = `
+        <td>${description}</td>
+        <td>${amount.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'})}</td>
+        <td style="text-align:center;"><button class="btn-danger" onclick="deleteExpense(${index})">Sil</button></td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+
+    function addExpense() {
+      const description = document.getElementById("expenseDescription").value.trim();
+      const amount = Number(document.getElementById("expenseAmount").value);
+
+      if (!description || amount <= 0) {
+        alert("Lütfen geçerli bir açıklama ve tutar girin.");
+        return;
       }
+
+      const project = projects[projectId];
+      if (!project.expenses) {
+        project.expenses = [];
+      }
+
+      project.expenses.push({ description, amount });
+      addExpenseRow(description, amount, project.expenses.length - 1);
+
+      document.getElementById("expenseDescription").value = "";
+      document.getElementById("expenseAmount").value = "";
+
+      calculateTotalCost();
+    }
+
+    function deleteExpense(index) {
+      const project = projects[projectId];
+      project.expenses.splice(index, 1);
+
+      const expensesBody = document.querySelector("#expensesTable tbody");
+      expensesBody.innerHTML = "";
+      project.expenses.forEach((expense, idx) => {
+        addExpenseRow(expense.description, expense.amount, idx);
+      });
+
+      calculateTotalCost();
+    }
+
+    function calculateTotalCost() {
+      const project = projects[projectId];
+      const totalCost = project.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      document.getElementById("cost").value = totalCost.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'});
+      updateRealizedProfit();
     }
 
     function updateRealizedProfit() {
-      const budget = Number(document.getElementById("budget").value);
-      const cost = Number(document.getElementById("cost").value);
+      const contractAmount = Number(document.getElementById("contractAmount").value);
+      const cost = Number(document.getElementById("cost").value.replace(/\D/g, '')) || 0;
       const margin = Number(document.getElementById("profitMargin").value);
       let profit = 0;
-      if (budget && cost && margin) {
-        profit = (budget - cost) * (margin / 100);
+      if (contractAmount && cost && margin) {
+        profit = (contractAmount - cost) * (margin / 100);
       }
       document.getElementById("realizedProfit").value = profit.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'});
     }
 
-    document.getElementById("budget").addEventListener("input", updateRealizedProfit);
-    document.getElementById("cost").addEventListener("input", updateRealizedProfit);
+    document.getElementById("contractAmount").addEventListener("input", updateRealizedProfit);
     document.getElementById("profitMargin").addEventListener("input", updateRealizedProfit);
 
     function saveDetails() {
-      // Öncelikle bütçe, maliyet ve kar marjı güncelle
-      const budget = Number(document.getElementById("budget").value);
-      const cost = Number(document.getElementById("cost").value);
-      const margin = Number(document.getElementById("profitMargin").value);
+      const project = projects[projectId];
 
-      if (budget < 0 || cost < 0 || margin < 0 || margin > 100) {
-        alert("Lütfen geçerli değerler girin. Kar marjı %0 - %100 arası olmalıdır.");
-        return;
-      }
-
-      projects[projectId].budget = budget;
-      projects[projectId].cost = cost;
-      projects[projectId].profitMargin = margin;
-
-      // Aşamalar zaten input eventleriyle güncellendi
+      project.contractAmount = Number(document.getElementById("contractAmount").value);
+      project.profitMargin = Number(document.getElementById("profitMargin").value);
 
       localStorage.setItem("projects", JSON.stringify(projects));
       alert("Proje detayları başarıyla kaydedildi!");
