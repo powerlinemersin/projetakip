@@ -10,7 +10,7 @@
   <meta http-equiv="Expires" content="0" />
 
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
 
   <style>
     body {
@@ -158,7 +158,7 @@
 </head>
 <body>
   <header>
-    <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" />
+    <img src="https://via.placeholder.com/150x40?text=Logo   " alt="Şirket Logosu" />
     <h1>Proje Takip Sistemi</h1>
   </header>
 
@@ -181,7 +181,7 @@
           <th>Başlangıç</th>
           <th>Bitiş</th>
           <th>Süre (gün)</th>
-          <th>Kar</th>
+          <th>Sözleşme Bedeli</th>
           <th>İşlem</th>
         </tr>
       </thead>
@@ -197,7 +197,6 @@
 
       data.forEach((proj, index) => {
         const duration = getDuration(proj.startDate, proj.endDate);
-        const profit = calculateProfit(proj.budget, proj.cost, proj.profitMargin);
 
         const tr = document.createElement("tr");
 
@@ -207,7 +206,7 @@
           <td>${proj.startDate}</td>
           <td>${proj.endDate}</td>
           <td>${duration} gün</td>
-          <td>${profit.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'})}</td>
+          <td>${proj.contractValue ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'}) : 'Belirtilmemiş'}</td>
           <td><button class="btn-danger" onclick="deleteProject(${index})">Sil</button></td>
         `;
         tbody.appendChild(tr);
@@ -225,15 +224,12 @@
         return;
       }
 
-      // Yeni projede bütçe, maliyet ve kar marjı için default boş değerler verelim
       const project = {
         name,
         client,
         startDate,
         endDate,
-        budget: 0,
-        cost: 0,
-        profitMargin: 0
+        contractValue: null // Sözleşme bedeli başlangıçta boş olacak
       };
 
       const projects = JSON.parse(localStorage.getItem("projects") || "[]");
@@ -260,12 +256,6 @@
       const e = new Date(end);
       const diffTime = Math.abs(e - s);
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    function calculateProfit(budget, cost, margin) {
-      // Basit kar hesaplama: (bütçe - maliyet) * kar marjı (yüzde)
-      if (!budget || !cost || !margin) return 0;
-      return (budget - cost) * (margin / 100);
     }
 
     loadProjects();
