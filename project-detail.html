@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js "></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js "></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js "></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Proje Detayları</title>
@@ -13,7 +9,14 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js "></script>
+
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -194,29 +197,44 @@
     <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
   </main>
   <script>
-    const stages = ["Keşif / Ön görüşme", "Teklif oluşturma", "Onay – sözleşme", "Malzeme temini", "Uygulama", "Test ve devreye alma", "Teslimat"];
-    let projectId = null;
-    let projects = [];
+    // Firebase yapılandırması
+    const firebaseConfig = {
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
+      authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
+      projectId: "projetakipsistemi-fbabd",
+      storageBucket: "projetakipsistemi-fbabd.firebasestorage.app",
+      messagingSenderId: "335282912485",
+      appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
+    };
 
-    function loadProject() {
+    // Firebase uygulamasını başlat
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let projectId = null;
+
+    // Proje detaylarını yükle
+    async function loadProject() {
       const params = new URLSearchParams(window.location.search);
       projectId = params.get("id");
       if (!projectId) return;
-      projects = JSON.parse(localStorage.getItem("projects") || "[]");
-      const p = projects[projectId];
+
+      const projectDoc = await db.collection("projects").doc(projectId).get();
+      const p = projectDoc.data();
       if (!p) return;
+
       document.getElementById("projectName").value = p.name;
       document.getElementById("clientName").value = p.client;
       document.getElementById("startDate").value = p.startDate || "";
       document.getElementById("endDate").value = p.endDate || "";
       document.getElementById("contractValue").value = p.contractValue || 0;
-      p.expenses = p.expenses || [];
-      renderExpenses(p.expenses);
-      p.stages = p.stages || stages.map(name => ({ name, responsible: "", date: "", completed: false }));
-      setTimeout(() => renderStages(p.stages), 0);
+
+      renderStages(p.stages || []);
+      renderExpenses(p.expenses || []);
       updateCalculations();
     }
 
+    // Aşamaları yükle
     function renderStages(data) {
       const tbody = document.querySelector("#stagesTable tbody");
       tbody.innerHTML = "";
@@ -229,21 +247,32 @@
         </tr>`;
         tbody.insertAdjacentHTML("beforeend", row);
       });
+
       tbody.querySelectorAll("input").forEach(input => {
         const idx = input.dataset.idx;
         const field = input.dataset.field;
         if (field === "completed") {
           input.addEventListener("change", e => {
-            projects[projectId].stages[idx][field] = e.target.checked;
+            saveStageField(idx, field, e.target.checked);
           });
         } else {
           input.addEventListener("input", e => {
-            projects[projectId].stages[idx][field] = e.target.value;
+            saveStageField(idx, field, e.target.value);
           });
         }
       });
     }
 
+    // Aşama alanlarını kaydet
+    async function saveStageField(index, field, value) {
+      const projectRef = db.collection("projects").doc(projectId);
+      const projectDoc = await projectRef.get();
+      const stages = projectDoc.data().stages || [];
+      stages[index][field] = value;
+      await projectRef.update({ stages });
+    }
+
+    // Harcamaları yükle
     function renderExpenses(list) {
       const tbody = document.querySelector("#expensesTable tbody");
       tbody.innerHTML = "";
@@ -253,26 +282,44 @@
       });
     }
 
-    function addExpense() {
+    // Harcama ekle
+    async function addExpense() {
       const desc = document.getElementById("expenseDesc").value.trim();
       const amount = parseFloat(document.getElementById("expenseAmount").value);
       if (!desc || isNaN(amount) || amount <= 0) return;
-      projects[projectId].expenses.push({ desc, amount });
-      renderExpenses(projects[projectId].expenses);
+
+      const projectRef = db.collection("projects").doc(projectId);
+      const projectDoc = await projectRef.get();
+      const expenses = projectDoc.data().expenses || [];
+      expenses.push({ desc, amount });
+      await projectRef.update({ expenses });
+
       document.getElementById("expenseDesc").value = "";
       document.getElementById("expenseAmount").value = "";
+      renderExpenses(expenses);
       updateCalculations();
     }
 
-    function removeExpense(i) {
-      projects[projectId].expenses.splice(i, 1);
-      renderExpenses(projects[projectId].expenses);
+    // Harcama sil
+    async function removeExpense(i) {
+      const projectRef = db.collection("projects").doc(projectId);
+      const projectDoc = await projectRef.get();
+      const expenses = projectDoc.data().expenses || [];
+      expenses.splice(i, 1);
+      await projectRef.update({ expenses });
+
+      renderExpenses(expenses);
       updateCalculations();
     }
 
+    // Kar hesaplamalarını güncelle
     function updateCalculations() {
       const contract = parseFloat(document.getElementById("contractValue").value) || 0;
-      const totalCost = projects[projectId].expenses.reduce((a, b) => a + b.amount, 0);
+      const totalCost = Array.from(document.querySelectorAll("#expensesTable tbody tr")).reduce((sum, row) => {
+        const amount = parseFloat(row.cells[1].innerText) || 0;
+        return sum + amount;
+      }, 0);
+
       const profit = contract - totalCost;
       const margin = contract > 0 ? (profit / contract) * 100 : 0;
       document.getElementById("totalExpenses").value = totalCost.toFixed(2);
@@ -280,19 +327,23 @@
       document.getElementById("realizedProfitMargin").value = margin.toFixed(2);
     }
 
-    function saveDetails() {
-      projects[projectId].startDate = document.getElementById("startDate").value;
-      projects[projectId].endDate = document.getElementById("endDate").value;
-      projects[projectId].contractValue = parseFloat(document.getElementById("contractValue").value) || 0;
-      localStorage.setItem("projects", JSON.stringify(projects));
+    // Değişiklikleri kaydet
+    async function saveDetails() {
+      const projectRef = db.collection("projects").doc(projectId);
+      await projectRef.update({
+        startDate: document.getElementById("startDate").value,
+        endDate: document.getElementById("endDate").value,
+        contractValue: parseFloat(document.getElementById("contractValue").value) || 0
+      });
       alert("Değişiklikler kaydedildi.");
     }
 
+    // Geri dön
     function goBack() {
       window.location.href = "index.html";
     }
 
-    document.getElementById("contractValue").addEventListener("input", updateCalculations);
+    // Sayfa yüklendiğinde projeyi yükle
     window.onload = loadProject;
   </script>
 </body>
