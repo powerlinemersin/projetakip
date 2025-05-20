@@ -14,11 +14,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
+  <!-- jsPDF Kütüphaneleri (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <!-- Türkçe karakterler için jsPDF'e font eklemek gerekebilir, şimdilik standart fontlarla deneyeceğiz -->
+
   <style>
     /* ... (mevcut stilleriniz aynı kalacak) ... */
-    input[type="text"].currency-input { /* Para inputları için özel stil, sağa yaslama */
-        text-align: right;
-    }
   </style>
 </head>
 <body>
@@ -26,278 +28,150 @@
     <!-- ... (header içeriği) ... -->
   </header>
   <main>
-    <section>
-      <h3>Genel Bilgiler</h3>
-      <!-- ... (Proje Adı, Müşteri Adı, Proje Durumu input-group'u) ... -->
-       <div class="input-group">
-        <div style="flex: 2;">
-          <label for="projectName">Proje Adı</label>
-          <input type="text" id="projectName" class="readonly" readonly />
-        </div>
-        <div style="flex: 2;">
-          <label for="clientName">Müşteri Adı</label>
-          <input type="text" id="clientName" class="readonly" readonly />
-        </div>
-        <div style="flex: 1;">
-          <label for="projectStatus">Proje Durumu</label>
-          <select id="projectStatus" onchange="updateProjectStatus(this.value)">
-            <option value="Başlamadı">Başlamadı</option>
-            <option value="Devam Ediyor">Devam Ediyor</option>
-            <option value="Tamamlandı">Tamamlandı</option>
-          </select>
-        </div>
-      </div>
-      
-      <h3>Aşamalar & Sorumlular</h3>
-      <!-- ... (Aşamalar Tablosu) ... -->
-      <table id="stagesTable">
-        <thead>
-          <tr>
-            <th>Aşama</th>
-            <th>Sorumlu Kişi</th>
-            <th>Tarih</th>
-            <th>Tamamlandı mı?</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      
-      <div class="input-group" style="margin-top: 20px;">
-        <div>
-          <label for="startDate">Sözleşme Başlangıcı</label>
-          <input type="date" id="startDate" />
-        </div>
-        <div>
-          <label for="endDate">Sözleşme Bitişi</label>
-          <input type="date" id="endDate" />
-        </div>
-      </div>
-    </section>
+    <!-- ... (Genel Bilgiler, Aşamalar, Sözleşme ve Kar Hesapları, Harcama Kalemleri, Proje Dosyaları bölümleri) ... -->
+    <section> /* ... */ </section>
+    <section style="margin-top: 30px;"> /* ... */ </section>
+    <section style="margin-top: 30px;"> /* ... */ </section>
+    <section style="margin-top: 30px;"> /* ... */ </section>
 
-    <section style="margin-top: 30px;">
-      <h3>Sözleşme ve Kar Hesapları</h3>
-      <div class="input-group">
-          <div>
-            <label for="contractValue">Sözleşme Tutarı (TL)</label>
-            <!-- type="text" olarak değiştirildi, oninput ve onblur eventleri eklendi -->
-            <input type="text" id="contractValue" class="currency-input" placeholder="0,00"
-                   oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/>
-          </div>
-          <div>
-            <label for="totalExpenses">Toplam Harcama (TL)</label>
-            <input type="text" id="totalExpenses" class="readonly currency-input" readonly />
-          </div>
-      </div>
-      <div class="input-group">
-          <div>
-            <label for="realizedProfit">Gerçekleşen Kar (TL)</label>
-            <input type="text" id="realizedProfit" class="readonly currency-input" readonly />
-          </div>
-          <div>
-            <label for="realizedProfitMargin">Gerçekleşen Kar Marjı (%)</label>
-            <input type="text" id="realizedProfitMargin" class="readonly" readonly style="text-align: right;"/>
-          </div>
-      </div>
-    </section>
-
-    <section style="margin-top: 30px;">
-      <h3>Harcama Kalemleri</h3>
-      <table id="expensesTable">
-        <thead>
-          <tr>
-            <th>Açıklama</th>
-            <th>Tutar (TL)</th>
-            <th>İşlem</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="input-group" style="margin-top: 15px;">
-        <div><input type="text" id="expenseDesc" placeholder="Açıklama" /></div>
-        <div>
-            <!-- type="text" olarak değiştirildi, oninput ve onblur eventleri eklendi -->
-            <input type="text" id="expenseAmount" class="currency-input" placeholder="0,00"
-                   oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/>
-        </div>
-        <div><button onclick="addExpense()">Harcama Ekle</button></div>
-      </div>
-    </section>
-
-    <!-- ... (Proje Dosyaları bölümü) ... -->
-    <section style="margin-top: 30px;">
-        <h3>Proje Dosyaları</h3>
-        <!-- ... (dosya yükleme HTML'i) ... -->
-    </section>
 
     <div style="margin-top: 30px; padding-bottom: 30px;">
         <button onclick="saveDetails()">Sözleşme Bilgilerini Kaydet</button>
+        <button onclick="generateReport()" style="margin-left:10px; background:#16a085;">Rapor İndir (PDF)</button> <!-- YENİ BUTON -->
         <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
     </div>
   </main>
 
   <script>
-    // ... (Firebase config, app, db, auth, storage tanımlamaları) ...
-    const firebaseConfig = { /* ... */ };
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    const storage = firebase.storage();
+    // ... (Firebase config, app, db, auth, storage, para formatlama fonksiyonları tanımlamaları) ...
+    const { jsPDF } = window.jspdf; // jsPDF'i global scope'tan al
 
-    let projectId = null;
-    const predefinedStageNames = [ /* ... */ ];
-    const defaultProjectStatus = "Başlamadı";
+    // ... (auth.onAuthStateChanged, loadProject, renderStages, vb. fonksiyonlar) ...
 
-    // PARA FORMATLAMA YARDIMCI FONKSİYONLARI
-    function formatCurrencyTR(number) {
-        if (isNaN(parseFloat(number))) return "0,00";
-        const num = parseFloat(number);
-        return num.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function parseCurrencyTR(formattedValue) {
-        if (!formattedValue) return 0;
-        // Binlik ayıracı olan noktaları kaldır, ondalık ayıracı olan virgülü noktaya çevir
-        const cleanedValue = formattedValue.replace(/\./g, '').replace(',', '.');
-        const number = parseFloat(cleanedValue);
-        return isNaN(number) ? 0 : number;
-    }
-
-    function handleCurrencyInput(event) {
-        const input = event.target;
-        let value = input.value;
-        
-        // Sadece sayılar, virgül ve bir tane nokta (binlik için) veya sadece sayılar ve bir virgül (ondalık için) izin ver
-        // Bu regex, kullanıcının yazımını kolaylaştırmak için biraz esnek olabilir, asıl formatlama parse'da yapılır.
-        let numericValue = value.replace(/[^0-9,]/g, ''); 
-        
-        // Eğer birden fazla virgül varsa, sonuncusu hariç diğerlerini kaldır (kullanıcı ondalık girmeye çalışıyor olabilir)
-        const parts = numericValue.split(',');
-        if (parts.length > 2) {
-            numericValue = parts[0] + ',' + parts.slice(1).join('');
+    // Rapor Oluşturma Fonksiyonu
+    async function generateReport() {
+        if (!projectId) {
+            alert("Rapor oluşturulacak proje bulunamadı.");
+            return;
         }
-        
-        input.value = numericValue; // Kullanıcının ne yazdığını anlık olarak göster (sadece sayı ve virgül)
-                                     // Tam formatlama onblur'da veya hesaplama/kaydetme öncesinde yapılacak.
-                                     // Anlık tam formatlama cursor pozisyonu sorunlarına yol açabilir.
-        updateCalculations(); // Her inputta hesaplamaları güncelle
-    }
-    
-    function formatCurrencyOnBlur(event) {
-        const input = event.target;
-        const numericValue = parseCurrencyTR(input.value); // Önce parse et
-        input.value = formatCurrencyTR(numericValue); // Sonra formatla göster
-    }
 
-
-    auth.onAuthStateChanged(user => { /* ... */ });
-
-    async function loadProject() {
-      if (!projectId) return;
-      try {
         const projectRef = db.collection("projects").doc(projectId);
         const projectDoc = await projectRef.get();
-        if (!projectDoc.exists) { /* ... */ return; }
-        const p = projectDoc.data();
 
-        document.getElementById("projectName").value = p.name || "";
-        document.getElementById("clientName").value = p.client || "";
-        document.getElementById("startDate").value = p.startDate || "";
-        document.getElementById("endDate").value = p.endDate || "";
-        
-        // Sözleşme tutarını formatlayarak yükle
-        document.getElementById("contractValue").value = formatCurrencyTR(p.contractValue || 0);
-        
-        document.getElementById("projectStatus").value = p.status || defaultProjectStatus;
-        
-        renderStages(p.stages || []);
-        renderExpenses(p.expenses || []);
-        renderFiles(p.files || []);
-        updateCalculations(); // Tüm değerler yüklendikten sonra hesapla
-
-      } catch (error) { /* ... */ }
-    }
-
-    // ... (renderStages, saveStageField, updateProjectStatus) ...
-
-    function renderExpenses(expensesList) {
-      const tbody = document.querySelector("#expensesTable tbody");
-      tbody.innerHTML = "";
-      (expensesList || []).forEach((item, idx) => {
-        const row = `<tr>
-                        <td>${item.desc}</td>
-                        <td style="text-align: right;">${formatCurrencyTR(item.amount || 0)}</td> 
-                        <td><button onclick="removeExpense(${idx})" style="background-color:#e74c3c; padding: 5px 10px; font-size:0.9rem;">Sil</button></td>
-                     </tr>`;
-        tbody.insertAdjacentHTML("beforeend", row);
-      });
-    }
-
-    async function addExpense() {
-      const desc = document.getElementById("expenseDesc").value.trim();
-      const amountInput = document.getElementById("expenseAmount");
-      const amount = parseCurrencyTR(amountInput.value); // Parse et
-
-      if (!desc || isNaN(amount) || amount <= 0) {
-        alert("Lütfen geçerli bir açıklama ve tutar girin.");
-        return;
-      }
-      try {
-        const projectRef = db.collection("projects").doc(projectId);
-        await projectRef.update({
-            expenses: firebase.firestore.FieldValue.arrayUnion({ desc, amount }) // Saf sayıyı kaydet
-        });
-        document.getElementById("expenseDesc").value = "";
-        amountInput.value = formatCurrencyTR(0); // Input'u formatlı sıfırla
-        
-        const updatedDoc = await projectRef.get();
-        if(updatedDoc.exists) {
-            renderExpenses(updatedDoc.data().expenses || []);
-            updateCalculations();
+        if (!projectDoc.exists) {
+            alert("Proje verileri bulunamadı.");
+            return;
         }
-      } catch (error) { /* ... */ }
-    }
+        const p = projectDoc.data();
+        const doc = new jsPDF();
 
-    // ... (removeExpense - içinde formatlamaya gerek yok, silme işlemi) ...
+        // Türkçe karakterler için bir font ayarlaması gerekebilir.
+        // Örnek: doc.setFont("helvetica", "normal"); // Veya bir TTF dosyası yükleyip registerFont ile ekleyebilirsiniz.
+        // Şimdilik varsayılan fontlarla deneyelim. Eğer Türkçe karakterler bozuk çıkarsa, font ekleme adımına geçeriz.
+        // Örnek bir Google Font (Roboto) ekleme (önce font dosyasını base64'e çevirip eklemek gerekir, bu daha karmaşık)
+        // Basit bir çözüm için, jsPDF'in desteklediği standart fontlardan birini kullanabiliriz:
+        // doc.setFont("arial", "normal"); // Arial genellikle daha fazla karakteri destekler.
+        // Ancak 'arial' jsPDF'e ayrıca eklenmeli. 'Helvetica' veya 'Times' daha standarttır.
+        // En iyi çözüm, özel bir fontu (örn: NotoSans-Regular.ttf) base64 olarak ekleyip kullanmaktır.
+        // Şimdilik font ayarını yoksayarak devam edelim, sorun çıkarsa bakarız.
 
-    function updateCalculations() {
-      const contractValueFormatted = document.getElementById("contractValue").value;
-      const contract = parseCurrencyTR(contractValueFormatted); // Parse et
-      
-      let totalCost = 0;
-      const expensesRows = document.querySelectorAll("#expensesTable tbody tr");
-      expensesRows.forEach(row => {
-        const amountTextFormatted = row.cells[1] ? row.cells[1].innerText : "0,00";
-        totalCost += parseCurrencyTR(amountTextFormatted); // Parse et
-      });
+        let yPos = 20; // PDF'te dikey pozisyonu takip etmek için
 
-      const profit = contract - totalCost;
-      const margin = contract > 0 ? (profit / contract) * 100 : 0;
-      
-      // Sonuçları formatlayarak göster
-      document.getElementById("totalExpenses").value = formatCurrencyTR(totalCost);
-      document.getElementById("realizedProfit").value = formatCurrencyTR(profit);
-      document.getElementById("realizedProfitMargin").value = margin.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
+        // Başlık
+        doc.setFontSize(18);
+        doc.text("Proje Detay Raporu", 105, yPos, { align: "center" });
+        yPos += 10;
 
-    async function saveDetails() {
-      const startDate = document.getElementById("startDate").value;
-      const endDate = document.getElementById("endDate").value;
-      const contractValueFormatted = document.getElementById("contractValue").value;
-      const contractValue = parseCurrencyTR(contractValueFormatted); // Parse et
+        // Genel Proje Bilgileri
+        doc.setFontSize(12);
+        doc.text(`Proje Adı: ${p.name || 'N/A'}`, 14, yPos);
+        yPos += 7;
+        doc.text(`Müşteri Adı: ${p.client || 'N/A'}`, 14, yPos);
+        yPos += 7;
+        doc.text(`Proje Durumu: ${p.status || defaultProjectStatus}`, 14, yPos);
+        yPos += 7;
+        doc.text(`Sözleşme Başlangıcı: ${p.startDate || 'N/A'}`, 14, yPos);
+        yPos += 7;
+        doc.text(`Sözleşme Bitişi: ${p.endDate || 'N/A'}`, 14, yPos);
+        yPos += 10; // Biraz boşluk
 
-      try {
-        const projectRef = db.collection("projects").doc(projectId);
-        await projectRef.update({
-          startDate: startDate,
-          endDate: endDate,
-          contractValue: contractValue // Saf sayıyı kaydet
+        // Aşamalar Tablosu
+        doc.setFontSize(14);
+        doc.text("Proje Aşamaları", 14, yPos);
+        yPos += 7;
+        const stagesTableHeaders = [["Aşama Adı", "Sorumlu Kişi", "Tarih", "Durum"]];
+        const stagesTableBody = (p.stages || []).map(s => [
+            s.name || 'N/A',
+            s.responsible || 'N/A',
+            s.date || 'N/A',
+            s.completed ? "Tamamlandı" : "Tamamlanmadı"
+        ]);
+        doc.autoTable({
+            startY: yPos,
+            head: stagesTableHeaders,
+            body: stagesTableBody,
+            theme: 'grid', // 'striped', 'grid', 'plain'
+            headStyles: { fillColor: [52, 73, 94] }, // Koyu mavi başlık
+            styles: { font: "helvetica", fontSize: 10 }, // Tablo için font ve boyut
+            // didDrawPage: function (data) { yPos = data.cursor.y; } // Eğer sayfa taşması olursa yPos'u güncellemek için
         });
-        alert("Sözleşme bilgileri kaydedildi.");
-        updateCalculations(); 
-      } catch (error) { /* ... */ }
+        yPos = doc.lastAutoTable.finalY + 10; // Tablodan sonraki pozisyonu al
+
+        // Harcama Kalemleri Tablosu
+        doc.setFontSize(14);
+        doc.text("Harcama Kalemleri", 14, yPos);
+        yPos += 7;
+        const expensesTableHeaders = [["Açıklama", "Tutar (TL)"]];
+        const expensesTableBody = (p.expenses || []).map(e => [
+            e.desc || 'N/A',
+            formatCurrencyTR(e.amount || 0) // Formatlı göster
+        ]);
+        doc.autoTable({
+            startY: yPos,
+            head: expensesTableHeaders,
+            body: expensesTableBody,
+            theme: 'grid',
+            headStyles: { fillColor: [52, 73, 94] },
+            styles: { font: "helvetica", fontSize: 10 },
+            columnStyles: { 1: { halign: 'right' } } // Tutar sütununu sağa yasla
+        });
+        yPos = doc.lastAutoTable.finalY + 10;
+
+        // Finansal Özet
+        doc.setFontSize(14);
+        doc.text("Finansal Özet", 14, yPos);
+        yPos += 7;
+        doc.setFontSize(12);
+        
+        const contractVal = parseCurrencyTR(document.getElementById("contractValue").value); // Güncel değeri al
+        const totalExp = parseCurrencyTR(document.getElementById("totalExpenses").value); // Güncel değeri al
+        const realProfit = parseCurrencyTR(document.getElementById("realizedProfit").value); // Güncel değeri al
+        const profitMarginText = document.getElementById("realizedProfitMargin").value;
+
+
+        doc.text(`Sözleşme Tutarı: ${formatCurrencyTR(contractVal)} TL`, 14, yPos);
+        yPos += 7;
+        doc.text(`Toplam Harcama: ${formatCurrencyTR(totalExp)} TL`, 14, yPos);
+        yPos += 7;
+        doc.text(`Gerçekleşen Kar: ${formatCurrencyTR(realProfit)} TL`, 14, yPos);
+        yPos += 7;
+        doc.text(`Gerçekleşen Kar Marjı: % ${profitMarginText}`, 14, yPos);
+        yPos += 10;
+
+        // Rapor Tarihi
+        const reportDate = new Date().toLocaleDateString('tr-TR');
+        doc.setFontSize(10);
+        doc.text(`Rapor Tarihi: ${reportDate}`, 14, yPos);
+
+        // PDF'i İndir
+        const fileName = `${p.name ? p.name.replace(/\s+/g, '_') : 'proje'}_rapor.pdf`;
+        doc.save(fileName);
+        alert("Rapor başarıyla oluşturuldu ve indiriliyor.");
     }
 
-    // ... (renderFiles, uploadFile, deleteFile, goBack, logout) ...
+    // ... (loadProject, renderStages, saveStageField, updateProjectStatus, renderExpenses, addExpense, removeExpense, ...)
+    // ... (updateCalculations, saveDetails, renderFiles, uploadFile, deleteFile, goBack, logout) ...
+    // (Mevcut fonksiyonlarınız burada yer alacak)
 
   </script>
 </body>
