@@ -39,6 +39,7 @@
       margin: 0;
       user-select: none;
     }
+    /* ... (diğer stilleriniz öncekiyle aynı kalacak) ... */
     main {
       max-width: 1100px;
       margin: 30px auto;
@@ -51,19 +52,19 @@
         border-bottom: 2px solid #2980b9;
         padding-bottom: 8px;
     }
-    label { /* Genel label stili, formlar için kullanılabilir */
+    label { 
       display: block;
       margin: 12px 0 6px;
       font-weight: 600;
     }
-    input, button { /* input ve button genel stilleri */
+    input, button { 
       padding: 10px 12px;
       font-size: 1rem;
       border-radius: 6px;
       border: 1px solid #ccc;
       outline: none;
       transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      box-sizing: border-box; /* width hesaplamasını doğru yapar */
+      box-sizing: border-box; 
     }
     input:focus {
       border-color: #2980b9;
@@ -76,7 +77,6 @@
       cursor: pointer;
       font-weight: 600;
       transition: background-color 0.3s ease;
-      /* margin-top: 10px; input-group içinde olduğu için genel margin-top kaldırıldı */
     }
     button:hover {
       background-color: #1c5980;
@@ -87,7 +87,7 @@
       background: white;
       margin-top: 25px;
       border-radius: 8px;
-      overflow: hidden; /* Köşelerin yuvarlak kalması için */
+      overflow: hidden; 
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     th, td {
@@ -102,9 +102,8 @@
     }
     tbody tr:hover {
       background-color: #ecf6fc;
-      /* cursor: pointer; Kaldırıldı, sadece link tıklanabilir olmalı */
     }
-    tbody tr td a { /* Proje adı linki için stil */
+    tbody tr td a { 
         color: #2980b9;
         text-decoration: none;
         font-weight: 600;
@@ -121,55 +120,52 @@
     .btn-danger:hover {
       background-color: #c0392b;
     }
-    .btn-primary { /* Add project button */
-      /* margin-left: 10px; input-group gap ile yönetiliyor */
+    .btn-primary { 
       font-weight: 600;
       padding: 10px 20px;
     }
     .input-group {
       display: flex;
-      flex-wrap: wrap; /* Mobil için alt alta geçiş */
+      flex-wrap: wrap; 
       gap: 12px;
-      align-items: flex-end; /* Butonun inputlarla aynı hizada olması için */
+      align-items: flex-end; 
     }
     .input-group input {
-      flex: 1; /* Alanı doldurur */
-      min-width: 200px; /* Mobil için minimum genişlik */
+      flex: 1; 
+      min-width: 200px; 
     }
     .input-group button {
-        flex-shrink: 0; /* Butonun küçülmemesi için */
+        flex-shrink: 0; 
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       header {
         flex-direction: column;
-        align-items: flex-start; /* Logoyu ve başlığı sola yasla */
+        align-items: flex-start; 
         gap: 10px;
         padding: 20px;
       }
-      header button { /* Çıkış yap butonu için */
-          margin-left: 0 !important; /* auto'yu override et */
-          align-self: flex-start; /* veya flex-end eğer sağda isteniyorsa */
+      header button { 
+          margin-left: 0 !important; 
+          align-self: flex-start; 
       }
       .input-group {
           flex-direction: column;
-          align-items: stretch; /* Tüm elemanlar tam genişlikte */
+          align-items: stretch; 
       }
       .input-group input, .input-group button {
           width: 100%;
-          margin-left: 0; /* Varsa sol margin'i sıfırla */
+          margin-left: 0; 
       }
       .input-group button {
-          margin-top: 10px; /* Input ve buton arasına boşluk */
+          margin-top: 10px; 
       }
 
-      /* Responsive Table */
       table, thead, tbody, th, td, tr {
         display: block;
       }
       thead tr {
-        display: none; /* Başlık satırını gizle */
+        display: none; 
       }
       tbody tr {
         margin-bottom: 20px;
@@ -181,21 +177,21 @@
       }
       tbody tr td {
         display: flex;
-        justify-content: space-between; /* Etiket ve değer arası boşluk */
+        justify-content: space-between; 
         align-items: center;
         padding: 10px 0;
-        border-bottom: 1px solid #eee; /* Hücreler arası ayırıcı */
-        text-align: right; /* Değerler sağa yaslı */
+        border-bottom: 1px solid #eee; 
+        text-align: right; 
       }
       tbody tr td:last-child {
-        border-bottom: 0; /* Son hücrenin alt çizgisini kaldır */
+        border-bottom: 0; 
       }
-      tbody tr td::before { /* Etiketleri ekle */
+      tbody tr td::before { 
         content: attr(data-label);
         font-weight: bold;
         margin-right: 10px;
-        text-align: left; /* Etiketler sola yaslı */
-        flex-grow: 1; /* Etiketin alanı doldurması için */
+        text-align: left; 
+        flex-grow: 1; 
         color: #555;
       }
     }
@@ -203,7 +199,7 @@
 </head>
 <body>
   <header>
-    <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" /> <!-- Extra space removed -->
+    <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" />
     <h1>Proje Takip Sistemi</h1>
     <button onclick="logout()" style="margin-left:auto; background:#e74c3c; color:white;">Çıkış Yap</button>
   </header>
@@ -216,13 +212,14 @@
       <button class="btn-primary" onclick="addProject()">Ekle</button>
     </div>
 
-    <h3>📋 Proje Listesi</h3>
+    <h3>📋 Proje Listesi (<span id="userRoleDisplay" style="font-weight:normal; font-size:0.9em;"></span>)</h3>
     <table id="projectTable">
       <thead>
         <tr>
           <th>Proje Adı</th>
           <th>Müşteri</th>
           <th>Sözleşme Bedeli</th>
+          <!-- <th>Sahibi (Admin için)</th> Eklenebilir -->
           <th>İşlem</th>
         </tr>
       </thead>
@@ -234,7 +231,7 @@
   <script>
     // Firebase yapılandırması
     const firebaseConfig = {
-      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I", // Lütfen kendi API anahtarınızı kullanın
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I", // API Anahtarınız
       authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
       projectId: "projetakipsistemi-fbabd",
       storageBucket: "projetakipsistemi-fbabd.firebasestorage.app",
@@ -248,42 +245,85 @@
     const auth = firebase.auth();
 
     let userId = null;
+    let currentUserRole = null; // Kullanıcının rolünü saklamak için
 
     // Oturum kontrolü
-    auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged(async user => { // async eklendi
       if (!user) {
         window.location.href = "login.html"; 
       } else {
-        userId = user.uid; 
-        loadProjects();
+        userId = user.uid;
+        
+        // Kullanıcının rolünü Firestore'dan çek
+        try {
+          const userDoc = await db.collection("users").doc(userId).get();
+          if (userDoc.exists) {
+            currentUserRole = userDoc.data().role;
+            document.getElementById("userRoleDisplay").textContent = currentUserRole === 'admin' ? 'Yönetici Görünümü' : 'Kullanıcı Görünümü';
+            console.log("Kullanıcı Rolü:", currentUserRole);
+          } else {
+            console.log("Kullanıcı için rol bilgisi bulunamadı, varsayılan 'user' kabul ediliyor.");
+            currentUserRole = "user"; // Varsayılan, eğer users dokümanı yoksa (olmamalı)
+            document.getElementById("userRoleDisplay").textContent = 'Kullanıcı Görünümü';
+          }
+        } catch (error) {
+          console.error("Kullanıcı rolü alınırken hata:", error);
+          currentUserRole = "user"; // Hata durumunda güvenli varsayılan
+          document.getElementById("userRoleDisplay").textContent = 'Kullanıcı Görünümü (Rol alınamadı)';
+        }
+        
+        loadProjects(); // Rol bilgisi alındıktan sonra projeleri yükle
       }
     });
 
     // Projeleri yükle
     async function loadProjects() {
-      if (!userId) return; // Kullanıcı ID'si yoksa işlem yapma
+      if (!userId || currentUserRole === null) { // currentUserRole kontrolü eklendi
+          console.log("Kullanıcı ID veya rol bilgisi henüz yüklenmedi. Projeler yüklenemiyor.");
+          return;
+      }
 
       const tbody = document.getElementById("projectBody");
       const noProjectsMessage = document.getElementById("noProjectsMessage");
-      tbody.innerHTML = ""; // Tabloyu temizle
+      tbody.innerHTML = ""; 
 
       try {
-        const projectsSnapshot = await db.collection("projects").where("userId", "==", userId).orderBy("name").get(); // İsteğe bağlı: Ada göre sırala
+        let projectsQuery = db.collection("projects");
+
+        if (currentUserRole === "admin") {
+          // Admin tüm projeleri görür, userId'ye göre filtreleme yapılmaz
+          // İsteğe bağlı: Admin görünümünde projeleri en son oluşturulana göre sıralayabiliriz
+          projectsQuery = projectsQuery.orderBy("createdAt", "desc"); 
+          console.log("Admin olarak tüm projeler yükleniyor.");
+        } else {
+          // Normal kullanıcı sadece kendi projelerini görür
+          projectsQuery = projectsQuery.where("userId", "==", userId).orderBy("name");
+          console.log("Kullanıcı olarak kendi projeleri yükleniyor.");
+        }
+
+        const projectsSnapshot = await projectsQuery.get();
         
         if (projectsSnapshot.empty) {
             noProjectsMessage.style.display = "block";
-            tbody.innerHTML = ""; // Ekstra güvenlik için tabloyu boşalt
+            tbody.innerHTML = ""; 
         } else {
             noProjectsMessage.style.display = "none";
             projectsSnapshot.forEach(doc => {
               const proj = doc.data();
               const tr = document.createElement("tr");
 
-              // data-label attributelarını mobil görünüm için ekle
+              // Admin için proje sahibinin email'ini göstermek isteyebiliriz (opsiyonel)
+              // let ownerInfo = '';
+              // if (currentUserRole === 'admin' && proj.userId) {
+              //    // Bu kısım için ek bir sorgu veya projeye userEmail gibi bir alan eklemek gerekebilir
+              //    ownerInfo = `<td>${proj.userEmail || proj.userId.substring(0,6)}...</td>`;
+              // }
+
               tr.innerHTML = `
                 <td data-label="Proje Adı"><a href="project-detail.html?id=${doc.id}">${proj.name}</a></td>
                 <td data-label="Müşteri">${proj.client}</td>
                 <td data-label="Sözleşme Bedeli">${proj.contractValue != null ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'}) : 'Belirtilmemiş'}</td>
+                ${'' /* ownerInfo */} 
                 <td data-label="İşlem"><button class="btn-danger" onclick="deleteProject('${doc.id}', '${proj.name}')">Sil</button></td>
               `;
               tbody.appendChild(tr);
@@ -291,7 +331,12 @@
         }
       } catch (error) {
           console.error("Projeler yüklenirken hata oluştu: ", error);
-          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Projeler yüklenirken bir hata oluştu.</td></tr>';
+          // Kullanıcıya daha anlaşılır bir hata mesajı göster
+          if (error.code === 'failed-precondition' && error.message.includes('index')) {
+              tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Veritabanı sorgusu için gerekli indeks eksik. Lütfen tarayıcı konsolunu kontrol edin ve Firebase'in önerdiği indeksi oluşturun. Hata: ${error.message}</td></tr>`;
+          } else {
+              tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Projeler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</td></tr>`;
+          }
           noProjectsMessage.style.display = "none";
       }
     }
@@ -316,10 +361,10 @@
         userId: userId, 
         name,
         client,
-        contractValue: 0, // Varsayılan sözleşme bedeli
+        contractValue: 0, 
         expenses: [],
-        stages: [],
-        createdAt: firebase.firestore.FieldValue.serverTimestamp() // Oluşturulma tarihi
+        stages: [], // Aşamalar `project-detail`de ön tanımlı olarak oluşturulacak
+        createdAt: firebase.firestore.FieldValue.serverTimestamp() 
       };
 
       try {
@@ -327,32 +372,45 @@
         nameInput.value = "";
         clientInput.value = "";
         alert("Proje başarıyla eklendi.");
-        loadProjects(); // Listeyi yenile
+        loadProjects(); 
       } catch (error) {
         console.error("Proje eklenirken hata oluştu: ", error);
         alert("Proje eklenirken bir hata oluştu. Lütfen tekrar deneyin.");
       }
     }
 
-    // Proje sil
+    // Proje sil (Admin herkesin projesini, kullanıcı sadece kendininkini silebilmeli - BU KONTROL EKLENMELİ)
     async function deleteProject(id, projectName) {
-      // Proje adını kullanarak daha anlaşılır bir onay mesajı
-      if (!confirm(`"${projectName}" adlı projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
-        return;
-      }
-      try {
-        await db.collection("projects").doc(id).delete();
-        alert(`"${projectName}" adlı proje başarıyla silindi.`);
-        loadProjects(); // Listeyi yenile
-      } catch (error) {
-        console.error("Proje silinirken hata oluştu: ", error);
-        alert(`"${projectName}" adlı proje silinirken bir hata oluştu. Lütfen tekrar deneyin.`);
-      }
+        // TODO: Rol bazlı silme yetkisi kontrolü eklenecek.
+        // Şimdilik, herkes silebiliyor gibi davranacak.
+        // Güvenlik kuralları ile bu daha da sağlamlaştırılmalı.
+
+        if (!confirm(`"${projectName}" adlı projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+            return;
+        }
+        try {
+            // Silmeden önce proje sahibini kontrol et (admin değilse)
+            if (currentUserRole !== 'admin') {
+                const projectDoc = await db.collection('projects').doc(id).get();
+                if (projectDoc.exists && projectDoc.data().userId !== userId) {
+                    alert('Bu projeyi silme yetkiniz yok.');
+                    return;
+                }
+            }
+
+            await db.collection("projects").doc(id).delete();
+            alert(`"${projectName}" adlı proje başarıyla silindi.`);
+            loadProjects(); 
+        } catch (error) {
+            console.error("Proje silinirken hata oluştu: ", error);
+            alert(`"${projectName}" adlı proje silinirken bir hata oluştu. Lütfen tekrar deneyin.`);
+        }
     }
 
     // Çıkış yap
     function logout() {
       auth.signOut().then(() => {
+        currentUserRole = null; // Rol bilgisini temizle
         window.location.href = "login.html"; 
       }).catch((error) => {
         console.error("Çıkış yapılırken hata:", error);
