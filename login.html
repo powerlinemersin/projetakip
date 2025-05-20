@@ -6,11 +6,11 @@
   <title>Giriş Yap</title>
 
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js "></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <style>
     body {
@@ -25,35 +25,38 @@
     }
     .login-container {
       background-color: white;
-      padding: 30px;
+      padding: 30px 40px;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 400px;
     }
     h2 {
-      margin-bottom: 20px;
+      margin-top: 0;
+      margin-bottom: 25px;
       font-weight: 600;
       text-align: center;
+      color: #34495e;
     }
     label {
       display: block;
-      margin: 12px 0 6px;
+      margin: 15px 0 8px;
       font-weight: 600;
+      font-size: 0.9rem;
     }
     input {
-      padding: 10px 12px;
+      padding: 12px 15px;
       font-size: 1rem;
       border-radius: 6px;
       border: 1px solid #ccc;
       outline: none;
-      transition: border-color 0.3s ease;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
       width: 100%;
       box-sizing: border-box;
     }
     input:focus {
       border-color: #2980b9;
-      box-shadow: 0 0 5px #2980b9;
+      box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
     }
     button {
       background-color: #2980b9;
@@ -62,36 +65,43 @@
       cursor: pointer;
       font-weight: 600;
       transition: background-color 0.3s ease;
-      margin-top: 10px;
+      margin-top: 25px;
       border-radius: 6px;
       width: 100%;
-      padding: 10px;
+      padding: 12px;
+      font-size: 1rem;
     }
     button:hover {
       background-color: #1c5980;
     }
     .signup-link {
-      margin-top: 15px;
+      margin-top: 20px;
       text-align: center;
+      font-size: 0.9rem;
     }
     .signup-link a {
       color: #2980b9;
       text-decoration: none;
       font-weight: 600;
     }
+     .signup-link a:hover {
+      text-decoration: underline;
+    }
     .error-message {
-      color: red;
+      color: #e74c3c;
       text-align: center;
-      margin-top: 10px;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      min-height: 1.2em; /* Hata mesajı alanı için yer ayır */
     }
   </style>
 </head>
 <body>
   <div class="login-container">
     <h2>Giriş Yap</h2>
-    <label>E-posta</label>
+    <label for="email">E-posta</label>
     <input type="email" id="email" placeholder="E-posta adresinizi girin" />
-    <label>Şifre</label>
+    <label for="password">Şifre</label>
     <input type="password" id="password" placeholder="Şifrenizi girin" />
     <button onclick="login()">Giriş Yap</button>
     <div class="signup-link">
@@ -103,7 +113,7 @@
   <script>
     // Firebase yapılandırması
     const firebaseConfig = {
-      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I", // Lütfen kendi API anahtarınızı kullanın
       authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
       projectId: "projetakipsistemi-fbabd",
       storageBucket: "projetakipsistemi-fbabd.firebasestorage.app",
@@ -114,14 +124,27 @@
     // Firebase uygulamasını başlat
     const app = firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const errorMessageDiv = document.getElementById("error-message");
+
+    // Oturum kontrolü
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // Kullanıcı zaten giriş yapmışsa ana sayfaya yönlendir
+        // Bu, login sayfasının tekrar gösterilmesini engeller
+        if (window.location.pathname.endsWith("login.html")) {
+            window.location.href = "index.html";
+        }
+      }
+    });
 
     // Giriş yapma fonksiyonu
     async function login() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
+      errorMessageDiv.innerText = ""; // Önceki hata mesajını temizle
 
       if (!email || !password) {
-        document.getElementById("error-message").innerText = "Lütfen tüm alanları doldurun.";
+        errorMessageDiv.innerText = "Lütfen e-posta ve şifre alanlarını doldurun.";
         return;
       }
 
@@ -129,17 +152,20 @@
         await auth.signInWithEmailAndPassword(email, password);
         window.location.href = "index.html"; // Giriş başarılıysa ana sayfaya yönlendir
       } catch (error) {
-        console.error("Giriş hatası:", error); // Hata mesajını konsola yazdır
-        document.getElementById("error-message").innerText = "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.";
+        console.error("Giriş hatası:", error.code, error.message);
+        let message = "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.";
+        if (error.code === 'auth/user-not-found') {
+          message = "Bu e-posta adresiyle kayıtlı bir kullanıcı bulunamadı.";
+        } else if (error.code === 'auth/wrong-password') {
+          message = "Yanlış şifre. Lütfen tekrar deneyin.";
+        } else if (error.code === 'auth/invalid-email') {
+          message = "Geçersiz e-posta adresi formatı.";
+        } else if (error.code === 'auth/too-many-requests') {
+            message = "Çok fazla başarısız giriş denemesi. Lütfen daha sonra tekrar deneyin.";
+        }
+        errorMessageDiv.innerText = message;
       }
     }
-
-    // Oturum kontrolü
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        window.location.href = "index.html"; // Oturum açıksa ana sayfaya yönlendir
-      }
-    });
   </script>
 </body>
 </html>
