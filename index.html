@@ -252,20 +252,21 @@
   <script>
     // Firebase yapılandırması
     const firebaseConfig = {
-      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I", // API Anahtarınız
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
       authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
       projectId: "projetakipsistemi-fbabd",
-      storageBucket: "projetakipsistemi-fbabd.firebasestorage.app",
+      storageBucket: "projetakipsistemi-fbabd.appspot.com",
       messagingSenderId: "335282912485",
       appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
     };
 
+    // Firebase uygulamasını başlat
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
     let userId = null;
-    let currentUserRole = null;
+    let currentUserRole = null; 
 
     // Proje durumları ve CSS sınıfları
     const projectStatuses = {
