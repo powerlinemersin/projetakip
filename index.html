@@ -4,217 +4,106 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Proje Takip Sistemi</title>
-
-  <!-- Google Fonts -->
+  
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
-    /* ... (mevcut stilleriniz aynı kalacak) ... */
     body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      background-color: #f9fbfd;
-      color: #2c3e50;
+      font-family: 'Poppins', sans-serif; margin: 0; background-color: #f9fbfd; color: #2c3e50;
     }
     header {
-      background-color: #34495e;
-      color: white;
-      padding: 15px 30px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background-color: #34495e; color: white; padding: 15px 30px; display: flex;
+      align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    header img {
-      height: 40px;
-      width: auto;
-    }
-    header h1 {
-      font-weight: 600;
-      font-size: 1.6rem;
-      margin: 0;
-      user-select: none;
-    }
-    main {
-      max-width: 1100px;
-      margin: 30px auto;
-      padding: 0 20px;
-    }
+    header img { height: 40px; width: auto; }
+    header h1 { font-weight: 600; font-size: 1.6rem; margin: 0; user-select: none; }
+    main { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
     h3 {
-        color: #34495e;
-        margin-top: 30px;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #2980b9;
-        padding-bottom: 8px;
+        color: #34495e; margin-top: 30px; margin-bottom: 15px;
+        border-bottom: 2px solid #2980b9; padding-bottom: 8px;
     }
-    label { 
-      display: block;
-      margin: 12px 0 6px;
-      font-weight: 600;
+    label { display: block; margin: 12px 0 6px; font-weight: 600; }
+    input, button {
+      padding: 10px 12px; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc;
+      outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; box-sizing: border-box;
     }
-    input, button, select { /* select eklendi */
-      padding: 10px 12px;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      outline: none;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      box-sizing: border-box; 
-    }
-    input:focus, select:focus { /* select eklendi */
-      border-color: #2980b9;
-      box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
-    }
+    input:focus { border-color: #2980b9; box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2); }
     button {
-      background-color: #2980b9;
-      border: none;
-      color: white;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
+      background-color: #2980b9; border: none; color: white; cursor: pointer;
+      font-weight: 600; transition: background-color 0.3s ease;
     }
-    button:hover {
-      background-color: #1c5980;
-    }
+    button:hover { background-color: #1c5980; }
     table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      margin-top: 25px;
-      border-radius: 8px;
-      overflow: hidden; 
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 100%; border-collapse: collapse; background: white; margin-top: 25px;
+      border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    th, td {
-      padding: 14px 18px;
-      border-bottom: 1px solid #e3e6ea;
-      text-align: left;
+    th, td { padding: 14px 18px; border-bottom: 1px solid #e3e6ea; text-align: left; }
+    thead { background-color: #2980b9; color: white; font-weight: 600; }
+    tbody tr:hover { background-color: #ecf6fc; }
+    tbody tr td a { color: #2980b9; text-decoration: none; font-weight: 600; }
+    tbody tr td a:hover { text-decoration: underline; }
+    .btn-danger { background-color: #e74c3c; color: white; padding: 8px 12px; font-size: 0.9rem; }
+    .btn-danger:hover { background-color: #c0392b; }
+    .btn-primary { font-weight: 600; padding: 10px 20px; }
+    .input-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .input-group input { flex: 1; min-width: 200px; }
+    .input-group button { flex-shrink: 0; }
+    .category-checkbox-group {
+        margin-top: 15px; margin-bottom: 10px; padding: 10px; border: 1px solid #eee;
+        border-radius: 6px; background-color: #fdfdfd;
     }
-    thead {
-      background-color: #2980b9;
-      color: white;
-      font-weight: 600;
+    .category-checkbox-group legend {
+        font-weight: 600; padding: 0 5px; margin-left: 5px; color: #34495e;
     }
-    tbody tr:hover {
-      background-color: #ecf6fc;
+    .category-checkbox-group label {
+        display: inline-block; margin-right: 15px; font-weight: normal; cursor: pointer;
     }
-    tbody tr td a { 
-        color: #2980b9;
-        text-decoration: none;
-        font-weight: 600;
+    .category-checkbox-group input[type="checkbox"] {
+        width: auto; margin-right: 5px; vertical-align: middle;
     }
-    tbody tr td a:hover {
-        text-decoration: underline;
+    .categories-display span {
+        background-color: #e0e0e0; color: #333; padding: 3px 8px; border-radius: 4px;
+        font-size: 0.8em; margin-right: 5px; display: inline-block; margin-bottom: 3px;
     }
-    .btn-danger {
-      background-color: #e74c3c;
-      color: white;
-      padding: 8px 12px;
-      font-size: 0.9rem;
-    }
-    .btn-danger:hover {
-      background-color: #c0392b;
-    }
-    .btn-primary { 
-      font-weight: 600;
-      padding: 10px 20px;
-    }
-    .input-group {
-      display: flex;
-      flex-wrap: wrap; 
-      gap: 12px;
-      align-items: flex-end; 
-    }
-    .input-group input {
-      flex: 1; 
-      min-width: 200px; 
-    }
-    .input-group button {
-        flex-shrink: 0; 
-    }
-    /* Durum etiketleri için stiller (opsiyonel) */
     .status-badge {
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 0.8em;
-        font-weight: 600;
-        color: white;
-        text-align: center;
-        min-width: 80px; /* Sabit genişlik */
-        display: inline-block;
+        padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 600;
+        color: white; text-align: center; min-width: 80px; display: inline-block;
     }
-    .status-baslamadi { background-color: #7f8c8d; } /* Gri */
-    .status-devam-ediyor { background-color: #f39c12; } /* Turuncu */
-    .status-tamamlandi { background-color: #2ecc71; } /* Yeşil */
-
+    .status-baslamadi { background-color: #7f8c8d; }
+    .status-devam-ediyor { background-color: #f39c12; }
+    .status-tamamlandi { background-color: #2ecc71; }
 
     @media (max-width: 768px) {
-      header {
-        flex-direction: column;
-        align-items: flex-start; 
-        gap: 10px;
-        padding: 20px;
-      }
-      header button { 
-          margin-left: 0 !important; 
-          align-self: flex-start; 
-      }
-      .input-group {
-          flex-direction: column;
-          align-items: stretch; 
-      }
-      .input-group input, .input-group button {
-          width: 100%;
-          margin-left: 0; 
-      }
-      .input-group button {
-          margin-top: 10px; 
-      }
-
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      thead tr {
-        display: none; 
-      }
+      header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 20px; }
+      header button { margin-left: 0 !important; align-self: flex-start; }
+      .input-group { flex-direction: column; align-items: stretch; }
+      .input-group input, .input-group button { width: 100%; margin-left: 0; }
+      .input-group button { margin-top: 10px; }
+      .category-checkbox-group label { margin-bottom: 5px; } /* Mobil için checkbox aralığı */
+      table, thead, tbody, th, td, tr { display: block; }
+      thead tr { display: none; }
       tbody tr {
-        margin-bottom: 20px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        padding: 15px;
-        border: 1px solid #ddd;
+        margin-bottom: 20px; background: white; border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 15px; border: 1px solid #ddd;
       }
       tbody tr td {
-        display: flex;
-        justify-content: space-between; 
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid #eee; 
-        text-align: right; 
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 0; border-bottom: 1px solid #eee; text-align: right;
       }
-      tbody tr td:last-child {
-        border-bottom: 0; 
+      tbody tr td:last-child { border-bottom: 0; }
+      tbody tr td::before {
+        content: attr(data-label); font-weight: bold; margin-right: 10px;
+        text-align: left; flex-grow: 1; color: #555;
       }
-      tbody tr td::before { 
-        content: attr(data-label);
-        font-weight: bold;
-        margin-right: 10px;
-        text-align: left; 
-        flex-grow: 1; 
-        color: #555;
-      }
-      /* Responsive table için data-label tanımlamaları */
       tbody tr td:nth-of-type(1)::before { content: "Proje Adı:"; }
       tbody tr td:nth-of-type(2)::before { content: "Müşteri:"; }
-      tbody tr td:nth-of-type(3)::before { content: "Durum:"; } /* Yeni eklendi */
-      tbody tr td:nth-of-type(4)::before { content: "Sözleşme Bedeli:"; }
-      tbody tr td:nth-of-type(5)::before { content: "İşlem:"; }
+      tbody tr td:nth-of-type(3)::before { content: "Kategoriler:"; }
+      tbody tr td:nth-of-type(4)::before { content: "Durum:"; }
+      tbody tr td:nth-of-type(5)::before { content: "Sözleşme Bedeli:"; }
+      tbody tr td:nth-of-type(6)::before { content: "İşlem:"; }
     }
   </style>
 </head>
@@ -230,7 +119,13 @@
     <div class="input-group">
       <input id="projectName" placeholder="Proje Adı" />
       <input id="clientName" placeholder="Müşteri Adı" />
-      <button class="btn-primary" onclick="addProject()">Ekle</button>
+    </div>
+    <fieldset class="category-checkbox-group" id="newProjectCategories">
+        <legend>Proje Kategorileri</legend>
+        <!-- Checkbox'lar JavaScript ile buraya eklenecek -->
+    </fieldset>
+    <div class="input-group" style="margin-top:10px;">
+         <button class="btn-primary" onclick="addProject()">Ekle</button>
     </div>
 
     <h3>📋 Proje Listesi (<span id="userRoleDisplay" style="font-weight:normal; font-size:0.9em;"></span>)</h3>
@@ -239,7 +134,8 @@
         <tr>
           <th>Proje Adı</th>
           <th>Müşteri</th>
-          <th>Durum</th> <!-- YENİ SÜTUN -->
+          <th>Kategoriler</th>
+          <th>Durum</th>
           <th>Sözleşme Bedeli</th>
           <th>İşlem</th>
         </tr>
@@ -250,7 +146,6 @@
   </main>
 
   <script>
-    // Firebase yapılandırması
     const firebaseConfig = {
       apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
       authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
@@ -260,23 +155,68 @@
       appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
     };
 
-    // Firebase uygulamasını başlat
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
     let userId = null;
-    let currentUserRole = null; 
-
-    // Proje durumları ve CSS sınıfları
+    let currentUserRole = null;
+    
     const projectStatuses = {
         "Başlamadı": "status-baslamadi",
         "Devam Ediyor": "status-devam-ediyor",
         "Tamamlandı": "status-tamamlandi"
     };
     const defaultStatus = "Başlamadı";
+    const projectCategories = ["Aydınlatma", "Otomasyon", "Taahhüt", "Danışmanlık", "Diğer"];
 
-    auth.onAuthStateChanged(async user => { 
+    function renderCategoryCheckboxes(containerId, prefix = "") {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        let legendText = 'Proje Kategorileri'; // Varsayılan legend
+        if (container.querySelector('legend')) {
+            legendText = container.querySelector('legend').textContent; // Mevcut legend'ı al
+        }
+        container.innerHTML = ""; // Temizle
+        
+        const legend = document.createElement('legend');
+        legend.textContent = legendText;
+        container.appendChild(legend);
+
+        projectCategories.forEach(category => {
+            const checkboxId = `${prefix}${category.replace(/\s+/g, '-').toLowerCase()}`;
+            const wrapper = document.createElement('span'); // Checkbox ve label için bir sarmalayıcı
+            wrapper.style.marginRight = "15px"; // Aralık için
+            wrapper.style.display = "inline-block"; // Yan yana düzgün durması için
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = checkboxId;
+            checkbox.value = category;
+            checkbox.name = `${prefix}project_category`;
+            checkbox.style.marginRight = "5px";
+            checkbox.style.verticalAlign = "middle";
+
+
+            const label = document.createElement('label');
+            label.htmlFor = checkboxId;
+            label.textContent = category;
+            label.style.fontWeight = "normal";
+            label.style.cursor = "pointer";
+            label.style.verticalAlign = "middle";
+            
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
+        });
+    }
+    
+    window.onload = function() {
+        renderCategoryCheckboxes('newProjectCategories', 'new_');
+    };
+
+    auth.onAuthStateChanged(async user => {
       if (!user) {
         window.location.href = "login.html"; 
       } else {
@@ -300,29 +240,24 @@
     });
 
     function getStatusBadge(statusText) {
-        const statusKey = statusText || defaultStatus; // Eğer status yoksa varsayılanı kullan
+        const statusKey = statusText || defaultStatus;
         const cssClass = projectStatuses[statusKey] || projectStatuses[defaultStatus];
         return `<span class="status-badge ${cssClass}">${statusKey}</span>`;
     }
 
     async function loadProjects() {
-      if (!userId || currentUserRole === null) { 
-          return;
-      }
-
+      if (!userId || currentUserRole === null) { return; }
       const tbody = document.getElementById("projectBody");
       const noProjectsMessage = document.getElementById("noProjectsMessage");
       tbody.innerHTML = ""; 
 
       try {
         let projectsQuery = db.collection("projects");
-
         if (currentUserRole === "admin") {
           projectsQuery = projectsQuery.orderBy("createdAt", "desc"); 
         } else {
           projectsQuery = projectsQuery.where("userId", "==", userId).orderBy("name");
         }
-
         const projectsSnapshot = await projectsQuery.get();
         
         if (projectsSnapshot.empty) {
@@ -333,11 +268,21 @@
               const proj = doc.data();
               const tr = document.createElement("tr");
 
+              let categoriesHtml = "N/A";
+              if (proj.categories && proj.categories.length > 0) {
+                  categoriesHtml = proj.categories.map(cat => `<span>${cat}</span>`).join(" ");
+              }
+
+              const contractValueDisplay = (proj.contractValue != null && typeof proj.contractValue === 'number')
+                ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'})
+                : 'Belirtilmemiş';
+
               tr.innerHTML = `
                 <td data-label="Proje Adı"><a href="project-detail.html?id=${doc.id}">${proj.name}</a></td>
                 <td data-label="Müşteri">${proj.client}</td>
-                <td data-label="Durum">${getStatusBadge(proj.status)}</td> <!-- DURUM BİLGİSİ GÖSTERİLİYOR -->
-                <td data-label="Sözleşme Bedeli">${proj.contractValue != null ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'}) : 'Belirtilmemiş'}</td>
+                <td data-label="Kategoriler">${categoriesHtml}</td>
+                <td data-label="Durum">${getStatusBadge(proj.status)}</td>
+                <td data-label="Sözleşme Bedeli">${contractValueDisplay}</td>
                 <td data-label="İşlem"><button class="btn-danger" onclick="deleteProject('${doc.id}', '${proj.name}')">Sil</button></td>
               `;
               tbody.appendChild(tr);
@@ -346,9 +291,9 @@
       } catch (error) {
           console.error("Projeler yüklenirken hata oluştu: ", error);
           if (error.code === 'failed-precondition' && error.message.includes('index')) {
-              tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Veritabanı sorgusu için gerekli indeks eksik. Lütfen tarayıcı konsolunu kontrol edin ve Firebase'in önerdiği indeksi oluşturun.</td></tr>`;
+              tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Veritabanı sorgusu için gerekli indeks eksik. Lütfen tarayıcı konsolunu kontrol edin ve Firebase'in önerdiği indeksi oluşturun.</td></tr>`;
           } else {
-              tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Projeler yüklenirken bir hata oluştu.</td></tr>`;
+              tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Projeler yüklenirken bir hata oluştu.</td></tr>`;
           }
           noProjectsMessage.style.display = "none";
       }
@@ -369,11 +314,18 @@
         return;
       }
 
+      const selectedCategories = [];
+      const checkboxes = document.querySelectorAll('#newProjectCategories input[type="checkbox"]:checked');
+      checkboxes.forEach(checkbox => {
+          selectedCategories.push(checkbox.value);
+      });
+
       const project = {
         userId: userId, 
         name,
         client,
-        status: defaultStatus, // YENİ PROJEYE VARSAYILAN DURUM EKLENDİ
+        categories: selectedCategories,
+        status: defaultStatus, 
         contractValue: 0, 
         expenses: [], 
         stages: [], 
@@ -384,6 +336,7 @@
         await db.collection("projects").add(project);
         nameInput.value = "";
         clientInput.value = "";
+        document.querySelectorAll('#newProjectCategories input[type="checkbox"]').forEach(cb => cb.checked = false);
         alert("Proje başarıyla eklendi.");
         loadProjects(); 
       } catch (error) {
