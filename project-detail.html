@@ -6,12 +6,12 @@
   <title>Proje Detayları</title>
 
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js "></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js "></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
     body {
@@ -85,7 +85,7 @@
       margin-top: 25px;
       border: 1px solid #ddd;
       border-radius: 8px;
-      overflow: visible;
+      overflow: visible; /* Changed from hidden for potential dropdowns/tooltips, can be 'hidden' if not needed */
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     th, td {
@@ -111,27 +111,69 @@
       flex: 1;
       min-width: 150px;
     }
+    .readonly { /* Added basic style for readonly inputs if desired */
+        background-color: #f0f0f0;
+        cursor: not-allowed;
+    }
     @media (max-width: 768px) {
       header {
         flex-direction: column;
         gap: 10px;
         padding: 20px;
       }
+      /* Responsive table styles for stages and expenses */
+      #stagesTable, #expensesTable { display: block; width: 100%; }
+      #stagesTable thead, #expensesTable thead { display: none; }
+      #stagesTable tbody, #expensesTable tbody { display: block; width: 100%; }
+      #stagesTable tr, #expensesTable tr {
+        display: block;
+        margin-bottom: 15px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        padding: 10px;
+        border: 1px solid #ddd;
+      }
+      #stagesTable td, #expensesTable td {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        text-align: right; /* Align value to the right */
+      }
+      #stagesTable td:last-child, #expensesTable td:last-child {
+        border-bottom: 0;
+      }
+      #stagesTable td::before, #expensesTable td::before {
+        font-weight: bold;
+        margin-right: 10px;
+        text-align: left; /* Align label to the left */
+        flex-grow: 1;
+      }
+      /* Specific labels for stagesTable */
+      #stagesTable tbody td:nth-of-type(1)::before { content: "Aşama:"; }
+      #stagesTable tbody td:nth-of-type(2)::before { content: "Sorumlu Kişi:"; }
+      #stagesTable tbody td:nth-of-type(3)::before { content: "Tarih:"; }
+      #stagesTable tbody td:nth-of-type(4)::before { content: "Tamamlandı mı?:"; }
+       /* Specific labels for expensesTable */
+      #expensesTable tbody td:nth-of-type(1)::before { content: "Açıklama:"; }
+      #expensesTable tbody td:nth-of-type(2)::before { content: "Tutar (TL):"; }
+      #expensesTable tbody td:nth-of-type(3)::before { content: "İşlem:"; }
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="https://via.placeholder.com/150x40?text=Logo   " alt="Şirket Logosu" />
+    <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" /> <!-- Removed extra space in placeholder text -->
     <h1>Proje Detayları</h1>
     <button onclick="logout()" style="margin-left:auto; background:#e74c3c; color:white;">Çıkış Yap</button>
   </header>
   <main>
     <section>
       <h3>Genel Bilgiler</h3>
-      <label>Proje Adı</label>
+      <label for="projectName">Proje Adı</label>
       <input type="text" id="projectName" class="readonly" readonly />
-      <label>Müşteri Adı</label>
+      <label for="clientName">Müşteri Adı</label>
       <input type="text" id="clientName" class="readonly" readonly />
       
       <h3>Aşamalar & Sorumlular</h3>
@@ -142,6 +184,7 @@
             <th>Sorumlu Kişi</th>
             <th>Tarih</th>
             <th>Tamamlandı mı?</th>
+            <!-- <th>İşlem</th> Optional: Add header for delete button -->
           </tr>
         </thead>
         <tbody></tbody>
@@ -150,16 +193,16 @@
         <div><input type="text" id="newStageName" placeholder="Yeni Aşama Adı" /></div>
         <div><input type="text" id="newStageResponsible" placeholder="Sorumlu Kişi" /></div>
         <div><input type="date" id="newStageDate" /></div>
-        <div><button onclick="addStage()">Ekle</button></div>
+        <div><button onclick="addStage()">Aşama Ekle</button></div>
       </div>
       
-      <div class="input-group">
+      <div class="input-group" style="margin-top: 20px;">
         <div>
-          <label>Sözleşme Başlangıcı</label>
+          <label for="startDate">Sözleşme Başlangıcı</label>
           <input type="date" id="startDate" />
         </div>
         <div>
-          <label>Sözleşme Bitişi</label>
+          <label for="endDate">Sözleşme Bitişi</label>
           <input type="date" id="endDate" />
         </div>
       </div>
@@ -167,13 +210,13 @@
 
     <section style="margin-top: 30px;">
       <h3>Sözleşme ve Kar Hesapları</h3>
-      <label>Sözleşme Tutarı (TL)</label>
-      <input type="number" id="contractValue" min="0" step="0.01" />
-      <label>Toplam Harcama (TL)</label>
+      <label for="contractValue">Sözleşme Tutarı (TL)</label>
+      <input type="number" id="contractValue" min="0" step="0.01" oninput="updateCalculations()" />
+      <label for="totalExpenses">Toplam Harcama (TL)</label>
       <input type="text" id="totalExpenses" class="readonly" readonly />
-      <label>Gerçekleşen Kar (TL)</label>
+      <label for="realizedProfit">Gerçekleşen Kar (TL)</label>
       <input type="text" id="realizedProfit" class="readonly" readonly />
-      <label>Gerçekleşen Kar Marjı (%)</label>
+      <label for="realizedProfitMargin">Gerçekleşen Kar Marjı (%)</label>
       <input type="text" id="realizedProfitMargin" class="readonly" readonly />
     </section>
 
@@ -184,25 +227,25 @@
           <tr>
             <th>Açıklama</th>
             <th>Tutar (TL)</th>
-            <th></th>
+            <th>İşlem</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
       <div class="input-group" style="margin-top: 15px;">
         <div><input type="text" id="expenseDesc" placeholder="Açıklama" /></div>
-        <div><input type="number" id="expenseAmount" placeholder="Tutar" /></div>
-        <div><button onclick="addExpense()">Ekle</button></div>
+        <div><input type="number" id="expenseAmount" placeholder="Tutar" min="0" step="0.01" /></div>
+        <div><button onclick="addExpense()">Harcama Ekle</button></div>
       </div>
     </section>
 
-    <button onclick="saveDetails()">Kaydet</button>
+    <button onclick="saveDetails()" style="margin-top:25px;">Değişiklikleri Kaydet</button>
     <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
   </main>
   <script>
     // Firebase yapılandırması
     const firebaseConfig = {
-      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I", // Lütfen kendi API anahtarınızı kullanın
       authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
       projectId: "projetakipsistemi-fbabd",
       storageBucket: "projetakipsistemi-fbabd.firebasestorage.app",
@@ -220,59 +263,74 @@
     // Oturum kontrolü
     auth.onAuthStateChanged(user => {
       if (!user) {
-        window.location.href = "login.html"; // Giriş yapılmamışsa login sayfasına yönlendir
+        window.location.href = "login.html"; 
       } else {
-        loadProject();
+        // Proje ID'sini URL'den al ve projeyi yükle
+        const params = new URLSearchParams(window.location.search);
+        projectId = params.get("id");
+        if (projectId) {
+          loadProject();
+        } else {
+          alert("Proje ID bulunamadı.");
+          goBack(); // ID yoksa ana sayfaya dön
+        }
       }
     });
 
     // Proje detaylarını yükle
     async function loadProject() {
-      const params = new URLSearchParams(window.location.search);
-      projectId = params.get("id");
       if (!projectId) return;
 
-      const projectDoc = await db.collection("projects").doc(projectId).get();
-      const p = projectDoc.data();
-      if (!p) return;
+      try {
+        const projectDoc = await db.collection("projects").doc(projectId).get();
+        if (!projectDoc.exists) {
+          alert("Proje bulunamadı veya erişim yetkiniz yok.");
+          goBack();
+          return;
+        }
+        const p = projectDoc.data();
 
-      document.getElementById("projectName").value = p.name;
-      document.getElementById("clientName").value = p.client;
-      document.getElementById("startDate").value = p.startDate || "";
-      document.getElementById("endDate").value = p.endDate || "";
-      document.getElementById("contractValue").value = p.contractValue || 0;
+        document.getElementById("projectName").value = p.name || "";
+        document.getElementById("clientName").value = p.client || "";
+        document.getElementById("startDate").value = p.startDate || "";
+        document.getElementById("endDate").value = p.endDate || "";
+        document.getElementById("contractValue").value = p.contractValue || 0;
 
-      renderStages(p.stages || []);
-      renderExpenses(p.expenses || []);
-      updateCalculations();
+        renderStages(p.stages || []);
+        renderExpenses(p.expenses || []);
+        updateCalculations();
+      } catch (error) {
+        console.error("Proje yüklenirken hata:", error);
+        alert("Proje detayları yüklenirken bir hata oluştu.");
+      }
     }
 
     // Aşamaları yükle
-    function renderStages(data) {
+    function renderStages(stagesData) {
       const tbody = document.querySelector("#stagesTable tbody");
       tbody.innerHTML = "";
-      data.forEach((s, i) => {
+      stagesData.forEach((s, i) => {
         const row = `<tr>
           <td>${s.name}</td>
-          <td><input type="text" value="${s.responsible}" data-idx="${i}" data-field="responsible"></td>
-          <td><input type="date" value="${s.date}" data-idx="${i}" data-field="date"></td>
-          <td><input type="checkbox" ${s.completed ? "checked" : ""} data-idx="${i}" data-field="completed"></td>
-        </tr>`;
+          <td><input type="text" value="${s.responsible || ''}" data-idx="${i}" data-field="responsible" class="stage-input"></td>
+          <td><input type="date" value="${s.date || ''}" data-idx="${i}" data-field="date" class="stage-input"></td>
+          <td><input type="checkbox" ${s.completed ? "checked" : ""} data-idx="${i}" data-field="completed" class="stage-input"></td>
+          <!-- <td><button onclick="removeStage(${i})" class="btn-danger-small">Sil</button></td> -->
+        </tr>`; // Sil butonu için yorum satırını açabilirsiniz
         tbody.insertAdjacentHTML("beforeend", row);
       });
 
-      tbody.querySelectorAll("input").forEach(input => {
-        const idx = input.dataset.idx;
+      // Dinamik olarak eklenen inputlara event listener ata
+      tbody.querySelectorAll(".stage-input").forEach(input => {
+        const idx = parseInt(input.dataset.idx); // Index'i integer yap
         const field = input.dataset.field;
-        if (field === "completed") {
-          input.addEventListener("change", e => {
-            saveStageField(idx, field, e.target.checked);
-          });
-        } else {
-          input.addEventListener("input", e => {
-            saveStageField(idx, field, e.target.value);
-          });
-        }
+        
+        // Otomatik kaydetme için:
+        const eventType = (field === "completed") ? "change" : "blur"; // Checkbox için change, diğerleri için blur
+        input.addEventListener(eventType, (e) => {
+            const value = (field === "completed") ? e.target.checked : e.target.value;
+            saveStageField(idx, field, value);
+        });
       });
     }
 
@@ -282,38 +340,68 @@
       const responsible = document.getElementById("newStageResponsible").value.trim();
       const date = document.getElementById("newStageDate").value;
 
-      if (!name || !responsible || !date) {
-        alert("Lütfen tüm alanları doldurun.");
+      if (!name) { // Sadece aşama adı zorunlu olsun, diğerleri opsiyonel olabilir.
+        alert("Lütfen en azından aşama adını girin.");
         return;
       }
 
-      const projectRef = db.collection("projects").doc(projectId);
-      const projectDoc = await projectRef.get();
-      const stages = projectDoc.data().stages || [];
-      stages.push({ name, responsible, date, completed: false });
-      await projectRef.update({ stages });
+      try {
+        const projectRef = db.collection("projects").doc(projectId);
+        const projectDoc = await projectRef.get();
+        if (!projectDoc.exists) {
+          alert("Proje bulunamadı.");
+          return;
+        }
+        const currentData = projectDoc.data();
+        const stages = currentData.stages || [];
+        stages.push({ name, responsible, date, completed: false });
+        await projectRef.update({ stages });
 
-      document.getElementById("newStageName").value = "";
-      document.getElementById("newStageResponsible").value = "";
-      document.getElementById("newStageDate").value = "";
-      renderStages(stages);
+        document.getElementById("newStageName").value = "";
+        document.getElementById("newStageResponsible").value = "";
+        document.getElementById("newStageDate").value = "";
+        renderStages(stages); // UI'ı güncelle
+        alert("Aşama eklendi.");
+      } catch (error) {
+        console.error("Aşama eklenirken hata:", error);
+        alert("Aşama eklenirken bir hata oluştu.");
+      }
     }
 
     // Aşama alanlarını kaydet
     async function saveStageField(index, field, value) {
-      const projectRef = db.collection("projects").doc(projectId);
-      const projectDoc = await projectRef.get();
-      const stages = projectDoc.data().stages || [];
-      stages[index][field] = value;
-      await projectRef.update({ stages });
+      if (projectId === null) return; // projectId kontrolü
+      try {
+        const projectRef = db.collection("projects").doc(projectId);
+        const projectDoc = await projectRef.get();
+        if (!projectDoc.exists) {
+          alert("Proje bulunamadı.");
+          return;
+        }
+        const stages = projectDoc.data().stages || [];
+        if (stages[index]) {
+          stages[index][field] = value;
+          await projectRef.update({ stages });
+          // console.log(`Aşama ${index}, alan ${field} güncellendi.`); // Başarı mesajı log'a
+        } else {
+          console.error("Güncellenecek aşama bulunamadı, index:", index);
+        }
+      } catch (error) {
+        console.error("Aşama alanı güncellenirken hata:", error);
+        alert("Aşama alanı güncellenirken bir hata oluştu.");
+      }
     }
 
     // Harcamaları yükle
-    function renderExpenses(list) {
+    function renderExpenses(expensesList) {
       const tbody = document.querySelector("#expensesTable tbody");
       tbody.innerHTML = "";
-      list.forEach((item, idx) => {
-        const row = `<tr><td>${item.desc}</td><td>${item.amount.toFixed(2)}</td><td><button onclick="removeExpense(${idx})">Sil</button></td></tr>`;
+      expensesList.forEach((item, idx) => {
+        const row = `<tr>
+                        <td>${item.desc}</td>
+                        <td>${item.amount.toFixed(2)}</td>
+                        <td><button onclick="removeExpense(${idx})" style="background-color:#e74c3c; padding: 5px 10px; font-size:0.9rem;">Sil</button></td>
+                     </tr>`;
         tbody.insertAdjacentHTML("beforeend", row);
       });
     }
@@ -321,57 +409,98 @@
     // Harcama ekle
     async function addExpense() {
       const desc = document.getElementById("expenseDesc").value.trim();
-      const amount = parseFloat(document.getElementById("expenseAmount").value);
-      if (!desc || isNaN(amount) || amount <= 0) return;
+      const amountInput = document.getElementById("expenseAmount").value;
+      const amount = parseFloat(amountInput);
 
-      const projectRef = db.collection("projects").doc(projectId);
-      const projectDoc = await projectRef.get();
-      const expenses = projectDoc.data().expenses || [];
-      expenses.push({ desc, amount });
-      await projectRef.update({ expenses });
+      if (!desc || isNaN(amount) || amount <= 0) {
+        alert("Lütfen geçerli bir açıklama ve tutar girin.");
+        return;
+      }
 
-      document.getElementById("expenseDesc").value = "";
-      document.getElementById("expenseAmount").value = "";
-      renderExpenses(expenses);
-      updateCalculations();
+      try {
+        const projectRef = db.collection("projects").doc(projectId);
+        const projectDoc = await projectRef.get();
+        if (!projectDoc.exists) {
+          alert("Proje bulunamadı.");
+          return;
+        }
+        const expenses = projectDoc.data().expenses || [];
+        expenses.push({ desc, amount });
+        await projectRef.update({ expenses });
+
+        document.getElementById("expenseDesc").value = "";
+        document.getElementById("expenseAmount").value = "";
+        renderExpenses(expenses);
+        updateCalculations();
+        alert("Harcama eklendi.");
+      } catch (error) {
+        console.error("Harcama eklenirken hata:", error);
+        alert("Harcama eklenirken bir hata oluştu.");
+      }
     }
 
     // Harcama sil
-    async function removeExpense(i) {
-      const projectRef = db.collection("projects").doc(projectId);
-      const projectDoc = await projectRef.get();
-      const expenses = projectDoc.data().expenses || [];
-      expenses.splice(i, 1);
-      await projectRef.update({ expenses });
+    async function removeExpense(index) {
+      if (!confirm("Bu harcamayı silmek istediğinizden emin misiniz?")) return;
+      try {
+        const projectRef = db.collection("projects").doc(projectId);
+        const projectDoc = await projectRef.get();
+        if (!projectDoc.exists) {
+          alert("Proje bulunamadı.");
+          return;
+        }
+        const expenses = projectDoc.data().expenses || [];
+        expenses.splice(index, 1);
+        await projectRef.update({ expenses });
 
-      renderExpenses(expenses);
-      updateCalculations();
+        renderExpenses(expenses);
+        updateCalculations();
+        alert("Harcama silindi.");
+      } catch (error) {
+        console.error("Harcama silinirken hata:", error);
+        alert("Harcama silinirken bir hata oluştu.");
+      }
     }
 
     // Kar hesaplamalarını güncelle
     function updateCalculations() {
-      const contract = parseFloat(document.getElementById("contractValue").value) || 0;
-      const totalCost = Array.from(document.querySelectorAll("#expensesTable tbody tr")).reduce((sum, row) => {
-        const amount = parseFloat(row.cells[1].innerText) || 0;
-        return sum + amount;
-      }, 0);
+      const contractValueInput = document.getElementById("contractValue").value;
+      const contract = parseFloat(contractValueInput) || 0;
+      
+      let totalCost = 0;
+      const expensesRows = document.querySelectorAll("#expensesTable tbody tr");
+      expensesRows.forEach(row => {
+        const amountText = row.cells[1] ? row.cells[1].innerText : "0";
+        totalCost += parseFloat(amountText) || 0;
+      });
 
       const profit = contract - totalCost;
       const margin = contract > 0 ? (profit / contract) * 100 : 0;
+      
       document.getElementById("totalExpenses").value = totalCost.toFixed(2);
       document.getElementById("realizedProfit").value = profit.toFixed(2);
       document.getElementById("realizedProfitMargin").value = margin.toFixed(2);
     }
 
-    // Değişiklikleri kaydet
+    // Değişiklikleri kaydet (Sözleşme başlangıç/bitiş tarihi ve tutarı)
     async function saveDetails() {
-      const projectRef = db.collection("projects").doc(projectId);
-      await projectRef.update({
-        startDate: document.getElementById("startDate").value,
-        endDate: document.getElementById("endDate").value,
-        contractValue: parseFloat(document.getElementById("contractValue").value) || 0
-      });
-      alert("Değişiklikler kaydedildi.");
+      const startDate = document.getElementById("startDate").value;
+      const endDate = document.getElementById("endDate").value;
+      const contractValue = parseFloat(document.getElementById("contractValue").value) || 0;
+
+      try {
+        const projectRef = db.collection("projects").doc(projectId);
+        await projectRef.update({
+          startDate: startDate,
+          endDate: endDate,
+          contractValue: contractValue
+        });
+        alert("Değişiklikler kaydedildi.");
+        updateCalculations(); // Kayıttan sonra hesaplamaları güncelle
+      } catch (error) {
+        console.error("Detaylar kaydedilirken hata:", error);
+        alert("Değişiklikler kaydedilirken bir hata oluştu.");
+      }
     }
 
     // Geri dön
@@ -382,12 +511,17 @@
     // Çıkış yap
     function logout() {
       auth.signOut().then(() => {
-        window.location.href = "login.html"; // Çıkış yapıldığında login sayfasına yönlendir
+        window.location.href = "login.html";
+      }).catch((error) => {
+        console.error("Çıkış yapılırken hata:", error);
+        alert("Çıkış yapılırken bir hata oluştu.");
       });
     }
+    
+    // Sözleşme tutarı input'u her değiştiğinde hesaplamaları güncelle
+    // (Bu zaten oninput ile HTML'de ele alındı, ama JavaScript'ten de eklenebilir)
+    // document.getElementById("contractValue").addEventListener("input", updateCalculations);
 
-    // Sayfa yüklendiğinde projeyi yükle
-    window.onload = loadProject;
   </script>
 </body>
 </html>
