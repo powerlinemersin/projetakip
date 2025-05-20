@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
+    /* ... (mevcut stilleriniz aynı kalacak, index.html'deki genel select stili de geçerli) ... */
     body {
       font-family: 'Poppins', sans-serif;
       margin: 0;
@@ -49,7 +50,7 @@
       margin: 12px 0 6px;
       font-weight: 600;
     }
-    input, button, select, textarea {
+    input, button, select, textarea { /* select zaten vardı */
       padding: 10px 12px;
       font-size: 1rem;
       border-radius: 6px;
@@ -59,7 +60,7 @@
       width: 100%;
       box-sizing: border-box;
     }
-    input:focus, select:focus, textarea:focus {
+    input:focus, select:focus, textarea:focus { /* select zaten vardı */
       border-color: #2980b9;
       box-shadow: 0 0 5px #2980b9;
     }
@@ -116,6 +117,7 @@
         cursor: not-allowed;
     }
     @media (max-width: 768px) {
+      /* ... (mevcut responsive stilleriniz aynı kalacak) ... */
       header {
         flex-direction: column;
         gap: 10px;
@@ -168,10 +170,24 @@
   <main>
     <section>
       <h3>Genel Bilgiler</h3>
-      <label for="projectName">Proje Adı</label>
-      <input type="text" id="projectName" class="readonly" readonly />
-      <label for="clientName">Müşteri Adı</label>
-      <input type="text" id="clientName" class="readonly" readonly />
+      <div class="input-group">
+        <div style="flex: 2;">
+          <label for="projectName">Proje Adı</label>
+          <input type="text" id="projectName" class="readonly" readonly />
+        </div>
+        <div style="flex: 2;">
+          <label for="clientName">Müşteri Adı</label>
+          <input type="text" id="clientName" class="readonly" readonly />
+        </div>
+        <div style="flex: 1;">
+          <label for="projectStatus">Proje Durumu</label>
+          <select id="projectStatus" onchange="updateProjectStatus(this.value)">
+            <option value="Başlamadı">Başlamadı</option>
+            <option value="Devam Ediyor">Devam Ediyor</option>
+            <option value="Tamamlandı">Tamamlandı</option>
+          </select>
+        </div>
+      </div>
       
       <h3>Aşamalar & Sorumlular</h3>
       <table id="stagesTable">
@@ -185,7 +201,6 @@
         </thead>
         <tbody></tbody>
       </table>
-      <!-- Yeni aşama ekleme bölümü kaldırıldı -->
       
       <div class="input-group" style="margin-top: 20px;">
         <div>
@@ -230,7 +245,7 @@
       </div>
     </section>
 
-    <button onclick="saveDetails()" style="margin-top:25px;">Değişiklikleri Kaydet</button>
+    <button onclick="saveDetails()" style="margin-top:25px;">Sözleşme Bilgilerini Kaydet</button>
     <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
   </main>
   <script>
@@ -244,23 +259,17 @@
       appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
     };
 
-    // Firebase uygulamasını başlat
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
     let projectId = null;
     const predefinedStageNames = [
-      "Keşif / Ön görüşme", 
-      "Teklif oluşturma", 
-      "Onay – sözleşme", 
-      "Malzeme temini", 
-      "Uygulama", 
-      "Test ve devreye alma", 
-      "Teslimat"
+      "Keşif / Ön görüşme", "Teklif oluşturma", "Onay – sözleşme", 
+      "Malzeme temini", "Uygulama", "Test ve devreye alma", "Teslimat"
     ];
+    const defaultProjectStatus = "Başlamadı"; // index.html'deki defaultStatus ile aynı olmalı
 
-    // Oturum kontrolü
     auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = "login.html"; 
@@ -276,7 +285,6 @@
       }
     });
 
-    // Proje detaylarını yükle
     async function loadProject() {
       if (!projectId) return;
 
@@ -296,13 +304,13 @@
         document.getElementById("startDate").value = p.startDate || "";
         document.getElementById("endDate").value = p.endDate || "";
         document.getElementById("contractValue").value = p.contractValue || 0;
+        
+        // Proje durumunu ayarla
+        document.getElementById("projectStatus").value = p.status || defaultProjectStatus;
 
         let stagesData = p.stages || [];
-
-        // Eğer Firestore'da aşama verisi yoksa veya eksikse, ön tanımlı aşamaları oluştur/tamamla
         if (!stagesData || stagesData.length !== predefinedStageNames.length || stagesData.some((s, i) => s.name !== predefinedStageNames[i])) {
             const defaultStages = predefinedStageNames.map(name => {
-                // Firestore'dan gelen mevcut veriyi koru, yoksa varsayılan ata
                 const existingStage = stagesData.find(s => s.name === name);
                 return {
                     name: name,
@@ -312,7 +320,7 @@
                 };
             });
             stagesData = defaultStages;
-            await projectRef.update({ stages: stagesData }); // Firestore'u güncelle
+            await projectRef.update({ stages: stagesData }); 
         }
         
         renderStages(stagesData);
@@ -325,22 +333,14 @@
       }
     }
 
-    // Aşamaları yükle
     function renderStages(stagesData) {
       const tbody = document.querySelector("#stagesTable tbody");
       tbody.innerHTML = "";
-
-      // predefinedStageNames dizisindeki sıraya göre render et
       predefinedStageNames.forEach((stageName, i) => {
-        // Firestore'dan gelen veride bu aşamayı bul
         let stage = stagesData.find(s => s.name === stageName);
-
-        // Eğer Firestore'dan gelen veride bu aşama yoksa (yeni eklenmiş bir ön tanımlı aşama olabilir),
-        // varsayılan boş bir obje oluştur. Bu durum loadProject içinde halledilmiş olmalı.
         if (!stage) {
             stage = { name: stageName, responsible: "", date: "", completed: false };
         }
-        
         const row = `<tr>
           <td>${stage.name}</td>
           <td><input type="text" value="${stage.responsible || ''}" data-idx="${i}" data-field="responsible" class="stage-input"></td>
@@ -353,7 +353,6 @@
       tbody.querySelectorAll(".stage-input").forEach(input => {
         const idx = parseInt(input.dataset.idx);
         const field = input.dataset.field;
-        
         const eventType = (field === "completed") ? "change" : "blur"; 
         input.addEventListener(eventType, (e) => {
             const value = (field === "completed") ? e.target.checked : e.target.value;
@@ -362,51 +361,46 @@
       });
     }
 
-    // addStage fonksiyonu artık gerekli değil ve kaldırıldı.
-
-    // Aşama alanlarını kaydet
     async function saveStageField(index, field, value) {
       if (projectId === null) return; 
       try {
         const projectRef = db.collection("projects").doc(projectId);
         const projectDoc = await projectRef.get();
-        if (!projectDoc.exists) {
-          alert("Proje bulunamadı.");
-          return;
-        }
-        // Önemli: Firestore'daki stages dizisini al ve güncelle
-        // Bu, senkronizasyon sorunlarını önler.
+        if (!projectDoc.exists) { return; }
         let stages = projectDoc.data().stages || [];
-
-        // Eğer stages dizisi boşsa veya beklenen uzunlukta değilse, yeniden oluştur
-        // Bu durum normalde loadProject içinde ele alınır ama bir güvenlik önlemi olarak eklenebilir.
         if (!stages || stages.length !== predefinedStageNames.length) {
-            stages = predefinedStageNames.map(name => ({
-                name: name,
-                responsible: "",
-                date: "",
-                completed: false
-            }));
+            stages = predefinedStageNames.map(name => ({ name: name, responsible: "", date: "", completed: false }));
         }
-
-        // Doğru indeksteki aşamayı güncelle
         if (stages[index]) {
           stages[index][field] = value;
-          // Aşama adının doğru olduğundan emin ol (ön tanımlı listeden)
           stages[index].name = predefinedStageNames[index]; 
           await projectRef.update({ stages });
-        } else {
-          console.error("Güncellenecek aşama bulunamadı, index:", index);
-          // Bu durumda tüm stage array'ini yeniden oluşturup kaydetmek bir çözüm olabilir
-          // Ancak idealde buraya düşmemesi gerekir.
         }
       } catch (error) {
-        console.error(`Aşama alanı (${predefinedStageNames[index]} - ${field}) güncellenirken hata:`, error);
-        alert("Aşama alanı güncellenirken bir hata oluştu.");
+        console.error(`Aşama alanı güncellenirken hata:`, error);
+        // alert("Aşama alanı güncellenirken bir hata oluştu."); // Kullanıcıya çok fazla alert göstermemek için yorumlandı
       }
     }
 
-    // Harcamaları yükle (Değişiklik yok)
+    // Proje durumunu güncelleme fonksiyonu
+    async function updateProjectStatus(newStatus) {
+        if (!projectId) return;
+        try {
+            const projectRef = db.collection("projects").doc(projectId);
+            await projectRef.update({
+                status: newStatus
+            });
+            // alert("Proje durumu güncellendi: " + newStatus); // Başarı mesajı (opsiyonel)
+            console.log("Proje durumu güncellendi:", newStatus);
+        } catch (error) {
+            console.error("Proje durumu güncellenirken hata:", error);
+            alert("Proje durumu güncellenirken bir hata oluştu.");
+            // Hata durumunda dropdown'ı eski değerine döndürmek gerekebilir
+            // Bunun için loadProject'i tekrar çağırmak veya eski status değerini saklamak gerekir.
+            // Şimdilik basit tutuyoruz.
+        }
+    }
+
     function renderExpenses(expensesList) {
       const tbody = document.querySelector("#expensesTable tbody");
       tbody.innerHTML = "";
@@ -420,83 +414,68 @@
       });
     }
 
-    // Harcama ekle (Değişiklik yok)
     async function addExpense() {
       const desc = document.getElementById("expenseDesc").value.trim();
       const amountInput = document.getElementById("expenseAmount").value;
       const amount = parseFloat(amountInput);
-
       if (!desc || isNaN(amount) || amount <= 0) {
         alert("Lütfen geçerli bir açıklama ve tutar girin.");
         return;
       }
-
       try {
         const projectRef = db.collection("projects").doc(projectId);
         const projectDoc = await projectRef.get();
-        if (!projectDoc.exists) {
-          alert("Proje bulunamadı.");
-          return;
-        }
+        if (!projectDoc.exists) { return; }
         const expenses = projectDoc.data().expenses || [];
         expenses.push({ desc, amount });
         await projectRef.update({ expenses });
-
         document.getElementById("expenseDesc").value = "";
         document.getElementById("expenseAmount").value = "";
         renderExpenses(expenses);
         updateCalculations();
-        alert("Harcama eklendi.");
+        // alert("Harcama eklendi.");
       } catch (error) {
         console.error("Harcama eklenirken hata:", error);
         alert("Harcama eklenirken bir hata oluştu.");
       }
     }
 
-    // Harcama sil (Değişiklik yok)
     async function removeExpense(index) {
       if (!confirm("Bu harcamayı silmek istediğinizden emin misiniz?")) return;
       try {
         const projectRef = db.collection("projects").doc(projectId);
         const projectDoc = await projectRef.get();
-        if (!projectDoc.exists) {
-          alert("Proje bulunamadı.");
-          return;
-        }
+        if (!projectDoc.exists) { return; }
         const expenses = projectDoc.data().expenses || [];
         expenses.splice(index, 1);
         await projectRef.update({ expenses });
-
         renderExpenses(expenses);
         updateCalculations();
-        alert("Harcama silindi.");
+        // alert("Harcama silindi.");
       } catch (error) {
         console.error("Harcama silinirken hata:", error);
         alert("Harcama silinirken bir hata oluştu.");
       }
     }
 
-    // Kar hesaplamalarını güncelle (Değişiklik yok)
     function updateCalculations() {
       const contractValueInput = document.getElementById("contractValue").value;
       const contract = parseFloat(contractValueInput) || 0;
-      
       let totalCost = 0;
       const expensesRows = document.querySelectorAll("#expensesTable tbody tr");
       expensesRows.forEach(row => {
         const amountText = row.cells[1] ? row.cells[1].innerText : "0";
         totalCost += parseFloat(amountText) || 0;
       });
-
       const profit = contract - totalCost;
       const margin = contract > 0 ? (profit / contract) * 100 : 0;
-      
       document.getElementById("totalExpenses").value = totalCost.toFixed(2);
       document.getElementById("realizedProfit").value = profit.toFixed(2);
       document.getElementById("realizedProfitMargin").value = margin.toFixed(2);
     }
 
-    // Değişiklikleri kaydet (Değişiklik yok)
+    // Sadece sözleşme başlangıç/bitiş ve tutarını kaydeder
+    // Proje durumu artık onchange ile anında kaydediliyor.
     async function saveDetails() {
       const startDate = document.getElementById("startDate").value;
       const endDate = document.getElementById("endDate").value;
@@ -508,21 +487,20 @@
           startDate: startDate,
           endDate: endDate,
           contractValue: contractValue
+          // status: document.getElementById("projectStatus").value // Eğer anında kaydetme istenmiyorsa bu satır eklenir
         });
-        alert("Değişiklikler kaydedildi.");
-        updateCalculations();
+        alert("Sözleşme bilgileri kaydedildi.");
+        updateCalculations(); 
       } catch (error) {
         console.error("Detaylar kaydedilirken hata:", error);
-        alert("Değişiklikler kaydedilirken bir hata oluştu.");
+        alert("Sözleşme bilgileri kaydedilirken bir hata oluştu.");
       }
     }
 
-    // Geri dön (Değişiklik yok)
     function goBack() {
       window.location.href = "index.html";
     }
 
-    // Çıkış yap (Değişiklik yok)
     function logout() {
       auth.signOut().then(() => {
         window.location.href = "login.html";
@@ -531,7 +509,6 @@
         alert("Çıkış yapılırken bir hata oluştu.");
       });
     }
-    
   </script>
 </body>
 </html>
