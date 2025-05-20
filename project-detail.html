@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <!-- jsPDF kütüphaneleri kaldırıldı -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     body {
@@ -93,71 +93,33 @@
         text-align: center; line-height: 10px; color: white; font-size: 0.7em;
     }
 
-    /* Yazdırma Stilleri */
-    @media print {
-      body {
-        font-family: Arial, sans-serif; margin: 20mm; font-size: 10pt;
-      }
-      header, 
-      main > div:last-child > button, /* En alttaki buton grubu */
-      main > section:nth-last-of-type(2) .input-group button, /* Harcama ekle butonu */
-      main > section:last-of-type .input-group button, /* Dosya yükle butonu */
-      #uploadProgress,
-      .delete-file-btn,
-      #expensesTable button, /* Harcama sil butonu (class'ı .delete-file-btn ise bu gereksiz) */
-      .stage-input[type="checkbox"] + label, /* Checkbox label'larını gizleyebiliriz, değerini metinle yazdıracağız */
-      .category-checkbox-group input[type="checkbox"], /* Kategori checkboxlarını gizle */
-      .category-checkbox-group label[for^="detail_"] /* Kategori label'larını gizle */
-       {
-        display: none !important;
-      }
-      h3 {
-          border-bottom: 1px solid #ccc; margin-top: 15px; margin-bottom: 10px;
-          font-size: 14pt;
-      }
-      table {
-          margin-top: 10px; font-size: 9pt; width: 100% !important;
-          border: 1px solid #ccc !important; page-break-inside: auto; /* Tabloların sayfa ortasında bölünmesini engellemeye çalış */
-      }
-      tr { page-break-inside: avoid; page-break-after: auto; } /* Satırların bölünmesini engelle */
-      th, td {
-          padding: 4px 6px !important; border: 1px solid #eee !important;
-          word-wrap: break-word; /* Uzun kelimeleri böl */
-      }
-      thead {
-          background-color: #f0f0f0 !important; color: #333 !important;
-          display: table-header-group; /* Her sayfada başlık tekrarı için */
-      }
+    @media print { /* Yazdırma Stilleri */
+      body { font-family: Arial, sans-serif; margin: 20mm; font-size: 10pt; }
+      header, main > div:last-child > button, main > section:nth-last-of-type(2) .input-group button,
+      main > section:last-of-type .input-group button, #uploadProgress, .delete-file-btn,
+      #expensesTable button, .stage-input[type="checkbox"] + label, 
+      .category-checkbox-group input[type="checkbox"], .category-checkbox-group label[for^="detail_"]
+       { display: none !important; }
+      h3 { border-bottom: 1px solid #ccc; margin-top: 15px; margin-bottom: 10px; font-size: 14pt;}
+      table { margin-top: 10px; font-size: 9pt; width: 100% !important; border: 1px solid #ccc !important; page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+      th, td { padding: 4px 6px !important; border: 1px solid #eee !important; word-wrap: break-word; }
+      thead { background-color: #f0f0f0 !important; color: #333 !important; display: table-header-group; }
       a { text-decoration: none; color: black; }
-      a[href]::after { content: " (" attr(href) ")"; font-size: 0.8em; color: #555; } /* Linkleri göster */
-      
-      /* Input ve select'lerin değerlerini metin olarak göster */
+      a[href]::after { content: " (" attr(href) ")"; font-size: 0.8em; color: #555; }
       input[type="text"], input[type="date"], select, textarea.stage-notes-input {
         border: none !important; box-shadow: none !important; padding: 0 !important;
         background-color: transparent !important; font: inherit !important; color: inherit !important;
-        -webkit-appearance: none; -moz-appearance: none; appearance: none;
-        width: auto !important; /* Genişliklerini içeriğe göre ayarla */
+        -webkit-appearance: none; -moz-appearance: none; appearance: none; width: auto !important;
       }
-      /* Okunabilir readonly inputlar için özel */
       input.readonly { color: #333; font-weight: normal; }
-
-      /* Checkbox değerini metinle göster */
-      .stage-input[type="checkbox"]::after {
-        content: attr(checked) ? "Evet" : "Hayır";
-        /* Veya JavaScript ile daha iyi bir çözüm: yazdırmadan önce checkbox'ın yanına metin ekle */
-      }
-       /* Seçili kategorileri yazdırmak için (JavaScript ile daha iyi olur) */
+      .stage-input[type="checkbox"]::after { content: attr(checked) ? "Evet" : "Hayır"; }
       #projectCategoriesCheckboxesContainer legend { font-weight: bold; margin-bottom: 3px; }
       #projectCategoriesCheckboxesContainer { border: none; padding: 0; margin-bottom: 10px; }
-      /* Yazdırmada sadece seçili kategorilerin gösterilmesi için daha gelişmiş bir çözüm gerekir (JS ile) */
-      /* Şimdilik checkboxlar gizlendi, kategori bilgisi metin olarak eklenebilir */
-
       .file-list li { background-color: transparent; border: none; padding: 2px 0; margin-bottom: 2px; }
     }
-
     @media (max-width: 768px) {
-      /* ... (mevcut mobil stilleriniz aynı kalacak) ... */
-       header { flex-direction: column; gap: 10px; padding: 20px; }
+      header { flex-direction: column; gap: 10px; padding: 20px; }
       .input-group { flex-direction: column; align-items: stretch; }
       .input-group > div { min-width: 100%; }
       .input-group button { width: 100%; margin-top: 10px; }
@@ -219,7 +181,6 @@
 
       <fieldset class="category-checkbox-group" id="projectCategoriesCheckboxesContainer">
           <legend>Proje Kategorileri</legend>
-          <!-- Checkbox'lar JavaScript ile buraya eklenecek -->
       </fieldset>
       
       <h3>Aşamalar & Sorumlular</h3>
@@ -314,7 +275,7 @@
 
     <div style="margin-top: 30px; padding-bottom: 30px;">
         <button onclick="saveDetails()">Sözleşme Bilgilerini Kaydet</button>
-        <button onclick="window.print();" style="margin-left:10px; background:#1abc9c;">Sayfayı Yazdır/PDF Kaydet</button>
+        <button onclick="generateExcelReport()" style="margin-left:10px; background:#27ae60;">Rapor İndir (Excel)</button>
         <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
     </div>
   </main>
@@ -334,7 +295,6 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     const storage = firebase.storage();
-    // const { jsPDF } = window.jspdf; // jsPDF kaldırıldığı için bu satır da kaldırıldı
 
     let projectId = null;
     const predefinedStageNames = [
@@ -438,28 +398,23 @@
         
         let stagesData = p.stages || [];
         let shouldUpdateStagesInDb = false;
-        if (!p.stages || p.stages.length === 0) { // Sadece proje ilk kez açılıyorsa ve aşamaları hiç yoksa
+        if (!p.stages || p.stages.length === 0) {
             stagesData = predefinedStageNames.map(name => ({
                 name: name, responsible: "", date: "", notes: "", completed: false
             }));
             shouldUpdateStagesInDb = true;
         } else if (stagesData.length !== predefinedStageNames.length || stagesData.some((s, i) => s.name !== predefinedStageNames[i])) {
-            // Mevcut aşamalar varsa ve ön tanımlı liste değişmişse, mevcutları koruyarak yenilerini ekle/sırala
             const newStagesData = predefinedStageNames.map(name => {
                  const existingStage = stagesData.find(s_1 => s_1.name === name);
                  return {
-                     name: name,
-                     responsible: existingStage?.responsible || "",
-                     date: existingStage?.date || "",
-                     notes: existingStage?.notes || "",
-                     completed: existingStage?.completed || false
+                     name: name, responsible: existingStage?.responsible || "", date: existingStage?.date || "",
+                     notes: existingStage?.notes || "", completed: existingStage?.completed || false
                  };
             });
             stagesData = newStagesData;
-            shouldUpdateStagesInDb = true; // Ön tanımlı liste değiştiği için DB'yi güncelle
+            shouldUpdateStagesInDb = true;
         }
-
-        if(shouldUpdateStagesInDb){
+        if(shouldUpdateStagesInDb && stagesData.length > 0){ // Sadece gerçekten aşama varsa güncelle
             await projectRef.update({ stages: stagesData });
         }
         
@@ -510,23 +465,18 @@
         if(!doc.exists) return;
 
         let stages = doc.data().stages || [];
-        // Ön tanımlı aşama yapısını koru
         if (!stages.length || stages.length !== predefinedStageNames.length || stages.some((s, i) => s.name !== predefinedStageNames[i])) {
             stages = predefinedStageNames.map(name => {
-                 const existingStage = stages.find(s_1 => s_1.name === name); // Mevcut veriyi korumaya çalış
+                 const existingStage = stages.find(s_1 => s_1.name === name);
                  return {
-                    name: name, 
-                    responsible: existingStage?.responsible || "", 
-                    date: existingStage?.date || "", 
-                    notes: existingStage?.notes || "", 
-                    completed: existingStage?.completed || false
+                    name: name, responsible: existingStage?.responsible || "", date: existingStage?.date || "", 
+                    notes: existingStage?.notes || "", completed: existingStage?.completed || false
                 };
             });
         }
         
         if (stages[index]) {
           stages[index][field] = value;
-          // stages[index].name = predefinedStageNames[index]; // Bu satır zaten renderStages'da sağlanıyor.
           await projectRef.update({ stages: stages });
         }
       } catch (error) {
@@ -628,9 +578,57 @@
       }
     }
     
-    // generateReport fonksiyonu kaldırıldı.
-    // function generateReport() { /* ... */ }
+    async function generateExcelReport() {
+        if (!projectId) { alert("Rapor oluşturulacak proje bulunamadı."); return; }
+        const projectRef = db.collection("projects").doc(projectId);
+        const projectDoc = await projectRef.get();
+        if (!projectDoc.exists) { alert("Proje verileri bulunamadı."); return; }
+        const p = projectDoc.data();
+        const wb = XLSX.utils.book_new();
 
+        const generalInfoData = [
+            ["Proje Adı", p.name || 'N/A'], ["Müşteri Adı", p.client || 'N/A'],
+            ["Proje Durumu", p.status || defaultProjectStatus],
+            ["Kategoriler", (p.categories || []).join(", ") || 'N/A'],
+            ["Sözleşme Başlangıcı", p.startDate || 'N/A'], ["Sözleşme Bitişi", p.endDate || 'N/A']
+        ];
+        const wsGeneral = XLSX.utils.aoa_to_sheet(generalInfoData);
+        XLSX.utils.book_append_sheet(wb, wsGeneral, "Genel Bilgiler");
+
+        const stagesHeaders = ["Aşama Adı", "Sorumlu Kişi", "Tarih", "Notlar", "Durum"];
+        const stagesBody = (p.stages || []).map(s => [
+            s.name, s.responsible, s.date, s.notes || '', s.completed ? "Tamamlandı" : "Tamamlanmadı"
+        ]);
+        const wsStages = XLSX.utils.aoa_to_sheet([stagesHeaders, ...stagesBody]);
+        XLSX.utils.book_append_sheet(wb, wsStages, "Aşamalar");
+
+        const expensesHeaders = ["Açıklama", "Tutar (TL)"];
+        const expensesBody = (p.expenses || []).map(e => [ e.desc, e.amount ]);
+        const wsExpenses = XLSX.utils.aoa_to_sheet([expensesHeaders, ...expensesBody]);
+        (expensesBody || []).forEach((r, i) => { const adr = XLSX.utils.encode_cell({c:1,r:i+1}); if(wsExpenses[adr]){ wsExpenses[adr].t='n'; wsExpenses[adr].z='#,##0.00 TL';}});
+        XLSX.utils.book_append_sheet(wb, wsExpenses, "Harcamalar");
+
+        const contractVal = p.contractValue||0; const totalExp=(p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0);
+        const realProfit=contractVal-totalExp; const profitMargin=contractVal>0?(realProfit/contractVal)*100:0;
+        const financialData = [
+            ["Sözleşme Tutarı (TL)", contractVal], ["Toplam Harcama (TL)", totalExp],
+            ["Gerçekleşen Kar (TL)", realProfit], ["Kar Marjı (%)", profitMargin]
+        ];
+        const wsFinancial = XLSX.utils.aoa_to_sheet(financialData);
+        financialData.forEach((r,i)=>{ const adr=XLSX.utils.encode_cell({c:1,r:i}); if(wsFinancial[adr]){wsFinancial[adr].t='n'; wsFinancial[adr].z= i<3 ? '#,##0.00 TL':'0.00%'; if(i===3) wsFinancial[adr].v=profitMargin/100;}});
+        XLSX.utils.book_append_sheet(wb, wsFinancial, "Finansal Özet");
+
+        if (p.files && p.files.length > 0) {
+            const filesHeaders = ["Dosya Adı", "Yüklenme Tarihi", "URL"];
+            const filesBody = (p.files || []).map(f => [ f.name, f.uploadedAt?.toDate?f.uploadedAt.toDate().toLocaleDateString('tr-TR'):'N/A', f.url]);
+            const wsFiles = XLSX.utils.aoa_to_sheet([filesHeaders, ...filesBody]);
+            XLSX.utils.book_append_sheet(wb, wsFiles, "Proje Dosyaları");
+        }
+
+        const fileName = `${p.name ? p.name.replace(/[^a-zA-Z0-9]/g, '_') : 'proje'}_rapor.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        alert("Excel raporu oluşturuldu ve indiriliyor.");
+    }
 
     function goBack() { window.location.href = "index.html"; }
     function logout() { auth.signOut().then(()=>window.location.href="login.html").catch(e=>{console.error("Çıkış hatası:",e);alert("Çıkış hatası.");});}
