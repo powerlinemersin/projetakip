@@ -9,8 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins :wght@400;600&display=swap" rel="stylesheet" />
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js "></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js "></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js "></script>
 
   <style>
     body {
@@ -129,6 +129,7 @@
         await auth.signInWithEmailAndPassword(email, password);
         window.location.href = "index.html"; // Giriş başarılıysa ana sayfaya yönlendir
       } catch (error) {
+        console.error("Giriş hatası:", error); // Hata mesajını konsola yazdır
         document.getElementById("error-message").innerText = "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.";
       }
     }
