@@ -11,6 +11,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script> <!-- Firestore SDK eklendi -->
 
   <style>
     body {
@@ -113,7 +114,7 @@
   <script>
     // Firebase yapılandırması
     const firebaseConfig = {
-      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I", // Lütfen kendi API anahtarınızı kullanın
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I", // API Anahtarınız
       authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
       projectId: "projetakipsistemi-fbabd",
       storageBucket: "projetakipsistemi-fbabd.firebasestorage.app",
@@ -124,13 +125,14 @@
     // Firebase uygulamasını başlat
     const app = firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore(); // Firestore'u initialize et
     const errorMessageDiv = document.getElementById("error-message");
 
     // Kayıt olma fonksiyonu
     async function signup() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
-      errorMessageDiv.innerText = ""; // Önceki hata mesajını temizle
+      errorMessageDiv.innerText = ""; 
 
       if (!email || !password) {
         errorMessageDiv.innerText = "Lütfen e-posta ve şifre alanlarını doldurun.";
@@ -142,9 +144,21 @@
       }
 
       try {
-        await auth.createUserWithEmailAndPassword(email, password);
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        // Firestore'a kullanıcı bilgilerini ve rolünü kaydet
+        if (user) {
+          await db.collection("users").doc(user.uid).set({
+            email: user.email,
+            role: "user", // Varsayılan rol "user"
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          console.log("Kullanıcı Firestore'a eklendi:", user.uid);
+        }
+
         alert("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz.");
-        window.location.href = "login.html"; // Kayıt başarılıysa giriş sayfasına yönlendir
+        window.location.href = "login.html"; 
       } catch (error) {
         console.error("Kayıt hatası:", error.code, error.message);
         let message = "Kayıt başarısız oldu. Lütfen bilgilerinizi kontrol edin.";
