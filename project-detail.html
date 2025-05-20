@@ -146,6 +146,12 @@
         </thead>
         <tbody></tbody>
       </table>
+      <div class="input-group" style="margin-top: 15px;">
+        <div><input type="text" id="newStageName" placeholder="Yeni Aşama Adı" /></div>
+        <div><input type="text" id="newStageResponsible" placeholder="Sorumlu Kişi" /></div>
+        <div><input type="date" id="newStageDate" /></div>
+        <div><button onclick="addStage()">Ekle</button></div>
+      </div>
       
       <div class="input-group">
         <div>
@@ -268,6 +274,29 @@
           });
         }
       });
+    }
+
+    // Yeni aşama ekle
+    async function addStage() {
+      const name = document.getElementById("newStageName").value.trim();
+      const responsible = document.getElementById("newStageResponsible").value.trim();
+      const date = document.getElementById("newStageDate").value;
+
+      if (!name || !responsible || !date) {
+        alert("Lütfen tüm alanları doldurun.");
+        return;
+      }
+
+      const projectRef = db.collection("projects").doc(projectId);
+      const projectDoc = await projectRef.get();
+      const stages = projectDoc.data().stages || [];
+      stages.push({ name, responsible, date, completed: false });
+      await projectRef.update({ stages });
+
+      document.getElementById("newStageName").value = "";
+      document.getElementById("newStageResponsible").value = "";
+      document.getElementById("newStageDate").value = "";
+      renderStages(stages);
     }
 
     // Aşama alanlarını kaydet
