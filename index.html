@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
+    /* ... (mevcut stilleriniz aynı kalacak) ... */
     body {
       font-family: 'Poppins', sans-serif;
       margin: 0;
@@ -39,7 +40,6 @@
       margin: 0;
       user-select: none;
     }
-    /* ... (diğer stilleriniz öncekiyle aynı kalacak) ... */
     main {
       max-width: 1100px;
       margin: 30px auto;
@@ -57,7 +57,7 @@
       margin: 12px 0 6px;
       font-weight: 600;
     }
-    input, button { 
+    input, button, select { /* select eklendi */
       padding: 10px 12px;
       font-size: 1rem;
       border-radius: 6px;
@@ -66,7 +66,7 @@
       transition: border-color 0.3s ease, box-shadow 0.3s ease;
       box-sizing: border-box; 
     }
-    input:focus {
+    input:focus, select:focus { /* select eklendi */
       border-color: #2980b9;
       box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
     }
@@ -137,6 +137,21 @@
     .input-group button {
         flex-shrink: 0; 
     }
+    /* Durum etiketleri için stiller (opsiyonel) */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: 600;
+        color: white;
+        text-align: center;
+        min-width: 80px; /* Sabit genişlik */
+        display: inline-block;
+    }
+    .status-baslamadi { background-color: #7f8c8d; } /* Gri */
+    .status-devam-ediyor { background-color: #f39c12; } /* Turuncu */
+    .status-tamamlandi { background-color: #2ecc71; } /* Yeşil */
+
 
     @media (max-width: 768px) {
       header {
@@ -194,6 +209,12 @@
         flex-grow: 1; 
         color: #555;
       }
+      /* Responsive table için data-label tanımlamaları */
+      tbody tr td:nth-of-type(1)::before { content: "Proje Adı:"; }
+      tbody tr td:nth-of-type(2)::before { content: "Müşteri:"; }
+      tbody tr td:nth-of-type(3)::before { content: "Durum:"; } /* Yeni eklendi */
+      tbody tr td:nth-of-type(4)::before { content: "Sözleşme Bedeli:"; }
+      tbody tr td:nth-of-type(5)::before { content: "İşlem:"; }
     }
   </style>
 </head>
@@ -218,8 +239,8 @@
         <tr>
           <th>Proje Adı</th>
           <th>Müşteri</th>
+          <th>Durum</th> <!-- YENİ SÜTUN -->
           <th>Sözleşme Bedeli</th>
-          <!-- <th>Sahibi (Admin için)</th> Eklenebilir -->
           <th>İşlem</th>
         </tr>
       </thead>
@@ -239,47 +260,52 @@
       appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
     };
 
-    // Firebase uygulamasını başlat
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
     let userId = null;
-    let currentUserRole = null; // Kullanıcının rolünü saklamak için
+    let currentUserRole = null;
 
-    // Oturum kontrolü
-    auth.onAuthStateChanged(async user => { // async eklendi
+    // Proje durumları ve CSS sınıfları
+    const projectStatuses = {
+        "Başlamadı": "status-baslamadi",
+        "Devam Ediyor": "status-devam-ediyor",
+        "Tamamlandı": "status-tamamlandi"
+    };
+    const defaultStatus = "Başlamadı";
+
+    auth.onAuthStateChanged(async user => { 
       if (!user) {
         window.location.href = "login.html"; 
       } else {
         userId = user.uid;
-        
-        // Kullanıcının rolünü Firestore'dan çek
         try {
           const userDoc = await db.collection("users").doc(userId).get();
           if (userDoc.exists) {
             currentUserRole = userDoc.data().role;
             document.getElementById("userRoleDisplay").textContent = currentUserRole === 'admin' ? 'Yönetici Görünümü' : 'Kullanıcı Görünümü';
-            console.log("Kullanıcı Rolü:", currentUserRole);
           } else {
-            console.log("Kullanıcı için rol bilgisi bulunamadı, varsayılan 'user' kabul ediliyor.");
-            currentUserRole = "user"; // Varsayılan, eğer users dokümanı yoksa (olmamalı)
+            currentUserRole = "user"; 
             document.getElementById("userRoleDisplay").textContent = 'Kullanıcı Görünümü';
           }
         } catch (error) {
           console.error("Kullanıcı rolü alınırken hata:", error);
-          currentUserRole = "user"; // Hata durumunda güvenli varsayılan
+          currentUserRole = "user"; 
           document.getElementById("userRoleDisplay").textContent = 'Kullanıcı Görünümü (Rol alınamadı)';
         }
-        
-        loadProjects(); // Rol bilgisi alındıktan sonra projeleri yükle
+        loadProjects(); 
       }
     });
 
-    // Projeleri yükle
+    function getStatusBadge(statusText) {
+        const statusKey = statusText || defaultStatus; // Eğer status yoksa varsayılanı kullan
+        const cssClass = projectStatuses[statusKey] || projectStatuses[defaultStatus];
+        return `<span class="status-badge ${cssClass}">${statusKey}</span>`;
+    }
+
     async function loadProjects() {
-      if (!userId || currentUserRole === null) { // currentUserRole kontrolü eklendi
-          console.log("Kullanıcı ID veya rol bilgisi henüz yüklenmedi. Projeler yüklenemiyor.");
+      if (!userId || currentUserRole === null) { 
           return;
       }
 
@@ -291,39 +317,26 @@
         let projectsQuery = db.collection("projects");
 
         if (currentUserRole === "admin") {
-          // Admin tüm projeleri görür, userId'ye göre filtreleme yapılmaz
-          // İsteğe bağlı: Admin görünümünde projeleri en son oluşturulana göre sıralayabiliriz
           projectsQuery = projectsQuery.orderBy("createdAt", "desc"); 
-          console.log("Admin olarak tüm projeler yükleniyor.");
         } else {
-          // Normal kullanıcı sadece kendi projelerini görür
           projectsQuery = projectsQuery.where("userId", "==", userId).orderBy("name");
-          console.log("Kullanıcı olarak kendi projeleri yükleniyor.");
         }
 
         const projectsSnapshot = await projectsQuery.get();
         
         if (projectsSnapshot.empty) {
             noProjectsMessage.style.display = "block";
-            tbody.innerHTML = ""; 
         } else {
             noProjectsMessage.style.display = "none";
             projectsSnapshot.forEach(doc => {
               const proj = doc.data();
               const tr = document.createElement("tr");
 
-              // Admin için proje sahibinin email'ini göstermek isteyebiliriz (opsiyonel)
-              // let ownerInfo = '';
-              // if (currentUserRole === 'admin' && proj.userId) {
-              //    // Bu kısım için ek bir sorgu veya projeye userEmail gibi bir alan eklemek gerekebilir
-              //    ownerInfo = `<td>${proj.userEmail || proj.userId.substring(0,6)}...</td>`;
-              // }
-
               tr.innerHTML = `
                 <td data-label="Proje Adı"><a href="project-detail.html?id=${doc.id}">${proj.name}</a></td>
                 <td data-label="Müşteri">${proj.client}</td>
+                <td data-label="Durum">${getStatusBadge(proj.status)}</td> <!-- DURUM BİLGİSİ GÖSTERİLİYOR -->
                 <td data-label="Sözleşme Bedeli">${proj.contractValue != null ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'}) : 'Belirtilmemiş'}</td>
-                ${'' /* ownerInfo */} 
                 <td data-label="İşlem"><button class="btn-danger" onclick="deleteProject('${doc.id}', '${proj.name}')">Sil</button></td>
               `;
               tbody.appendChild(tr);
@@ -331,17 +344,15 @@
         }
       } catch (error) {
           console.error("Projeler yüklenirken hata oluştu: ", error);
-          // Kullanıcıya daha anlaşılır bir hata mesajı göster
           if (error.code === 'failed-precondition' && error.message.includes('index')) {
-              tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Veritabanı sorgusu için gerekli indeks eksik. Lütfen tarayıcı konsolunu kontrol edin ve Firebase'in önerdiği indeksi oluşturun. Hata: ${error.message}</td></tr>`;
+              tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Veritabanı sorgusu için gerekli indeks eksik. Lütfen tarayıcı konsolunu kontrol edin ve Firebase'in önerdiği indeksi oluşturun.</td></tr>`;
           } else {
-              tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Projeler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</td></tr>`;
+              tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Projeler yüklenirken bir hata oluştu.</td></tr>`;
           }
           noProjectsMessage.style.display = "none";
       }
     }
 
-    // Yeni proje ekle
     async function addProject() {
       const nameInput = document.getElementById("projectName");
       const clientInput = document.getElementById("clientName");
@@ -361,9 +372,10 @@
         userId: userId, 
         name,
         client,
+        status: defaultStatus, // YENİ PROJEYE VARSAYILAN DURUM EKLENDİ
         contractValue: 0, 
-        expenses: [],
-        stages: [], // Aşamalar `project-detail`de ön tanımlı olarak oluşturulacak
+        expenses: [], 
+        stages: [], 
         createdAt: firebase.firestore.FieldValue.serverTimestamp() 
       };
 
@@ -379,17 +391,11 @@
       }
     }
 
-    // Proje sil (Admin herkesin projesini, kullanıcı sadece kendininkini silebilmeli - BU KONTROL EKLENMELİ)
     async function deleteProject(id, projectName) {
-        // TODO: Rol bazlı silme yetkisi kontrolü eklenecek.
-        // Şimdilik, herkes silebiliyor gibi davranacak.
-        // Güvenlik kuralları ile bu daha da sağlamlaştırılmalı.
-
         if (!confirm(`"${projectName}" adlı projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
             return;
         }
         try {
-            // Silmeden önce proje sahibini kontrol et (admin değilse)
             if (currentUserRole !== 'admin') {
                 const projectDoc = await db.collection('projects').doc(id).get();
                 if (projectDoc.exists && projectDoc.data().userId !== userId) {
@@ -397,20 +403,18 @@
                     return;
                 }
             }
-
             await db.collection("projects").doc(id).delete();
             alert(`"${projectName}" adlı proje başarıyla silindi.`);
             loadProjects(); 
         } catch (error) {
             console.error("Proje silinirken hata oluştu: ", error);
-            alert(`"${projectName}" adlı proje silinirken bir hata oluştu. Lütfen tekrar deneyin.`);
+            alert(`"${projectName}" adlı proje silinirken bir hata oluştu.`);
         }
     }
 
-    // Çıkış yap
     function logout() {
       auth.signOut().then(() => {
-        currentUserRole = null; // Rol bilgisini temizle
+        currentUserRole = null; 
         window.location.href = "login.html"; 
       }).catch((error) => {
         console.error("Çıkış yapılırken hata:", error);
