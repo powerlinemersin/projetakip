@@ -100,12 +100,12 @@
 
     @media print { /* Yazdırma Stilleri */
       body { font-family: Arial, sans-serif; margin: 20mm; font-size: 10pt; }
-      header, main > div:last-child > button, main > section:nth-last-of-type(3) .input-group button, /* Harcama Ekle */
-      main > section:nth-last-of-type(2) .input-group button, /* Dosya Yükle */
+      header, main > div:last-child > button, main > section:nth-last-of-type(3) .input-group button,
+      main > section:nth-last-of-type(2) .input-group button,
       #uploadProgress, .delete-file-btn, #expensesTable button,
       .stage-input[type="checkbox"] + label, .category-checkbox-group input[type="checkbox"],
       .category-checkbox-group label[for^="detail_"],
-      #collectionsTable button /* Tahsilat sil butonu */
+      #collectionsTable button
        { display: none !important; }
       h3 { border-bottom: 1px solid #ccc; margin-top: 15px; margin-bottom: 10px; font-size: 14pt;}
       table { margin-top: 10px; font-size: 9pt; width: 100% !important; border: 1px solid #ccc !important; page-break-inside: auto; }
@@ -124,8 +124,7 @@
       #projectCategoriesCheckboxesContainer legend { font-weight: bold; margin-bottom: 3px; }
       #projectCategoriesCheckboxesContainer { border: none; padding: 0; margin-bottom: 10px; }
       .file-list li { background-color: transparent; border: none; padding: 2px 0; margin-bottom: 2px; }
-      /* Tahsilat ekleme formunu yazdırmada gizle */
-      main > section:nth-last-of-type(3) > div[style*="border:1px solid #ddd"] { display: none !important; }
+      main > section:nth-of-type(4) > div[style*="border:1px solid #ddd"] { display: none !important; } /* Tahsilat ekleme formunu gizle */
     }
     @media (max-width: 768px) {
       header { flex-direction: column; gap: 10px; padding: 20px; }
@@ -175,26 +174,11 @@
     <section>
       <h3>Genel Bilgiler</h3>
       <div class="input-group">
-        <div style="flex: 2;">
-          <label for="projectName">Proje Adı</label>
-          <input type="text" id="projectName" class="readonly" readonly />
-        </div>
-        <div style="flex: 2;">
-          <label for="clientName">Müşteri Adı</label>
-          <input type="text" id="clientName" class="readonly" readonly />
-        </div>
-        <div style="flex: 1;">
-          <label for="projectStatus">Proje Durumu</label>
-          <select id="projectStatus" onchange="updateProjectStatus(this.value)">
-            <option value="Başlamadı">Başlamadı</option>
-            <option value="Devam Ediyor">Devam Ediyor</option>
-            <option value="Tamamlandı">Tamamlandı</option>
-          </select>
-        </div>
+        <div style="flex: 2;"><label for="projectName">Proje Adı</label><input type="text" id="projectName" class="readonly" readonly /></div>
+        <div style="flex: 2;"><label for="clientName">Müşteri Adı</label><input type="text" id="clientName" class="readonly" readonly /></div>
+        <div style="flex: 1;"><label for="projectStatus">Proje Durumu</label><select id="projectStatus" onchange="updateProjectStatus(this.value)"><option value="Başlamadı">Başlamadı</option><option value="Devam Ediyor">Devam Ediyor</option><option value="Tamamlandı">Tamamlandı</option></select></div>
       </div>
-      <fieldset class="category-checkbox-group" id="projectCategoriesCheckboxesContainer">
-          <legend>Proje Kategorileri</legend>
-      </fieldset>
+      <fieldset class="category-checkbox-group" id="projectCategoriesCheckboxesContainer"><legend>Proje Kategorileri</legend></fieldset>
       <h3>Aşamalar & Sorumlular</h3>
       <table id="stagesTable">
         <thead><tr><th>Aşama</th><th>Sorumlu Kişi</th><th>Tarih</th><th>Notlar/Açıklama</th><th>Tamamlandı mı?</th></tr></thead>
@@ -271,7 +255,6 @@
     <div style="margin-top: 30px; padding-bottom: 30px;">
         <button onclick="saveDetails()">Sözleşme Bilgilerini Kaydet</button>
         <button onclick="generateExcelReport()" style="margin-left:10px; background:#27ae60;">Rapor İndir (Excel)</button>
-        <!-- <button onclick="window.print();" style="margin-left:10px; background:#1abc9c;">Sayfayı Yazdır/PDF Kaydet</button> -->
         <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
     </div>
   </main>
@@ -316,11 +299,11 @@
     async function removeExpense(idx){if(!confirm("Bu harcama silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let ex=d.data().expenses||[];ex.splice(idx,1);await ref.update({expenses:ex});renderExpenses(ex);updateCalculations();}catch(e){console.error("Harcama silme hatası:",e);alert("Harcama silinemedi.");}}
     function renderCollections(arr){const tb=document.querySelector("#collectionsTable tbody");const msg=document.getElementById("noCollectionsMessage");tb.innerHTML="";if(arr&&arr.length>0){msg.style.display="none";arr.forEach((col,idx)=>{let amt=col.type==="Barter"&&col.barterDetails?formatCurrencyTR(col.barterDetails.value||0):formatCurrencyTR(col.amount||0);tb.insertAdjacentHTML("beforeend",`<tr><td>${col.date||'N/A'}</td><td>${col.type||'N/A'}</td><td>${col.description||''}</td><td style="text-align:right;">${amt}</td><td><button class="delete-file-btn" style="padding:5px 8px;" onclick="removeCollection(${idx})">Sil</button></td></tr>`);});}else{msg.style.display="block";}updateCalculations();}
     function toggleCollectionDetails(){const t=document.getElementById('collectionType').value;document.getElementById('checkDetailsGroup').style.display=t==='Çek'?'block':'none';document.getElementById('barterDetailsGroup').style.display=t==='Barter'?'block':'none';document.getElementById('collectionAmountGroup').style.display=t==='Barter'?'none':'block';}
-    async function addCollection(){const dt=document.getElementById('collectionDate').value,tp=document.getElementById('collectionType').value,dsc=document.getElementById('collectionDescription').value.trim();let amt=0,chk=null,brt=null;if(!dt||!tp){alert("Tarih ve tip seçin.");return;}
-    if(tp==="Nakit"||tp==="Banka Transferi"){amt=parseCurrencyTR(document.getElementById('collectionAmount').value);if(isNaN(amt)||amt<=0){alert("Geçerli tutar.");return;}}else if(tp==="Çek"){amt=parseCurrencyTR(document.getElementById('collectionAmount').value);const due=document.getElementById('checkDueDate').value,cno=document.getElementById('checkNumber').value.trim(),bnk=document.getElementById('checkBank').value.trim();if(isNaN(amt)||amt<=0||!due||!cno||!bnk){alert("Çek detayları ve tutar.");return;}chk={dueDate:due,checkNo:cno,bank:bnk};}else if(tp==="Barter"){const ast=document.getElementById('barterAsset').value.trim(),val=parseCurrencyTR(document.getElementById('barterValue').value);if(!ast||isNaN(val)||val<=0){alert("Barter varlık ve değer.");return;}brt={asset:ast,value:val};}
-    const nCol={date:dt,type:tp,description:dsc,amount:(tp!=="Barter"?amt:null),checkDetails:chk,barterDetails:brt,addedAt:firebase.firestore.FieldValue.serverTimestamp()};
-    try{const ref=db.collection("projects").doc(projectId);await ref.update({collections:firebase.firestore.FieldValue.arrayUnion(nCol)});['collectionDate','collectionDescription','checkDueDate','checkNumber','checkBank','barterAsset'].forEach(id=>document.getElementById(id).value="");document.getElementById('collectionType').value="Nakit";document.getElementById('collectionAmount').value=formatCurrencyTR(0);document.getElementById('barterValue').value=formatCurrencyTR(0);toggleCollectionDetails();const uDoc=await ref.get();if(uDoc.exists)renderCollections(uDoc.data().collections||[]);alert("Tahsilat eklendi.");}catch(e){console.error("Tahsilat ekleme hatası:",e);alert("Tahsilat eklenemedi.");}}
-    async function removeCollection(idx){if(!confirm("Bu tahsilat silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let cols=d.data().collections||[];cols.splice(idx,1);await ref.update({collections:cols});renderCollections(cols);}catch(e){console.error("Tahsilat silme hatası:",e);alert("Tahsilat silinemedi.");}}
+    async function addCollection(){const dateInput=document.getElementById('collectionDate').value;const type=document.getElementById('collectionType').value;const description=document.getElementById('collectionDescription').value.trim();let amount=0,checkDetails=null,barterDetails=null;if(!dateInput||!type){alert("Tarih ve tip seçin.");return;}
+    if(type==="Nakit"||type==="Banka Transferi"){amount=parseCurrencyTR(document.getElementById('collectionAmount').value);if(isNaN(amount)||amount<=0){alert("Geçerli tutar.");return;}}else if(type==="Çek"){amount=parseCurrencyTR(document.getElementById('collectionAmount').value);const dueDate=document.getElementById('checkDueDate').value;const checkNo=document.getElementById('checkNumber').value.trim();const bank=document.getElementById('checkBank').value.trim();if(isNaN(amount)||amount<=0||!dueDate||!checkNo||!bank){alert("Çek detayları ve tutar.");return;}checkDetails={dueDate,checkNo,bank};}else if(type==="Barter"){const asset=document.getElementById('barterAsset').value.trim();const value=parseCurrencyTR(document.getElementById('barterValue').value);if(!asset||isNaN(value)||value<=0){alert("Barter varlık ve değer.");return;}barterDetails={asset,value};}
+    const newCollection={date:dateInput,type,description,amount:(type!=="Barter"?amount:null),checkDetails,barterDetails,addedAt:firebase.firestore.Timestamp.now()};
+    try{const projectRef=db.collection("projects").doc(projectId);await projectRef.update({collections:firebase.firestore.FieldValue.arrayUnion(newCollection)});['collectionDate','collectionDescription','checkDueDate','checkNumber','checkBank','barterAsset'].forEach(id=>document.getElementById(id).value="");document.getElementById('collectionType').value="Nakit";document.getElementById('collectionAmount').value=formatCurrencyTR(0);document.getElementById('barterValue').value=formatCurrencyTR(0);toggleCollectionDetails();const updatedDoc=await projectRef.get();if(updatedDoc.exists)renderCollections(updatedDoc.data().collections||[]);alert("Tahsilat eklendi.");}catch(error){console.error("Tahsilat eklenirken Firestore hatası:",error);alert(`Tahsilat eklenemedi. Hata: ${error.message}`);}}
+    async function removeCollection(idx){if(!confirm("Bu tahsilat silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let cols=d.data().collections||[];cols.splice(idx,1);await ref.update({collections:cols});renderCollections(cols);alert("Tahsilat silindi.");}catch(e){console.error("Tahsilat silme hatası:",e);alert("Tahsilat silinemedi.");}}
     function updateCalculations(){const contract=parseCurrencyTR(document.getElementById("contractValue").value);let totalCost=0;document.querySelectorAll("#expensesTable tbody tr").forEach(r=>{totalCost+=parseCurrencyTR(r.cells[1]?r.cells[1].innerText:"0,00");});let totalColl=0;document.querySelectorAll("#collectionsTable tbody tr").forEach(r=>{totalColl+=parseCurrencyTR(r.cells[3]?r.cells[3].innerText:"0,00");});
     const profit=contract-totalCost;const margin=contract>0?(profit/contract)*100:0;const remain=contract-totalColl;
     document.getElementById("totalExpenses").value=formatCurrencyTR(totalCost);document.getElementById("realizedProfit").value=formatCurrencyTR(profit);document.getElementById("realizedProfitMargin").value=margin.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById("totalCollections").value=formatCurrencyTR(totalColl);document.getElementById("remainingBalance").value=formatCurrencyTR(remain);}
@@ -333,8 +316,8 @@
     const generalInfoData=[["Proje Adı",p.name||'N/A'],["Müşteri Adı",p.client||'N/A'],["Proje Durumu",p.status||defaultProjectStatus],["Kategoriler",(p.categories||[]).join(", ")||'N/A'],["Sözleşme Başlangıcı",p.startDate||'N/A'],["Sözleşme Bitişi",p.endDate||'N/A']];const wsGeneral=XLSX.utils.aoa_to_sheet(generalInfoData);XLSX.utils.book_append_sheet(wb,wsGeneral,"Genel Bilgiler");
     const stagesHeaders=["Aşama Adı","Sorumlu Kişi","Tarih","Notlar","Durum"];const stagesBody=(p.stages||[]).map(s=>[s.name,s.responsible,s.date,s.notes||'',s.completed?"Tamamlandı":"Tamamlanmadı"]);const wsStages=XLSX.utils.aoa_to_sheet([stagesHeaders,...stagesBody]);XLSX.utils.book_append_sheet(wb,wsStages,"Aşamalar");
     const expensesHeaders=["Açıklama","Tutar (TL)"];const expensesBody=(p.expenses||[]).map(e=>[e.desc,e.amount]);const wsExpenses=XLSX.utils.aoa_to_sheet([expensesHeaders,...expensesBody]);(expensesBody||[]).forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:1,r:i+1});if(wsExpenses[adr]){wsExpenses[adr].t='n';wsExpenses[adr].z='#,##0.00 TL';}});XLSX.utils.book_append_sheet(wb,wsExpenses,"Harcamalar");
-    const collectionsHeaders=["Tarih","Tip","Açıklama","Tutar/Değer (TL)"];const collectionsBody=(p.collections||[]).map(c=>{let amt=c.type==="Barter"&&c.barterDetails?c.barterDetails.value:c.amount;return[c.date,c.type,c.description,amt];});const wsCollections=XLSX.utils.aoa_to_sheet([collectionsHeaders,...collectionsBody]);(collectionsBody||[]).forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:3,r:i+1});if(wsCollections[adr]){wsCollections[adr].t='n';wsCollections[adr].z='#,##0.00 TL';}});XLSX.utils.book_append_sheet(wb,wsCollections,"Tahsilatlar");
-    const contractVal=p.contractValue||0;const totalExp=(p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0);const totalColl=(p.collections||[]).reduce((s,c)=>s+(c.type==="Barter"&&c.barterDetails?c.barterDetails.value:c.amount||0),0);const realProfit=contractVal-totalExp;const profitMargin=contractVal>0?(realProfit/contractVal)*100:0;const remainBal=contractVal-totalColl;
+    const collectionsHeaders=["Tarih","Tip","Açıklama","Tutar/Değer (TL)"];const collectionsBody=(p.collections||[]).map(c=>{let amt=0;if(c.type==="Barter"&&c.barterDetails){amt=c.barterDetails.value||0;}else{amt=c.amount||0;}return[c.date,c.type,c.description,amt];});const wsCollections=XLSX.utils.aoa_to_sheet([collectionsHeaders,...collectionsBody]);(collectionsBody||[]).forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:3,r:i+1});if(wsCollections[adr]){wsCollections[adr].t='n';wsCollections[adr].z='#,##0.00 TL';}});XLSX.utils.book_append_sheet(wb,wsCollections,"Tahsilatlar");
+    const contractVal=p.contractValue||0;const totalExp=(p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0);const totalColl=(p.collections||[]).reduce((s,c)=>s+((c.type==="Barter"&&c.barterDetails?c.barterDetails.value:c.amount)||0),0);const realProfit=contractVal-totalExp;const profitMargin=contractVal>0?(realProfit/contractVal)*100:0;const remainBal=contractVal-totalColl;
     const financialData=[["Sözleşme Tutarı (TL)",contractVal],["Toplam Harcama (TL)",totalExp],["Gerçekleşen Kar (TL)",realProfit],["Kar Marjı (%)",profitMargin],["Toplam Tahsil Edilen (TL)",totalColl],["Kalan Bakiye (TL)",remainBal]];const wsFinancial=XLSX.utils.aoa_to_sheet(financialData);financialData.forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:1,r:i});if(wsFinancial[adr]){wsFinancial[adr].t='n';wsFinancial[adr].z=i===3?'0.00%':'#,##0.00 TL';if(i===3)wsFinancial[adr].v=profitMargin/100;}});XLSX.utils.book_append_sheet(wb,wsFinancial,"Finansal Özet");
     if(p.files&&p.files.length>0){const filesHeaders=["Dosya Adı","Yüklenme Tarihi","URL"];const filesBody=(p.files||[]).map(f=>[f.name,f.uploadedAt?.toDate?f.uploadedAt.toDate().toLocaleDateString('tr-TR'):'N/A',f.url]);const wsFiles=XLSX.utils.aoa_to_sheet([filesHeaders,...filesBody]);XLSX.utils.book_append_sheet(wb,wsFiles,"Proje Dosyaları");}
     const fileName=`${p.name?p.name.replace(/[^a-zA-Z0-9]/g,'_'):'proje'}_rapor.xlsx`;XLSX.writeFile(wb,fileName);alert("Excel raporu oluşturuldu ve indiriliyor.");}
