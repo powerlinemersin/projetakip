@@ -29,12 +29,12 @@
     }
     .filter-section button {
       background-color: #2980b9; color: white; cursor: pointer; border: none;
-      transition: background-color 0.3s ease; height: 43px; /* Inputlarla aynı yükseklik için */
+      transition: background-color 0.3s ease; height: 43px; 
     }
     .filter-section button:hover { background-color: #1c5980; }
     #loadingIndicator { margin-top: 10px; font-style: italic; color: #555; }
     #reportResults { margin-top: 20px; }
-    #reportResults h3 {
+    #reportResults h3 { 
         color: #34495e; margin-top: 25px; margin-bottom: 10px;
         border-bottom: 1px solid #2980b9; padding-bottom: 5px; font-size: 1.2rem;
     }
@@ -48,13 +48,11 @@
     .report-table th, .report-table td { vertical-align: top; }
      .report-table th.sortable { cursor: pointer; }
     .report-table th.sortable:hover { background-color: #e9ecef; }
-    .report-table th.sortable::after { /* Sıralama ikonu için yer tutucu */
-        content: ' \2195'; /* Yukarı aşağı ok */
-        font-size: 0.8em;
-        opacity: 0.5;
+    .report-table th.sortable::after {
+        content: ' \2195'; font-size: 0.8em; opacity: 0.5;
     }
-    .report-table th.sort-asc::after { content: ' \2191'; opacity: 1;} /* Yukarı ok */
-    .report-table th.sort-desc::after { content: ' \2193'; opacity: 1;} /* Aşağı ok */
+    .report-table th.sort-asc::after { content: ' \2191'; opacity: 1;}
+    .report-table th.sort-desc::after { content: ' \2193'; opacity: 1;}
   </style>
 </head>
 <body>
@@ -98,12 +96,15 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // Proje Kategorileri Tanımı (index.html ve project-detail.html ile aynı olmalı)
+    const projectCategories = ["Aydınlatma", "Otomasyon", "Taahhüt", "Danışmanlık", "Diğer"];
+    const defaultProjectStatus = "Başlamadı"; // Proje durumları için varsayılan (project-detail'den)
+
     auth.onAuthStateChanged(user => {
       if (!user) {
         console.warn("Kullanıcı girişi yapılmamış. Bu sayfa normalde yetkili erişim gerektirir.");
         // Opsiyonel: window.location.href = "login.html"; 
       } else {
-        // Kullanıcı giriş yapmış, bir şey yapmaya gerek yok, sayfa erişilebilir.
         console.log("Yetkili kullanıcı, rapor sayfasına erişebilir.");
       }
     });
@@ -112,19 +113,18 @@
         window.location.href = "index.html";
     }
 
-    // Para formatlama fonksiyonları (project-detail.html'den alındı)
     function formatCurrencyTR(numberStrOrNum) {
         let number = typeof numberStrOrNum === 'string' ? parseFloat(numberStrOrNum.replace(/\./g, '').replace(',', '.')) : numberStrOrNum;
         if (isNaN(number)) return "0,00";
         return number.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-    function parseCurrencyTR(formattedValue) { // Bu fonksiyon raporda doğrudan kullanılmayacak ama tutarlılık için eklendi.
+    // parseCurrencyTR bu dosyada doğrudan kullanılmıyor ama tutarlılık için kalabilir.
+    function parseCurrencyTR(formattedValue) { 
         if (typeof formattedValue !== 'string' || !formattedValue.trim()) return 0;
         const cleanedValue = formattedValue.replace(/\./g, '').replace(',', '.');
         const number = parseFloat(cleanedValue);
         return isNaN(number) ? 0 : number;
     }
-
 
     async function generateAnalysisReport() {
       const startDateInput = document.getElementById('reportStartDate').value;
@@ -146,195 +146,97 @@
       resultsDiv.innerHTML = ""; 
 
       try {
-        // Firestore'dan tüm projeleri çek (şimdilik tarih filtresi Firestore'da değil, JS'de)
-        // Daha büyük veri setleri için Firestore'da filtreleme daha iyi olurdu,
-        // ama birden fazla aralık sorgusu için indeks karmaşıklığı yaratır.
-        // Şirket içi kullanım için proje sayısı yönetilebilir ise bu yaklaşım işe yarayabilir.
         const projectsSnapshot = await db.collection("projects").get();
-
         let allProjects = [];
         projectsSnapshot.forEach(doc => {
           allProjects.push({ id: doc.id, ...doc.data() });
         });
 
-        // İstemci tarafında tarih aralığına göre filtreleme
-        // Proje süresi (startDate ve endDate) rapor aralığı ile kesişen projeler
         const projectsInDateRange = allProjects.filter(proj => {
             const projectStartDate = proj.startDate ? new Date(proj.startDate) : null;
             const projectEndDate = proj.endDate ? new Date(proj.endDate) : null;
             const reportStartDate = new Date(startDateInput);
             const reportEndDate = new Date(endDateInput);
-
-            // Bitiş tarihini gün sonuna al
             reportEndDate.setHours(23, 59, 59, 999);
-
-            if (!projectStartDate || !projectEndDate) return false; // Tarihleri olmayanları hariç tut
-
-            // Kesişim kontrolü:
-            // Projenin başlangıcı <= Raporun Bitişi VE Projenin Bitişi >= Raporun Başlangıcı
+            if (!projectStartDate || !projectEndDate) return false;
             return projectStartDate <= reportEndDate && projectEndDate >= reportStartDate;
         });
-
 
         if (projectsInDateRange.length === 0) {
           resultsDiv.innerHTML = "<p>Belirtilen tarih aralığıyla kesişen proje bulunamadı.</p>";
           loadingIndicator.style.display = 'none';
           return;
         }
-
-        console.log("Filtrelenmiş Projeler:", projectsInDateRange);
         
-        // Raporu oluşturacak HTML içeriği
+        console.log("Filtrelenmiş Projeler:", projectsInDateRange);
         let reportHTML = `<h3>Rapor Dönemi: ${startDateInput} - ${endDateInput}</h3>`;
 
-        // A. Genel Finansal Özet
         let totalContractValue = 0;
         let totalActualExpenses = 0;
         projectsInDateRange.forEach(p => {
             totalContractValue += (p.contractValue || 0);
-            (p.expenses || []).forEach(exp => {
-                totalActualExpenses += (exp.amount || 0);
-            });
+            (p.expenses || []).forEach(exp => { totalActualExpenses += (exp.amount || 0); });
         });
         const totalNetProfitOrLoss = totalContractValue - totalActualExpenses;
         const averageProfitMargin = totalContractValue > 0 ? (totalNetProfitOrLoss / totalContractValue) * 100 : 0;
         const averageProfitPerProject = projectsInDateRange.length > 0 ? totalNetProfitOrLoss / projectsInDateRange.length : 0;
 
-        reportHTML += `
-            <div class="summary-section">
-                <h3>Genel Finansal Özet</h3>
-                <div><strong>Bu Dönemde Kapsanan Proje Sayısı:</strong> <span>${projectsInDateRange.length}</span></div>
-                <div><strong>Toplam Sözleşme Bedeli:</strong> <span>${formatCurrencyTR(totalContractValue)} TL</span></div>
-                <div><strong>Toplam Gerçekleşen Harcama:</strong> <span>${formatCurrencyTR(totalActualExpenses)} TL</span></div>
-                <div><strong>Net Dönemsel Kar/Zarar:</strong> <span style="color:${totalNetProfitOrLoss >= 0 ? 'green' : 'red'};">${formatCurrencyTR(totalNetProfitOrLoss)} TL</span></div>
-                <div><strong>Ortalama Proje Başına Kar/Zarar:</strong> <span>${formatCurrencyTR(averageProfitPerProject)} TL</span></div>
-                <div><strong>Ortalama Kar Marjı:</strong> <span>${averageProfitMargin.toFixed(2)}%</span></div>
-            </div>
-        `;
+        reportHTML += `<div class="summary-section"><h3>Genel Finansal Özet</h3>
+            <div><strong>Bu Dönemde Kapsanan Proje Sayısı:</strong> <span>${projectsInDateRange.length}</span></div>
+            <div><strong>Toplam Sözleşme Bedeli:</strong> <span>${formatCurrencyTR(totalContractValue)} TL</span></div>
+            <div><strong>Toplam Gerçekleşen Harcama:</strong> <span>${formatCurrencyTR(totalActualExpenses)} TL</span></div>
+            <div><strong>Net Dönemsel Kar/Zarar:</strong> <span style="color:${totalNetProfitOrLoss >= 0 ? 'green' : 'red'};">${formatCurrencyTR(totalNetProfitOrLoss)} TL</span></div>
+            <div><strong>Ortalama Proje Başına Kar/Zarar:</strong> <span>${formatCurrencyTR(averageProfitPerProject)} TL</span></div>
+            <div><strong>Ortalama Kar Marjı:</strong> <span>${averageProfitMargin.toFixed(2)}%</span></div></div>`;
 
-        // B. Proje Detay Tablosu
-        reportHTML += `
-            <h3>Proje Detayları (Dönem İçi Kapsananlar)</h3>
-            <table class="report-table" id="projectDetailTable">
-                <thead>
-                    <tr>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 0)">Proje Adı</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 1)">Müşteri</th>
-                        <th>Kategoriler</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 3)">Durum</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 4, 'date')">Söz. Başlangıç</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 5, 'date')">Söz. Bitiş</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 6, 'number')">Söz. Tutarı (TL)</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 7, 'number')">Top. Harcama (TL)</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 8, 'number')">Net Kar/Zarar (TL)</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 9, 'number')">Kar Marjı (%)</th>
-                        <th class="sortable" onclick="sortTable('projectDetailTable', 10, 'number')">Proje Süresi (Gün)</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+        reportHTML += `<h3>Proje Detayları (Dönem İçi Kapsananlar)</h3>
+            <table class="report-table" id="projectDetailTable"><thead><tr>
+            <th class="sortable" onclick="sortTable('projectDetailTable',0)">Proje Adı</th><th class="sortable" onclick="sortTable('projectDetailTable',1)">Müşteri</th>
+            <th>Kategoriler</th><th class="sortable" onclick="sortTable('projectDetailTable',3)">Durum</th>
+            <th class="sortable" onclick="sortTable('projectDetailTable',4,'date')">Söz. Başlangıç</th><th class="sortable" onclick="sortTable('projectDetailTable',5,'date')">Söz. Bitiş</th>
+            <th class="sortable" onclick="sortTable('projectDetailTable',6,'number')">Söz. Tutarı (TL)</th><th class="sortable" onclick="sortTable('projectDetailTable',7,'number')">Top. Harcama (TL)</th>
+            <th class="sortable" onclick="sortTable('projectDetailTable',8,'number')">Net Kar/Zarar (TL)</th><th class="sortable" onclick="sortTable('projectDetailTable',9,'number')">Kar Marjı (%)</th>
+            <th class="sortable" onclick="sortTable('projectDetailTable',10,'number')">Proje Süresi (Gün)</th>
+            </tr></thead><tbody>`;
         projectsInDateRange.forEach(p => {
-            const projectExpenses = (p.expenses || []).reduce((sum, exp) => sum + (exp.amount || 0), 0);
-            const projectProfit = (p.contractValue || 0) - projectExpenses;
-            const projectMargin = (p.contractValue || 0) > 0 ? (projectProfit / (p.contractValue || 0)) * 100 : 0;
-            const startDate = p.startDate ? new Date(p.startDate) : null;
-            const endDate = p.endDate ? new Date(p.endDate) : null;
-            let projectDuration = "N/A";
-            if (startDate && endDate && endDate >= startDate) {
-                projectDuration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1; // +1 dahil etmek için
-            }
-
-            reportHTML += `
-                <tr>
-                    <td>${p.name || 'N/A'}</td>
-                    <td>${p.client || 'N/A'}</td>
-                    <td>${(p.categories || []).join(", ") || 'N/A'}</td>
-                    <td>${p.status || defaultProjectStatus}</td>
-                    <td>${p.startDate || 'N/A'}</td>
-                    <td>${p.endDate || 'N/A'}</td>
-                    <td style="text-align:right;">${formatCurrencyTR(p.contractValue || 0)}</td>
-                    <td style="text-align:right;">${formatCurrencyTR(projectExpenses)}</td>
-                    <td style="text-align:right; color:${projectProfit >= 0 ? 'green' : 'red'};">${formatCurrencyTR(projectProfit)}</td>
-                    <td style="text-align:right;">${projectMargin.toFixed(2)}%</td>
-                    <td style="text-align:right;">${projectDuration}</td>
-                </tr>
-            `;
+            const pExp = (p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0); const pProfit=(p.contractValue||0)-pExp;
+            const pMrg=(p.contractValue||0)>0?(pProfit/(p.contractValue||0))*100:0;
+            const sDate=p.startDate?new Date(p.startDate):null; const eDate=p.endDate?new Date(p.endDate):null;
+            let pDur="N/A"; if(sDate&&eDate&&eDate>=sDate){pDur=Math.ceil((eDate-sDate)/(1000*60*60*24))+1;}
+            reportHTML += `<tr><td>${p.name||'N/A'}</td><td>${p.client||'N/A'}</td><td>${(p.categories||[]).join(", ")||'N/A'}</td>
+                <td>${p.status||defaultProjectStatus}</td><td>${p.startDate||'N/A'}</td><td>${p.endDate||'N/A'}</td>
+                <td style="text-align:right;">${formatCurrencyTR(p.contractValue||0)}</td><td style="text-align:right;">${formatCurrencyTR(pExp)}</td>
+                <td style="text-align:right;color:${pProfit>=0?'green':'red'};">${formatCurrencyTR(pProfit)}</td>
+                <td style="text-align:right;">${pMrg.toFixed(2)}%</td><td style="text-align:right;">${pDur}</td></tr>`;
         });
         reportHTML += `</tbody></table>`;
 
-        // C. Proje Tipi (Kategori) Bazlı Performans Analizi
         const categoryAnalysis = {};
-        projectCategories.forEach(cat => { // Önceden tanımlı kategorileri kullan
-            categoryAnalysis[cat] = {
-                count: 0,
-                totalContract: 0,
-                totalExpense: 0,
-                totalProfit: 0,
-                projects: []
-            };
-        });
-
+        // projectCategories burada tanımlı olmalı (globalde tanımlandı)
+        projectCategories.forEach(cat => { categoryAnalysis[cat] = { count:0,totalContract:0,totalExpense:0,totalProfit:0,projects:[]}; });
         projectsInDateRange.forEach(p => {
-            const projectExpenses = (p.expenses || []).reduce((sum, exp) => sum + (exp.amount || 0), 0);
-            const projectProfit = (p.contractValue || 0) - projectExpenses;
-            (p.categories || []).forEach(cat => {
-                if (categoryAnalysis[cat]) {
-                    categoryAnalysis[cat].count++;
-                    categoryAnalysis[cat].totalContract += (p.contractValue || 0);
-                    categoryAnalysis[cat].totalExpense += projectExpenses;
-                    categoryAnalysis[cat].totalProfit += projectProfit;
-                    categoryAnalysis[cat].projects.push({name: p.name, profit: projectProfit});
-                }
-            });
+            const pExp=(p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0); const pProfit=(p.contractValue||0)-pExp;
+            (p.categories||[]).forEach(cat=>{if(categoryAnalysis[cat]){categoryAnalysis[cat].count++; categoryAnalysis[cat].totalContract+=(p.contractValue||0); categoryAnalysis[cat].totalExpense+=pExp; categoryAnalysis[cat].totalProfit+=pProfit; categoryAnalysis[cat].projects.push({name:p.name,profit:pProfit});}});
         });
 
-        reportHTML += `
-            <h3>Proje Tipi (Kategori) Bazlı Performans Analizi</h3>
-            <table class="report-table" id="categoryAnalysisTable">
-                <thead>
-                    <tr>
-                        <th class="sortable" onclick="sortTable('categoryAnalysisTable', 0)">Kategori Adı</th>
-                        <th class="sortable" onclick="sortTable('categoryAnalysisTable', 1, 'number')">Biten Proje Sayısı</th>
-                        <th class="sortable" onclick="sortTable('categoryAnalysisTable', 2, 'number')">Top. Söz. Bedeli (TL)</th>
-                        <th class="sortable" onclick="sortTable('categoryAnalysisTable', 3, 'number')">Top. Harcama (TL)</th>
-                        <th class="sortable" onclick="sortTable('categoryAnalysisTable', 4, 'number')">Top. Net Kar/Zarar (TL)</th>
-                        <th class="sortable" onclick="sortTable('categoryAnalysisTable', 5, 'number')">Ort. Kar Marjı (%)</th>
-                        <th>En Karlı Proje (Kar)</th>
-                        <th>En Zararlı Proje (Zarar)</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        for (const category in categoryAnalysis) {
-            if (categoryAnalysis.hasOwnProperty(category) && categoryAnalysis[category].count > 0) { // Sadece proje olan kategorileri göster
-                const catData = categoryAnalysis[category];
-                const avgMargin = catData.totalContract > 0 ? (catData.totalProfit / catData.totalContract) * 100 : 0;
-                
-                let mostProfitable = { name: "N/A", profit: -Infinity };
-                let leastProfitable = { name: "N/A", profit: Infinity };
-
-                catData.projects.forEach(proj => {
-                    if (proj.profit > mostProfitable.profit) mostProfitable = proj;
-                    if (proj.profit < leastProfitable.profit) leastProfitable = proj;
-                });
-                
-                // Eğer en karlı proje negatifse veya en zararlı pozitifse N/A göster
-                const mostProfitableDisplay = mostProfitable.profit > 0 ? `${mostProfitable.name} (${formatCurrencyTR(mostProfitable.profit)})` : "N/A";
-                const leastProfitableDisplay = leastProfitable.profit < 0 ? `${leastProfitable.name} (${formatCurrencyTR(leastProfitable.profit)})` : "N/A";
-
-
-                reportHTML += `
-                    <tr>
-                        <td>${category}</td>
-                        <td style="text-align:right;">${catData.count}</td>
-                        <td style="text-align:right;">${formatCurrencyTR(catData.totalContract)}</td>
-                        <td style="text-align:right;">${formatCurrencyTR(catData.totalExpense)}</td>
-                        <td style="text-align:right; color:${catData.totalProfit >= 0 ? 'green' : 'red'};">${formatCurrencyTR(catData.totalProfit)}</td>
-                        <td style="text-align:right;">${avgMargin.toFixed(2)}%</td>
-                        <td>${mostProfitableDisplay}</td>
-                        <td>${leastProfitableDisplay}</td>
-                    </tr>
-                `;
+        reportHTML += `<h3>Proje Tipi (Kategori) Bazlı Performans Analizi</h3>
+            <table class="report-table" id="categoryAnalysisTable"><thead><tr>
+            <th class="sortable" onclick="sortTable('categoryAnalysisTable',0)">Kategori Adı</th><th class="sortable" onclick="sortTable('categoryAnalysisTable',1,'number')">Proje Sayısı</th>
+            <th class="sortable" onclick="sortTable('categoryAnalysisTable',2,'number')">Top. Söz. Bedeli (TL)</th><th class="sortable" onclick="sortTable('categoryAnalysisTable',3,'number')">Top. Harcama (TL)</th>
+            <th class="sortable" onclick="sortTable('categoryAnalysisTable',4,'number')">Top. Net Kar/Zarar (TL)</th><th class="sortable" onclick="sortTable('categoryAnalysisTable',5,'number')">Ort. Kar Marjı (%)</th>
+            <th>En Karlı Proje (Kar)</th><th>En Zararlı Proje (Zarar)</th>
+            </tr></thead><tbody>`;
+        for(const cat in categoryAnalysis){
+            if(categoryAnalysis.hasOwnProperty(cat)&&categoryAnalysis[cat].count>0){
+                const cd=categoryAnalysis[cat]; const avgM=cd.totalContract>0?(cd.totalProfit/cd.totalContract)*100:0;
+                let mostP={name:"N/A",profit:-Infinity}; let leastP={name:"N/A",profit:Infinity};
+                cd.projects.forEach(p=>{if(p.profit>mostP.profit)mostP=p; if(p.profit<leastP.profit)leastP=p;});
+                const mostPDisp=mostP.profit>0?`${mostP.name} (${formatCurrencyTR(mostP.profit)})`:"N/A";
+                const leastPDisp=leastP.profit<0?`${leastP.name} (${formatCurrencyTR(leastP.profit)})`:"N/A";
+                reportHTML+=`<tr><td>${cat}</td><td style="text-align:right;">${cd.count}</td>
+                    <td style="text-align:right;">${formatCurrencyTR(cd.totalContract)}</td><td style="text-align:right;">${formatCurrencyTR(cd.totalExpense)}</td>
+                    <td style="text-align:right;color:${cd.totalProfit>=0?'green':'red'};">${formatCurrencyTR(cd.totalProfit)}</td>
+                    <td style="text-align:right;">${avgM.toFixed(2)}%</td><td>${mostPDisp}</td><td>${leastPDisp}</td></tr>`;
             }
         }
         reportHTML += `</tbody></table>`;
@@ -349,49 +251,37 @@
       }
     }
     
-    // Basit Tablo Sıralama Fonksiyonu
-    let sortDirections = {}; // Her tablo için sıralama yönlerini sakla
+    let sortDirections = {}; 
     function sortTable(tableId, columnIndex, type = 'string') {
-        const table = document.getElementById(tableId);
-        if (!table) return;
-        const tbody = table.tBodies[0];
-        const rows = Array.from(tbody.rows);
+        const table = document.getElementById(tableId); if (!table) return;
+        const tbody = table.tBodies[0]; const rows = Array.from(tbody.rows);
         const headerCell = table.tHead.rows[0].cells[columnIndex];
-
-        // Sıralama yönünü belirle
         const currentDirection = sortDirections[`${tableId}-${columnIndex}`] || 'asc';
         const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+        sortDirections = {}; // Sadece bir sütun için aktif sıralama
         sortDirections[`${tableId}-${columnIndex}`] = newDirection;
-
-        // Diğer başlıkların sıralama ikonlarını temizle
-        Array.from(table.tHead.rows[0].cells).forEach(th => {
-            th.classList.remove('sort-asc', 'sort-desc');
-        });
+        Array.from(table.tHead.rows[0].cells).forEach(th => th.classList.remove('sort-asc', 'sort-desc'));
         headerCell.classList.add(newDirection === 'asc' ? 'sort-asc' : 'sort-desc');
-
 
         rows.sort((a, b) => {
             let valA = a.cells[columnIndex].textContent.trim();
             let valB = b.cells[columnIndex].textContent.trim();
-
             if (type === 'number') {
-                valA = parseCurrencyTR(valA); // Para formatını sayıya çevir
-                valB = parseCurrencyTR(valB);
+                // Para formatını ve yüzdeyi sayıya çevir
+                const cleanValA = valA.replace(/[^\d,-]/g, '').replace(',', '.');
+                const cleanValB = valB.replace(/[^\d,-]/g, '').replace(',', '.');
+                valA = parseFloat(cleanValA) || 0; // NaN ise 0
+                valB = parseFloat(cleanValB) || 0;
             } else if (type === 'date') {
-                // YYYY-MM-DD formatında olduğunu varsayarak veya Date objesine çevirerek
-                // Basit string karşılaştırması YYYY-MM-DD için genellikle çalışır
-                // Daha sağlamı: new Date(valA) ve new Date(valB)
-                // Şimdilik string karşılaştırması yapalım
+                // YYYY-MM-DD formatı için basit string karşılaştırması yeterli olabilir.
+                // Daha sağlamı: new Date(valA.split('.').reverse().join('-')) vs.
             }
-
             if (valA < valB) return newDirection === 'asc' ? -1 : 1;
             if (valA > valB) return newDirection === 'asc' ? 1 : -1;
             return 0;
         });
-
         rows.forEach(row => tbody.appendChild(row));
     }
-
   </script>
 </body>
 </html>
