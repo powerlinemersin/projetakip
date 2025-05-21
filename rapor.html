@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dönemsel Proje Analiz Raporu</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script> <!-- Oturum kontrolü için gerekebilir -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif; margin: 0; background-color: #f9fbfd; color: #2c3e50;
+      padding: 20px;
+    }
+    header { /* Diğer sayfalardan kopyalanabilir veya basitleştirilebilir */
+      background-color: #34495e; color: white; padding: 15px 30px; display: flex;
+      align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;
+    }
+    header h1 { font-weight: 600; font-size: 1.6rem; margin: 0; }
+    .container { max-width: 1200px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .filter-section { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-section > div { display: flex; flex-direction: column; }
+    .filter-section label { margin-bottom: 5px; font-weight: 600; font-size: 0.9em; }
+    .filter-section input[type="date"], .filter-section button {
+      padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem;
+    }
+    .filter-section button {
+      background-color: #2980b9; color: white; cursor: pointer; border: none;
+      transition: background-color 0.3s ease;
+    }
+    .filter-section button:hover { background-color: #1c5980; }
+    #loadingIndicator { margin-top: 10px; font-style: italic; color: #555; }
+    #reportResults { margin-top: 20px; }
+    #reportResults h3 { /* Rapor içindeki başlıklar */
+        color: #34495e; margin-top: 25px; margin-bottom: 10px;
+        border-bottom: 1px solid #2980b9; padding-bottom: 5px; font-size: 1.2rem;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+    th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; }
+    thead th { background-color: #f2f2f2; font-weight: 600; }
+    .summary-card { /* Genel özet için */
+        background-color: #e9ecef; padding: 15px; border-radius: 6px; margin-bottom: 10px;
+    }
+    .summary-card p { margin: 5px 0; }
+    .summary-card strong { color: #2c3e50; }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- İsterseniz diğer sayfalardaki gibi logo vb. eklenebilir -->
+    <h1>Dönemsel Proje Analiz Raporu</h1>
+    <!-- Bu sayfa özel olduğu için Çıkış Yap butonu koymayabiliriz veya koyabiliriz -->
+    <button onclick="goBackToDashboard()" style="margin-left:auto; background:#7f8c8d; color:white;">Ana Sayfaya Dön</button>
+  </header>
+
+  <div class="container">
+    <div class="filter-section">
+      <div>
+        <label for="reportStartDate">Rapor Başlangıç Tarihi:</label>
+        <input type="date" id="reportStartDate">
+      </div>
+      <div>
+        <label for="reportEndDate">Rapor Bitiş Tarihi:</label>
+        <input type="date" id="reportEndDate">
+      </div>
+      <div>
+        <button id="generateReportButton" onclick="generateAnalysisReport()">Raporu Oluştur</button>
+      </div>
+    </div>
+
+    <div id="loadingIndicator" style="display:none;">Rapor verileri yükleniyor, lütfen bekleyin...</div>
+    <div id="reportResults">
+      <!-- Rapor sonuçları buraya dinamik olarak eklenecek -->
+      <p>Lütfen raporlamak istediğiniz tarih aralığını seçip "Raporu Oluştur" butonuna tıklayın.</p>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
+      authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
+      projectId: "projetakipsistemi-fbabd",
+      storageBucket: "projetakipsistemi-fbabd.appspot.com",
+      messagingSenderId: "335282912485",
+      appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth(); // Oturum kontrolü için
+
+    // Oturum kontrolü: Bu sayfaya sadece giriş yapmış kullanıcılar erişebilmeli
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        // Kullanıcı giriş yapmamışsa, login sayfasına yönlendirilebilir
+        // Ancak sadece URL ile erişilecekse bu kontrol gereksiz olabilir,
+        // veya bir uyarı mesajı gösterilebilir. Şimdilik sadece konsola yazalım.
+        console.warn("Kullanıcı girişi yapılmamış. Bu sayfa normalde yetkili erişim gerektirir.");
+        // window.location.href = "login.html"; // İsterseniz aktif edebilirsiniz
+      }
+    });
+
+    function goBackToDashboard() {
+        window.location.href = "index.html"; // Ana sayfanızın adı
+    }
+
+    async function generateAnalysisReport() {
+      const startDateInput = document.getElementById('reportStartDate').value;
+      const endDateInput = document.getElementById('reportEndDate').value;
+      const resultsDiv = document.getElementById('reportResults');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+
+      resultsDiv.innerHTML = ""; // Önceki sonuçları temizle
+      if (!startDateInput || !endDateInput) {
+        resultsDiv.innerHTML = "<p style='color:red;'>Lütfen başlangıç ve bitiş tarihlerini seçin!</p>";
+        return;
+      }
+
+      const startDate = new Date(startDateInput);
+      const endDate = new Date(endDateInput);
+      // Bitiş tarihini gün sonu olarak ayarlamak için: endDate.setHours(23, 59, 59, 999);
+      // Firestore Timestamp ile karşılaştırma yaparken bu önemli olabilir.
+      // Şimdilik doğrudan tarihleri kullanalım.
+
+      loadingIndicator.style.display = 'block';
+      resultsDiv.innerHTML = ""; // Temizle
+
+      try {
+        // Öneri: endDate'e göre filtreleme
+        // Firestore tarih sorguları için Timestamp objesi kullanmak daha güvenilirdir.
+        // Ancak .where() string tarihleri de (YYYY-MM-DD formatında) genellikle doğru karşılaştırır.
+        // Daha sağlamı: firebase.firestore.Timestamp.fromDate(new Date(startDateInput))
+        const projectsQuery = db.collection("projects")
+                                .where("endDate", ">=", startDateInput)
+                                .where("endDate", "<=", endDateInput);
+                                // .orderBy("endDate"); // İsteğe bağlı, endDate'e göre sıralama
+
+        const snapshot = await projectsQuery.get();
+
+        if (snapshot.empty) {
+          resultsDiv.innerHTML = "<p>Belirtilen tarih aralığında sözleşmesi biten proje bulunamadı.</p>";
+          loadingIndicator.style.display = 'none';
+          return;
+        }
+
+        let projectsData = [];
+        snapshot.forEach(doc => {
+          projectsData.push({ id: doc.id, ...doc.data() });
+        });
+
+        console.log("Çekilen Projeler:", projectsData); // Veriyi ilk aşamada konsolda görelim
+        resultsDiv.innerHTML = `
+            <h3>Rapor Dönemi: ${startDateInput} - ${endDateInput}</h3>
+            <p>${projectsData.length} adet proje bulundu.</p>
+            <p><em>Detaylı analiz ve tablo gösterimi sonraki adımlarda eklenecektir.</em></p>
+            <pre>${JSON.stringify(projectsData, null, 2)}</pre> <!-- Ham veriyi göster -->
+        `;
+        // Sonraki adımlarda buraya genel özet, proje tablosu ve kategori analizi eklenecek.
+
+      } catch (error) {
+        console.error("Rapor oluşturulurken hata oluştu: ", error);
+        resultsDiv.innerHTML = `<p style='color:red;'>Rapor oluşturulurken bir hata oluştu. Konsolu kontrol edin. Hata: ${error.message}</p>`;
+        if (error.code === 'failed-precondition') {
+             resultsDiv.innerHTML += `<p style='color:red;'>Bu sorgu için bir Firestore indeksi gerekebilir. Lütfen tarayıcı konsolundaki hata mesajında verilen linki kullanarak indeksi oluşturun.</p>`;
+        }
+      } finally {
+        loadingIndicator.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
