@@ -92,13 +92,20 @@
         width: 0%; height: 100%; background-color: #28a745; border-radius: .25rem;
         text-align: center; line-height: 10px; color: white; font-size: 0.7em;
     }
+    .collection-details-fields {
+        display: none; padding-left: 15px; border-left: 2px solid #eee;
+        margin-left: 5px; margin-top: 10px;
+    }
+    #collectionsTable td, #collectionsTable th { font-size: 0.9em; }
 
     @media print { /* Yazdırma Stilleri */
       body { font-family: Arial, sans-serif; margin: 20mm; font-size: 10pt; }
-      header, main > div:last-child > button, main > section:nth-last-of-type(2) .input-group button,
-      main > section:last-of-type .input-group button, #uploadProgress, .delete-file-btn,
-      #expensesTable button, .stage-input[type="checkbox"] + label, 
-      .category-checkbox-group input[type="checkbox"], .category-checkbox-group label[for^="detail_"]
+      header, main > div:last-child > button, main > section:nth-last-of-type(3) .input-group button, /* Harcama Ekle */
+      main > section:nth-last-of-type(2) .input-group button, /* Dosya Yükle */
+      #uploadProgress, .delete-file-btn, #expensesTable button,
+      .stage-input[type="checkbox"] + label, .category-checkbox-group input[type="checkbox"],
+      .category-checkbox-group label[for^="detail_"],
+      #collectionsTable button /* Tahsilat sil butonu */
        { display: none !important; }
       h3 { border-bottom: 1px solid #ccc; margin-top: 15px; margin-bottom: 10px; font-size: 14pt;}
       table { margin-top: 10px; font-size: 9pt; width: 100% !important; border: 1px solid #ccc !important; page-break-inside: auto; }
@@ -117,6 +124,8 @@
       #projectCategoriesCheckboxesContainer legend { font-weight: bold; margin-bottom: 3px; }
       #projectCategoriesCheckboxesContainer { border: none; padding: 0; margin-bottom: 10px; }
       .file-list li { background-color: transparent; border: none; padding: 2px 0; margin-bottom: 2px; }
+      /* Tahsilat ekleme formunu yazdırmada gizle */
+      main > section:nth-last-of-type(3) > div[style*="border:1px solid #ddd"] { display: none !important; }
     }
     @media (max-width: 768px) {
       header { flex-direction: column; gap: 10px; padding: 20px; }
@@ -125,19 +134,19 @@
       .input-group button { width: 100%; margin-top: 10px; }
       .file-upload-input-group > div:last-child button { margin-top: 10px; }
       .category-checkbox-group label { margin-bottom: 8px; }
-      #stagesTable, #expensesTable { display: block; width: 100%; }
-      #stagesTable thead, #expensesTable thead { display: none; }
-      #stagesTable tbody, #expensesTable tbody { display: block; width: 100%; }
-      #stagesTable tr, #expensesTable tr {
+      #stagesTable, #expensesTable, #collectionsTable { display: block; width: 100%; }
+      #stagesTable thead, #expensesTable thead, #collectionsTable thead { display: none; }
+      #stagesTable tbody, #expensesTable tbody, #collectionsTable tbody { display: block; width: 100%; }
+      #stagesTable tr, #expensesTable tr, #collectionsTable tr {
         display: block; margin-bottom: 15px; background: white; border-radius: 8px;
         box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 10px; border: 1px solid #ddd;
       }
-      #stagesTable td, #expensesTable td {
+      #stagesTable td, #expensesTable td, #collectionsTable td {
         display: flex; justify-content: space-between; padding: 8px 0;
         border-bottom: 1px solid #eee; text-align: right;
       }
-      #stagesTable td:last-child, #expensesTable td:last-child { border-bottom: 0; }
-      #stagesTable td::before, #expensesTable td::before {
+      #stagesTable td:last-child, #expensesTable td:last-child, #collectionsTable td:last-child { border-bottom: 0; }
+      #stagesTable td::before, #expensesTable td::before, #collectionsTable td::before {
         font-weight: bold; margin-right: 10px; text-align: left; flex-grow: 1;
       }
       #stagesTable tbody td:nth-of-type(1)::before { content: "Aşama:"; }
@@ -148,6 +157,11 @@
       #expensesTable tbody td:nth-of-type(1)::before { content: "Açıklama:"; }
       #expensesTable tbody td:nth-of-type(2)::before { content: "Tutar (TL):"; }
       #expensesTable tbody td:nth-of-type(3)::before { content: "İşlem:"; }
+      #collectionsTable tbody td:nth-of-type(1)::before { content: "Tarih:"; }
+      #collectionsTable tbody td:nth-of-type(2)::before { content: "Tip:"; }
+      #collectionsTable tbody td:nth-of-type(3)::before { content: "Açıklama:"; }
+      #collectionsTable tbody td:nth-of-type(4)::before { content: "Tutar/Değer (TL):"; }
+      #collectionsTable tbody td:nth-of-type(5)::before { content: "İşlem:"; }
     }
   </style>
 </head>
@@ -178,94 +192,75 @@
           </select>
         </div>
       </div>
-
       <fieldset class="category-checkbox-group" id="projectCategoriesCheckboxesContainer">
           <legend>Proje Kategorileri</legend>
       </fieldset>
-      
       <h3>Aşamalar & Sorumlular</h3>
       <table id="stagesTable">
-        <thead>
-          <tr>
-            <th>Aşama</th>
-            <th>Sorumlu Kişi</th>
-            <th>Tarih</th>
-            <th>Notlar/Açıklama</th>
-            <th>Tamamlandı mı?</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Aşama</th><th>Sorumlu Kişi</th><th>Tarih</th><th>Notlar/Açıklama</th><th>Tamamlandı mı?</th></tr></thead>
         <tbody></tbody>
       </table>
-      
       <div class="input-group" style="margin-top: 20px;">
-        <div>
-          <label for="startDate">Sözleşme Başlangıcı</label>
-          <input type="date" id="startDate" />
-        </div>
-        <div>
-          <label for="endDate">Sözleşme Bitişi</label>
-          <input type="date" id="endDate" />
-        </div>
+        <div><label for="startDate">Sözleşme Başlangıcı</label><input type="date" id="startDate" /></div>
+        <div><label for="endDate">Sözleşme Bitişi</label><input type="date" id="endDate" /></div>
       </div>
     </section>
 
     <section style="margin-top: 30px;">
       <h3>Sözleşme ve Kar Hesapları</h3>
       <div class="input-group">
-          <div>
-            <label for="contractValue">Sözleşme Tutarı (TL)</label>
-            <input type="text" id="contractValue" class="currency-input" placeholder="0,00"
-                   oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/>
-          </div>
-          <div>
-            <label for="totalExpenses">Toplam Harcama (TL)</label>
-            <input type="text" id="totalExpenses" class="readonly currency-input" readonly />
-          </div>
+          <div><label for="contractValue">Sözleşme Tutarı (TL)</label><input type="text" id="contractValue" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/></div>
+          <div><label for="totalExpenses">Toplam Harcama (TL)</label><input type="text" id="totalExpenses" class="readonly currency-input" readonly /></div>
       </div>
       <div class="input-group">
-          <div>
-            <label for="realizedProfit">Gerçekleşen Kar (TL)</label>
-            <input type="text" id="realizedProfit" class="readonly currency-input" readonly />
-          </div>
-          <div>
-            <label for="realizedProfitMargin">Gerçekleşen Kar Marjı (%)</label>
-            <input type="text" id="realizedProfitMargin" class="readonly" readonly style="text-align: right;"/>
-          </div>
+          <div><label for="realizedProfit">Gerçekleşen Kar (TL)</label><input type="text" id="realizedProfit" class="readonly currency-input" readonly /></div>
+          <div><label for="realizedProfitMargin">Gerçekleşen Kar Marjı (%)</label><input type="text" id="realizedProfitMargin" class="readonly" readonly style="text-align: right;"/></div>
+      </div>
+      <div class="input-group" style="margin-top:10px;">
+          <div><label for="totalCollections">Toplam Tahsil Edilen (TL)</label><input type="text" id="totalCollections" class="readonly currency-input" readonly /></div>
+          <div><label for="remainingBalance">Kalan Bakiye (TL)</label><input type="text" id="remainingBalance" class="readonly currency-input" readonly /></div>
       </div>
     </section>
 
     <section style="margin-top: 30px;">
       <h3>Harcama Kalemleri</h3>
       <table id="expensesTable">
-        <thead>
-          <tr>
-            <th>Açıklama</th>
-            <th>Tutar (TL)</th>
-            <th>İşlem</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Açıklama</th><th>Tutar (TL)</th><th>İşlem</th></tr></thead>
         <tbody></tbody>
       </table>
       <div class="input-group" style="margin-top: 15px;">
         <div><input type="text" id="expenseDesc" placeholder="Açıklama" /></div>
-        <div>
-            <input type="text" id="expenseAmount" class="currency-input" placeholder="0,00"
-                   oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/>
-        </div>
+        <div><input type="text" id="expenseAmount" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/></div>
         <div><button onclick="addExpense()">Harcama Ekle</button></div>
       </div>
     </section>
 
     <section style="margin-top: 30px;">
+        <h3>Tahsilatlar</h3>
+        <table id="collectionsTable">
+            <thead><tr><th>Tarih</th><th>Tip</th><th>Açıklama</th><th style="text-align:right;">Tutar/Değer (TL)</th><th>İşlem</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <p id="noCollectionsMessage" style="text-align:center; margin-top:10px; display:none;">Henüz tahsilat eklenmemiş.</p>
+        <div style="margin-top: 20px; padding:15px; border:1px solid #ddd; border-radius:8px;">
+            <h4>Yeni Tahsilat Ekle</h4>
+            <div class="input-group">
+                <div><label for="collectionDate">Tarih:</label><input type="date" id="collectionDate" /></div>
+                <div><label for="collectionType">Tip:</label><select id="collectionType" onchange="toggleCollectionDetails()"><option value="Nakit">Nakit</option><option value="Banka Transferi">Banka Transferi</option><option value="Çek">Çek</option><option value="Barter">Barter</option></select></div>
+            </div>
+            <div id="collectionAmountGroup"><label for="collectionAmount">Tutar (TL):</label><input type="text" id="collectionAmount" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/></div>
+            <div id="checkDetailsGroup" class="collection-details-fields"><h5>Çek Detayları</h5><label for="checkDueDate">Vade Tarihi:</label><input type="date" id="checkDueDate" /><label for="checkNumber">Çek No:</label><input type="text" id="checkNumber" placeholder="Çek Numarası" /><label for="checkBank">Banka:</label><input type="text" id="checkBank" placeholder="Banka Adı" /></div>
+            <div id="barterDetailsGroup" class="collection-details-fields"><h5>Barter Detayları</h5><label for="barterAsset">Takas Edilen Varlık:</label><input type="text" id="barterAsset" placeholder="Örn: Daire - A Blok No:5, Ford Transit" /><label for="barterValue">Belirlenen Değer (TL):</label><input type="text" id="barterValue" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/></div>
+            <div><label for="collectionDescription">Açıklama/Not:</label><textarea id="collectionDescription" rows="3" placeholder="Tahsilatla ilgili ek notlar..."></textarea></div>
+            <button onclick="addCollection()" style="margin-top:15px;">Tahsilat Ekle</button>
+        </div>
+    </section>
+
+    <section style="margin-top: 30px;">
         <h3>Proje Dosyaları</h3>
         <div class="input-group file-upload-input-group">
-            <div>
-                <label for="fileUploadInput">Dosya Seç</label>
-                <input type="file" id="fileUploadInput" />
-            </div>
-            <div>
-                <button onclick="uploadFile()">Yükle</button>
-            </div>
+            <div><label for="fileUploadInput">Dosya Seç</label><input type="file" id="fileUploadInput" /></div>
+            <div><button onclick="uploadFile()">Yükle</button></div>
         </div>
         <div id="uploadProgress"><div id="uploadProgressBar"></div></div>
         <h4 style="margin-top: 20px;">Yüklenmiş Dosyalar:</h4>
@@ -276,12 +271,12 @@
     <div style="margin-top: 30px; padding-bottom: 30px;">
         <button onclick="saveDetails()">Sözleşme Bilgilerini Kaydet</button>
         <button onclick="generateExcelReport()" style="margin-left:10px; background:#27ae60;">Rapor İndir (Excel)</button>
+        <!-- <button onclick="window.print();" style="margin-left:10px; background:#1abc9c;">Sayfayı Yazdır/PDF Kaydet</button> -->
         <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
     </div>
   </main>
 
   <script>
-    // Firebase yapılandırması
     const firebaseConfig = {
       apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
       authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
@@ -297,341 +292,54 @@
     const storage = firebase.storage();
 
     let projectId = null;
-    const predefinedStageNames = [
-      "Keşif / Ön görüşme", "Teklif oluşturma", "Onay – sözleşme", 
-      "Malzeme temini", "Uygulama", "Test ve devreye alma", "Teslimat"
-    ];
+    const predefinedStageNames = ["Keşif / Ön görüşme", "Teklif oluşturma", "Onay – sözleşme", "Malzeme temini", "Uygulama", "Test ve devreye alma", "Teslimat"];
     const defaultProjectStatus = "Başlamadı";
     const projectCategories = ["Aydınlatma", "Otomasyon", "Taahhüt", "Danışmanlık", "Diğer"];
 
-    // PARA FORMATLAMA FONKSİYONLARI
-    function formatCurrencyTR(numberStrOrNum) {
-        let number = typeof numberStrOrNum === 'string' ? parseFloat(numberStrOrNum.replace(/\./g, '').replace(',', '.')) : numberStrOrNum;
-        if (isNaN(number)) return "0,00";
-        return number.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    function parseCurrencyTR(formattedValue) {
-        if (typeof formattedValue !== 'string' || !formattedValue.trim()) return 0;
-        const cleanedValue = formattedValue.replace(/\./g, '').replace(',', '.');
-        const number = parseFloat(cleanedValue);
-        return isNaN(number) ? 0 : number;
-    }
-    function handleCurrencyInput(event) {
-        const input = event.target; let value = input.value;
-        let numericValue = value.replace(/[^0-9,]/g, ''); 
-        const parts = numericValue.split(',');
-        if (parts.length > 2) { numericValue = parts[0] + ',' + parts.slice(1).join('');}
-        input.value = numericValue; 
-    }
-    function formatCurrencyOnBlur(event) {
-        const input = event.target;
-        const numericValue = parseCurrencyTR(input.value);
-        input.value = formatCurrencyTR(numericValue);
-        updateCalculations(); 
-    }
-
-    // KATEGORİ CHECKBOX FONKSİYONLARI
-    function renderDetailCategoryCheckboxes() {
-        const container = document.getElementById('projectCategoriesCheckboxesContainer');
-        if (!container) return;
-        let legend = container.querySelector('legend');
-        if (!legend) { legend = document.createElement('legend'); legend.textContent = 'Proje Kategorileri'; }
-        container.innerHTML = ""; container.appendChild(legend);
-        projectCategories.forEach(category => {
-            const checkboxId = `detail_${category.replace(/\s+/g, '-').toLowerCase()}`;
-            const wrapper = document.createElement('span'); 
-            wrapper.style.marginRight = "15px"; wrapper.style.display = "inline-block";
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.value = category;
-            checkbox.name = 'project_category_detail'; checkbox.style.marginRight = "5px";
-            checkbox.style.verticalAlign = "middle"; checkbox.onchange = updateProjectCategories;
-            const label = document.createElement('label');
-            label.htmlFor = checkboxId; label.textContent = category;
-            label.style.fontWeight = "normal"; label.style.cursor = "pointer"; label.style.verticalAlign = "middle";
-            wrapper.appendChild(checkbox); wrapper.appendChild(label); container.appendChild(wrapper);
-        });
-    }
-    async function updateProjectCategories() {
-        if (!projectId) return;
-        const selectedCategories = [];
-        document.querySelectorAll('#projectCategoriesCheckboxesContainer input[type="checkbox"]:checked').forEach(cb => selectedCategories.push(cb.value));
-        try {
-            await db.collection("projects").doc(projectId).update({ categories: selectedCategories });
-            console.log("Proje kategorileri güncellendi:", selectedCategories);
-        } catch (error) {
-            console.error("Proje kategorileri güncellenirken hata:", error);
-            alert("Proje kategorileri güncellenirken bir hata oluştu.");
-        }
-    }
-
-    auth.onAuthStateChanged(user => {
-      if (!user) { window.location.href = "login.html"; } 
-      else {
-        const params = new URLSearchParams(window.location.search); projectId = params.get("id");
-        if (projectId) { loadProject(); } else { alert("Proje ID bulunamadı."); goBack(); }
-      }
-    });
-
-    async function loadProject() {
-      if (!projectId) return;
-      try {
-        renderDetailCategoryCheckboxes(); 
-        const projectRef = db.collection("projects").doc(projectId);
-        const projectDoc = await projectRef.get();
-        if (!projectDoc.exists) { alert("Proje bulunamadı veya erişim yetkiniz yok."); goBack(); return; }
-        const p = projectDoc.data();
-
-        document.getElementById("projectName").value = p.name || "";
-        document.getElementById("clientName").value = p.client || "";
-        document.getElementById("startDate").value = p.startDate || "";
-        document.getElementById("endDate").value = p.endDate || "";
-        document.getElementById("contractValue").value = formatCurrencyTR(p.contractValue || 0);
-        document.getElementById("projectStatus").value = p.status || defaultProjectStatus;
-
-        if (p.categories && Array.isArray(p.categories)) {
-            p.categories.forEach(savedCategory => {
-                const checkboxId = `detail_${savedCategory.replace(/\s+/g, '-').toLowerCase()}`;
-                const checkbox = document.getElementById(checkboxId);
-                if (checkbox) { checkbox.checked = true; }
-            });
-        }
-        
-        let stagesData = p.stages || [];
-        let shouldUpdateStagesInDb = false;
-        if (!p.stages || p.stages.length === 0) {
-            stagesData = predefinedStageNames.map(name => ({
-                name: name, responsible: "", date: "", notes: "", completed: false
-            }));
-            shouldUpdateStagesInDb = true;
-        } else if (stagesData.length !== predefinedStageNames.length || stagesData.some((s, i) => s.name !== predefinedStageNames[i])) {
-            const newStagesData = predefinedStageNames.map(name => {
-                 const existingStage = stagesData.find(s_1 => s_1.name === name);
-                 return {
-                     name: name, responsible: existingStage?.responsible || "", date: existingStage?.date || "",
-                     notes: existingStage?.notes || "", completed: existingStage?.completed || false
-                 };
-            });
-            stagesData = newStagesData;
-            shouldUpdateStagesInDb = true;
-        }
-        if(shouldUpdateStagesInDb && stagesData.length > 0){ // Sadece gerçekten aşama varsa güncelle
-            await projectRef.update({ stages: stagesData });
-        }
-        
-        renderStages(stagesData);
-        renderExpenses(p.expenses || []);
-        renderFiles(p.files || []);
-        updateCalculations();
-
-      } catch (error) {
-        console.error("Proje yüklenirken hata:", error);
-        alert("Proje detayları yüklenirken bir hata oluştu.");
-      }
-    }
-
-    function renderStages(stagesData) {
-      const tbody = document.querySelector("#stagesTable tbody");
-      tbody.innerHTML = "";
-      predefinedStageNames.forEach((stageName, i) => {
-        let stage = stagesData.find(s => s.name === stageName) || 
-                    { name: stageName, responsible: "", date: "", notes: "", completed: false };
-        
-        const row = `<tr>
-          <td>${stage.name}</td>
-          <td><input type="text" value="${stage.responsible || ''}" data-idx="${i}" data-field="responsible" class="stage-input"></td>
-          <td><input type="date" value="${stage.date || ''}" data-idx="${i}" data-field="date" class="stage-input"></td>
-          <td><textarea class="stage-notes-input stage-input" data-idx="${i}" data-field="notes">${stage.notes || ''}</textarea></td>
-          <td><input type="checkbox" ${stage.completed ? "checked" : ""} data-idx="${i}" data-field="completed" class="stage-input"></td>
-        </tr>`;
-        tbody.insertAdjacentHTML("beforeend", row);
-      });
-
-      tbody.querySelectorAll(".stage-input").forEach(input => {
-        const idx = parseInt(input.dataset.idx);
-        const field = input.dataset.field;
-        const eventType = (field === "completed") ? "change" : ((input.tagName === 'TEXTAREA') ? "blur" : "blur"); 
-        input.addEventListener(eventType, (e) => {
-            const value = (field === "completed") ? e.target.checked : e.target.value;
-            saveStageField(idx, field, value);
-        });
-      });
-    }
-
-    async function saveStageField(index, field, value) {
-      if (projectId === null) return; 
-      try {
-        const projectRef = db.collection("projects").doc(projectId);
-        const doc = await projectRef.get();
-        if(!doc.exists) return;
-
-        let stages = doc.data().stages || [];
-        if (!stages.length || stages.length !== predefinedStageNames.length || stages.some((s, i) => s.name !== predefinedStageNames[i])) {
-            stages = predefinedStageNames.map(name => {
-                 const existingStage = stages.find(s_1 => s_1.name === name);
-                 return {
-                    name: name, responsible: existingStage?.responsible || "", date: existingStage?.date || "", 
-                    notes: existingStage?.notes || "", completed: existingStage?.completed || false
-                };
-            });
-        }
-        
-        if (stages[index]) {
-          stages[index][field] = value;
-          await projectRef.update({ stages: stages });
-        }
-      } catch (error) {
-        console.error(`Aşama alanı (${field}) güncellenirken hata:`, error);
-      }
-    }
-
-    async function updateProjectStatus(newStatus) {
-        if (!projectId) return; 
-        try { await db.collection("projects").doc(projectId).update({status:newStatus}); console.log("Durum güncellendi:",newStatus); }
-        catch(e){ console.error("Durum güncelleme hatası:",e); alert("Durum güncellenemedi.");}
-    }
-
-    function renderExpenses(list) {
-      const tbody = document.querySelector("#expensesTable tbody"); tbody.innerHTML = "";
-      (list||[]).forEach((item,idx) => {
-        tbody.insertAdjacentHTML("beforeend", `<tr><td>${item.desc}</td><td style="text-align:right;">${formatCurrencyTR(item.amount||0)}</td><td><button onclick="removeExpense(${idx})" class="delete-file-btn" style="padding:5px 8px;">Sil</button></td></tr>`);
-      });
-    }
-
-    async function addExpense() {
-      const desc = document.getElementById("expenseDesc").value.trim();
-      const amountIn = document.getElementById("expenseAmount"); const amount = parseCurrencyTR(amountIn.value);
-      if (!desc||isNaN(amount)||amount<=0) { alert("Geçerli açıklama ve tutar girin."); return; }
-      try {
-        const ref = db.collection("projects").doc(projectId);
-        await ref.update({expenses: firebase.firestore.FieldValue.arrayUnion({desc, amount})});
-        document.getElementById("expenseDesc").value=""; amountIn.value=formatCurrencyTR(0);
-        const uDoc = await ref.get(); if(uDoc.exists) { renderExpenses(uDoc.data().expenses||[]); updateCalculations(); }
-      } catch (e) { console.error("Harcama ekleme hatası:",e); alert("Harcama eklenemedi."); }
-    }
-
-    async function removeExpense(index) {
-      if(!confirm("Bu harcamayı silmek istediğinizden emin misiniz?")) return;
-      try {
-        const ref = db.collection("projects").doc(projectId); const doc = await ref.get(); if(!doc.exists) return;
-        let exp = doc.data().expenses||[]; exp.splice(index,1); await ref.update({expenses:exp});
-        renderExpenses(exp); updateCalculations();
-      } catch (e) { console.error("Harcama silme hatası:",e); alert("Harcama silinemedi."); }
-    }
-
-    function updateCalculations() {
-      const contract = parseCurrencyTR(document.getElementById("contractValue").value);
-      let totalCost=0; document.querySelectorAll("#expensesTable tbody tr").forEach(r => { totalCost += parseCurrencyTR(r.cells[1]?r.cells[1].innerText:"0,00");});
-      const profit = contract - totalCost; const margin = contract>0?(profit/contract)*100:0;
-      document.getElementById("totalExpenses").value = formatCurrencyTR(totalCost);
-      document.getElementById("realizedProfit").value = formatCurrencyTR(profit);
-      document.getElementById("realizedProfitMargin").value = margin.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
-    }
-
-    async function saveDetails() {
-      const pRef = db.collection("projects").doc(projectId);
-      try {
-        await pRef.update({
-          startDate: document.getElementById("startDate").value,
-          endDate: document.getElementById("endDate").value,
-          contractValue: parseCurrencyTR(document.getElementById("contractValue").value)
-        });
-        alert("Sözleşme bilgileri kaydedildi."); updateCalculations();
-      } catch(e){ console.error("Detay kaydetme hatası:",e); alert("Bilgiler kaydedilemedi.");}
-    }
-
-    function renderFiles(files) {
-      const ul=document.getElementById("fileList"); const msg=document.getElementById("noFilesMessage"); ul.innerHTML="";
-      if(files&&files.length>0){ msg.style.display="none"; files.forEach((f,i)=>{ul.innerHTML+=`<li><a href="${f.url}" target="_blank" title="İndir: ${f.name}">${f.name}</a><button class="delete-file-btn" onclick="deleteFile(${i},'${f.name}','${f.path}')">Sil</button></li>`;});}
-      else{ msg.style.display="block"; }
-    }
-
-    async function uploadFile() {
-      const fin = document.getElementById('fileUploadInput'); const f = fin.files[0];
-      const pBarC = document.getElementById('uploadProgress'); const pBar = document.getElementById('uploadProgressBar');
-      if (!f) { alert("Dosya seçin."); return; } if (!projectId) { alert("Proje ID yok."); return; }
-      const fNameStore = `${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
-      const fPath = `projects/${projectId}/${fNameStore}`; const fRef = storage.ref(fPath);
-      try {
-        const task = fRef.put(f); pBarC.style.display='block';
-        task.on('state_changed', (s) => { const prog=(s.bytesTransferred/s.totalBytes)*100; pBar.style.width=prog+'%'; pBar.textContent=Math.round(prog)+'%';},
-        (err) => { console.error("Yükleme hatası:",err); alert(`Yükleme hatası: ${err.message}`); pBarC.style.display='none';},
-        async () => {
-          pBarC.style.display='none'; pBar.style.width='0%'; pBar.textContent='';
-          const url = await task.snapshot.ref.getDownloadURL(); const pRef = db.collection("projects").doc(projectId);
-          await pRef.update({files:firebase.firestore.FieldValue.arrayUnion({name:f.name,url,path:fPath,uploadedAt:firebase.firestore.FieldValue.serverTimestamp()})});
-          alert("Dosya yüklendi!"); fin.value=""; const pDoc = await pRef.get(); if(pDoc.exists) renderFiles(pDoc.data().files||[]);
-        });
-      } catch (e) { console.error("Yükleme başlatma hatası:",e); alert("Yükleme başlatılamadı."); pBarC.style.display='none';}
-    }
-
-    async function deleteFile(idx, name, path) {
-      if(!confirm(`"${name}" silinsin mi?`))return; if(!projectId||!path){alert("Silinemedi, bilgi eksik.");return;}
-      try {
-        await storage.ref(path).delete(); const pRef = db.collection("projects").doc(projectId); const pDoc = await pRef.get();
-        if(pDoc.exists){ let files = pDoc.data().files||[]; files=files.filter(f=>f.path!==path); await pRef.update({files}); renderFiles(files); alert(`"${name}" silindi.`);}
-      } catch (e) {
-        console.error("Dosya silme hatası:", e);
-        if (e.code==='storage/object-not-found'){ alert("Dosya Storage'da yok. DB kaydı siliniyor.");
-            const pRef = db.collection("projects").doc(projectId); const pDoc = await pRef.get();
-            if(pDoc.exists){ let files=pDoc.data().files||[]; files=files.filter(f=>f.path!==path); await pRef.update({files}); renderFiles(files);}
-        } else { alert(`Silme hatası: ${e.message}`); }
-      }
-    }
-    
-    async function generateExcelReport() {
-        if (!projectId) { alert("Rapor oluşturulacak proje bulunamadı."); return; }
-        const projectRef = db.collection("projects").doc(projectId);
-        const projectDoc = await projectRef.get();
-        if (!projectDoc.exists) { alert("Proje verileri bulunamadı."); return; }
-        const p = projectDoc.data();
-        const wb = XLSX.utils.book_new();
-
-        const generalInfoData = [
-            ["Proje Adı", p.name || 'N/A'], ["Müşteri Adı", p.client || 'N/A'],
-            ["Proje Durumu", p.status || defaultProjectStatus],
-            ["Kategoriler", (p.categories || []).join(", ") || 'N/A'],
-            ["Sözleşme Başlangıcı", p.startDate || 'N/A'], ["Sözleşme Bitişi", p.endDate || 'N/A']
-        ];
-        const wsGeneral = XLSX.utils.aoa_to_sheet(generalInfoData);
-        XLSX.utils.book_append_sheet(wb, wsGeneral, "Genel Bilgiler");
-
-        const stagesHeaders = ["Aşama Adı", "Sorumlu Kişi", "Tarih", "Notlar", "Durum"];
-        const stagesBody = (p.stages || []).map(s => [
-            s.name, s.responsible, s.date, s.notes || '', s.completed ? "Tamamlandı" : "Tamamlanmadı"
-        ]);
-        const wsStages = XLSX.utils.aoa_to_sheet([stagesHeaders, ...stagesBody]);
-        XLSX.utils.book_append_sheet(wb, wsStages, "Aşamalar");
-
-        const expensesHeaders = ["Açıklama", "Tutar (TL)"];
-        const expensesBody = (p.expenses || []).map(e => [ e.desc, e.amount ]);
-        const wsExpenses = XLSX.utils.aoa_to_sheet([expensesHeaders, ...expensesBody]);
-        (expensesBody || []).forEach((r, i) => { const adr = XLSX.utils.encode_cell({c:1,r:i+1}); if(wsExpenses[adr]){ wsExpenses[adr].t='n'; wsExpenses[adr].z='#,##0.00 TL';}});
-        XLSX.utils.book_append_sheet(wb, wsExpenses, "Harcamalar");
-
-        const contractVal = p.contractValue||0; const totalExp=(p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0);
-        const realProfit=contractVal-totalExp; const profitMargin=contractVal>0?(realProfit/contractVal)*100:0;
-        const financialData = [
-            ["Sözleşme Tutarı (TL)", contractVal], ["Toplam Harcama (TL)", totalExp],
-            ["Gerçekleşen Kar (TL)", realProfit], ["Kar Marjı (%)", profitMargin]
-        ];
-        const wsFinancial = XLSX.utils.aoa_to_sheet(financialData);
-        financialData.forEach((r,i)=>{ const adr=XLSX.utils.encode_cell({c:1,r:i}); if(wsFinancial[adr]){wsFinancial[adr].t='n'; wsFinancial[adr].z= i<3 ? '#,##0.00 TL':'0.00%'; if(i===3) wsFinancial[adr].v=profitMargin/100;}});
-        XLSX.utils.book_append_sheet(wb, wsFinancial, "Finansal Özet");
-
-        if (p.files && p.files.length > 0) {
-            const filesHeaders = ["Dosya Adı", "Yüklenme Tarihi", "URL"];
-            const filesBody = (p.files || []).map(f => [ f.name, f.uploadedAt?.toDate?f.uploadedAt.toDate().toLocaleDateString('tr-TR'):'N/A', f.url]);
-            const wsFiles = XLSX.utils.aoa_to_sheet([filesHeaders, ...filesBody]);
-            XLSX.utils.book_append_sheet(wb, wsFiles, "Proje Dosyaları");
-        }
-
-        const fileName = `${p.name ? p.name.replace(/[^a-zA-Z0-9]/g, '_') : 'proje'}_rapor.xlsx`;
-        XLSX.writeFile(wb, fileName);
-        alert("Excel raporu oluşturuldu ve indiriliyor.");
-    }
-
-    function goBack() { window.location.href = "index.html"; }
-    function logout() { auth.signOut().then(()=>window.location.href="login.html").catch(e=>{console.error("Çıkış hatası:",e);alert("Çıkış hatası.");});}
+    function formatCurrencyTR(val){let n=typeof val==='string'?parseFloat(val.replace(/\./g,'').replace(',','.')):val;return isNaN(n)?"0,00":n.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+    function parseCurrencyTR(val){if(typeof val!=='string'||!val.trim())return 0;const cl=val.replace(/\./g,'').replace(',','.');const n=parseFloat(cl);return isNaN(n)?0:n;}
+    function handleCurrencyInput(e){const i=e.target;let v=i.value;let nv=v.replace(/[^0-9,]/g,'');const p=nv.split(',');if(p.length>2){nv=p[0]+','+p.slice(1).join('');}i.value=nv;}
+    function formatCurrencyOnBlur(e){const i=e.target;const nv=parseCurrencyTR(i.value);i.value=formatCurrencyTR(nv);updateCalculations();}
+    function renderDetailCategoryCheckboxes(){const c=document.getElementById('projectCategoriesCheckboxesContainer');if(!c)return;let lg=c.querySelector('legend');if(!lg){lg=document.createElement('legend');lg.textContent='Proje Kategorileri';}c.innerHTML="";c.appendChild(lg);projectCategories.forEach(cat=>{const id=`detail_${cat.replace(/\s+/g,'-').toLowerCase()}`;const wr=document.createElement('span');wr.style.marginRight="15px";wr.style.display="inline-block";const cb=document.createElement('input');cb.type='checkbox';cb.id=id;cb.value=cat;cb.name='project_category_detail';cb.style.marginRight="5px";cb.style.verticalAlign="middle";cb.onchange=updateProjectCategories;const lb=document.createElement('label');lb.htmlFor=id;lb.textContent=cat;lb.style.fontWeight="normal";lb.style.cursor="pointer";lb.style.verticalAlign="middle";wr.appendChild(cb);wr.appendChild(lb);c.appendChild(wr);});}
+    async function updateProjectCategories(){if(!projectId)return;const sel=[];document.querySelectorAll('#projectCategoriesCheckboxesContainer input[type="checkbox"]:checked').forEach(cb=>sel.push(cb.value));try{await db.collection("projects").doc(projectId).update({categories:sel});console.log("Kategoriler güncellendi:",sel);}catch(e){console.error("Kategori güncelleme hatası:",e);alert("Kategoriler güncellenemedi.");}}
+    auth.onAuthStateChanged(u=>{if(!u){window.location.href="login.html";}else{const p=new URLSearchParams(window.location.search);projectId=p.get("id");if(projectId){loadProject();}else{alert("Proje ID yok.");goBack();}}});
+    async function loadProject(){if(!projectId)return;try{renderDetailCategoryCheckboxes();const ref=db.collection("projects").doc(projectId);const doc=await ref.get();if(!doc.exists){alert("Proje bulunamadı.");goBack();return;}const p=doc.data();document.getElementById("projectName").value=p.name||"";document.getElementById("clientName").value=p.client||"";document.getElementById("startDate").value=p.startDate||"";document.getElementById("endDate").value=p.endDate||"";document.getElementById("contractValue").value=formatCurrencyTR(p.contractValue||0);document.getElementById("projectStatus").value=p.status||defaultProjectStatus;if(p.categories&&Array.isArray(p.categories)){p.categories.forEach(cat=>{const id=`detail_${cat.replace(/\s+/g,'-').toLowerCase()}`;const cb=document.getElementById(id);if(cb)cb.checked=true;});}
+    let stages=p.stages||[];let updStg=false;if(!p.stages||p.stages.length===0){stages=predefinedStageNames.map(n=>({name:n,responsible:"",date:"",notes:"",completed:false}));updStg=true;}else if(stages.length!==predefinedStageNames.length||stages.some((s,i)=>s.name!==predefinedStageNames[i])){const newStg=predefinedStageNames.map(n=>{const es=stages.find(s1=>s1.name===n);return{name:n,responsible:es?.responsible||"",date:es?.date||"",notes:es?.notes||"",completed:es?.completed||false};});stages=newStg;updStg=true;}if(updStg&&stages.length>0){await ref.update({stages:stages});}
+    renderStages(stages);renderExpenses(p.expenses||[]);renderCollections(p.collections||[]);renderFiles(p.files||[]);updateCalculations();}catch(e){console.error("Proje yükleme hatası:",e);alert("Detaylar yüklenemedi.");}}
+    function renderStages(data){const tb=document.querySelector("#stagesTable tbody");tb.innerHTML="";predefinedStageNames.forEach((sName,i)=>{let s=data.find(st=>st.name===sName)||( {name:sName,responsible:"",date:"",notes:"",completed:false});tb.insertAdjacentHTML("beforeend",`<tr><td>${s.name}</td><td><input type="text" value="${s.responsible||''}" data-idx="${i}" data-field="responsible" class="stage-input"></td><td><input type="date" value="${s.date||''}" data-idx="${i}" data-field="date" class="stage-input"></td><td><textarea class="stage-notes-input stage-input" data-idx="${i}" data-field="notes">${s.notes||''}</textarea></td><td><input type="checkbox" ${s.completed?"checked":""} data-idx="${i}" data-field="completed" class="stage-input"></td></tr>`);});
+    tb.querySelectorAll(".stage-input").forEach(inp=>{const idx=parseInt(inp.dataset.idx),fld=inp.dataset.field;inp.addEventListener((fld==="completed"?"change":(inp.tagName==='TEXTAREA'?"blur":"blur")),e=>saveStageField(idx,fld,(fld==="completed"?e.target.checked:e.target.value)));});}
+    async function saveStageField(idx,fld,val){if(!projectId)return;try{const ref=db.collection("projects").doc(projectId);const doc=await ref.get();if(!doc.exists)return;let stg=doc.data().stages||[];if(!stg.length||stg.length!==predefinedStageNames.length||stg.some((s,i)=>s.name!==predefinedStageNames[i])){stg=predefinedStageNames.map(n=>{const es=stg.find(s1=>s1.name===n);return{name:n,responsible:es?.responsible||"",date:es?.date||"",notes:es?.notes||"",completed:es?.completed||false};});}
+    if(stg[idx]){stg[idx][fld]=val;await ref.update({stages:stg});}}catch(e){console.error(`Aşama ${fld} güncelleme hatası:`,e);}}
+    async function updateProjectStatus(newSt){if(!projectId)return;try{await db.collection("projects").doc(projectId).update({status:newSt});console.log("Durum güncellendi:",newSt);}catch(e){console.error("Durum güncelleme hatası:",e);alert("Durum güncellenemedi.");}}
+    function renderExpenses(list){const tb=document.querySelector("#expensesTable tbody");tb.innerHTML="";(list||[]).forEach((it,idx)=>{tb.insertAdjacentHTML("beforeend",`<tr><td>${it.desc}</td><td style="text-align:right;">${formatCurrencyTR(it.amount||0)}</td><td><button onclick="removeExpense(${idx})" class="delete-file-btn" style="padding:5px 8px;">Sil</button></td></tr>`);});}
+    async function addExpense(){const d=document.getElementById("expenseDesc").value.trim();const ai=document.getElementById("expenseAmount");const a=parseCurrencyTR(ai.value);if(!d||isNaN(a)||a<=0){alert("Geçerli açıklama ve tutar.");return;}try{const ref=db.collection("projects").doc(projectId);await ref.update({expenses:firebase.firestore.FieldValue.arrayUnion({desc:d,amount:a})});document.getElementById("expenseDesc").value="";ai.value=formatCurrencyTR(0);const ud=await ref.get();if(ud.exists){renderExpenses(ud.data().expenses||[]);updateCalculations();}}catch(e){console.error("Harcama ekleme hatası:",e);alert("Harcama eklenemedi.");}}
+    async function removeExpense(idx){if(!confirm("Bu harcama silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let ex=d.data().expenses||[];ex.splice(idx,1);await ref.update({expenses:ex});renderExpenses(ex);updateCalculations();}catch(e){console.error("Harcama silme hatası:",e);alert("Harcama silinemedi.");}}
+    function renderCollections(arr){const tb=document.querySelector("#collectionsTable tbody");const msg=document.getElementById("noCollectionsMessage");tb.innerHTML="";if(arr&&arr.length>0){msg.style.display="none";arr.forEach((col,idx)=>{let amt=col.type==="Barter"&&col.barterDetails?formatCurrencyTR(col.barterDetails.value||0):formatCurrencyTR(col.amount||0);tb.insertAdjacentHTML("beforeend",`<tr><td>${col.date||'N/A'}</td><td>${col.type||'N/A'}</td><td>${col.description||''}</td><td style="text-align:right;">${amt}</td><td><button class="delete-file-btn" style="padding:5px 8px;" onclick="removeCollection(${idx})">Sil</button></td></tr>`);});}else{msg.style.display="block";}updateCalculations();}
+    function toggleCollectionDetails(){const t=document.getElementById('collectionType').value;document.getElementById('checkDetailsGroup').style.display=t==='Çek'?'block':'none';document.getElementById('barterDetailsGroup').style.display=t==='Barter'?'block':'none';document.getElementById('collectionAmountGroup').style.display=t==='Barter'?'none':'block';}
+    async function addCollection(){const dt=document.getElementById('collectionDate').value,tp=document.getElementById('collectionType').value,dsc=document.getElementById('collectionDescription').value.trim();let amt=0,chk=null,brt=null;if(!dt||!tp){alert("Tarih ve tip seçin.");return;}
+    if(tp==="Nakit"||tp==="Banka Transferi"){amt=parseCurrencyTR(document.getElementById('collectionAmount').value);if(isNaN(amt)||amt<=0){alert("Geçerli tutar.");return;}}else if(tp==="Çek"){amt=parseCurrencyTR(document.getElementById('collectionAmount').value);const due=document.getElementById('checkDueDate').value,cno=document.getElementById('checkNumber').value.trim(),bnk=document.getElementById('checkBank').value.trim();if(isNaN(amt)||amt<=0||!due||!cno||!bnk){alert("Çek detayları ve tutar.");return;}chk={dueDate:due,checkNo:cno,bank:bnk};}else if(tp==="Barter"){const ast=document.getElementById('barterAsset').value.trim(),val=parseCurrencyTR(document.getElementById('barterValue').value);if(!ast||isNaN(val)||val<=0){alert("Barter varlık ve değer.");return;}brt={asset:ast,value:val};}
+    const nCol={date:dt,type:tp,description:dsc,amount:(tp!=="Barter"?amt:null),checkDetails:chk,barterDetails:brt,addedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    try{const ref=db.collection("projects").doc(projectId);await ref.update({collections:firebase.firestore.FieldValue.arrayUnion(nCol)});['collectionDate','collectionDescription','checkDueDate','checkNumber','checkBank','barterAsset'].forEach(id=>document.getElementById(id).value="");document.getElementById('collectionType').value="Nakit";document.getElementById('collectionAmount').value=formatCurrencyTR(0);document.getElementById('barterValue').value=formatCurrencyTR(0);toggleCollectionDetails();const uDoc=await ref.get();if(uDoc.exists)renderCollections(uDoc.data().collections||[]);alert("Tahsilat eklendi.");}catch(e){console.error("Tahsilat ekleme hatası:",e);alert("Tahsilat eklenemedi.");}}
+    async function removeCollection(idx){if(!confirm("Bu tahsilat silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let cols=d.data().collections||[];cols.splice(idx,1);await ref.update({collections:cols});renderCollections(cols);}catch(e){console.error("Tahsilat silme hatası:",e);alert("Tahsilat silinemedi.");}}
+    function updateCalculations(){const contract=parseCurrencyTR(document.getElementById("contractValue").value);let totalCost=0;document.querySelectorAll("#expensesTable tbody tr").forEach(r=>{totalCost+=parseCurrencyTR(r.cells[1]?r.cells[1].innerText:"0,00");});let totalColl=0;document.querySelectorAll("#collectionsTable tbody tr").forEach(r=>{totalColl+=parseCurrencyTR(r.cells[3]?r.cells[3].innerText:"0,00");});
+    const profit=contract-totalCost;const margin=contract>0?(profit/contract)*100:0;const remain=contract-totalColl;
+    document.getElementById("totalExpenses").value=formatCurrencyTR(totalCost);document.getElementById("realizedProfit").value=formatCurrencyTR(profit);document.getElementById("realizedProfitMargin").value=margin.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById("totalCollections").value=formatCurrencyTR(totalColl);document.getElementById("remainingBalance").value=formatCurrencyTR(remain);}
+    async function saveDetails(){const ref=db.collection("projects").doc(projectId);try{await ref.update({startDate:document.getElementById("startDate").value,endDate:document.getElementById("endDate").value,contractValue:parseCurrencyTR(document.getElementById("contractValue").value)});alert("Sözleşme bilgileri kaydedildi.");updateCalculations();}catch(e){console.error("Detay kaydetme hatası:",e);alert("Bilgiler kaydedilemedi.");}}
+    function renderFiles(files){const ul=document.getElementById("fileList");const msg=document.getElementById("noFilesMessage");ul.innerHTML="";if(files&&files.length>0){msg.style.display="none";files.forEach((f,i)=>{ul.innerHTML+=`<li><a href="${f.url}" target="_blank" title="İndir: ${f.name}">${f.name}</a><button class="delete-file-btn" onclick="deleteFile(${i},'${f.name}','${f.path}')">Sil</button></li>`;});}else{msg.style.display="block";}}
+    async function uploadFile(){const fin=document.getElementById('fileUploadInput');const f=fin.files[0];const pBarC=document.getElementById('uploadProgress');const pBar=document.getElementById('uploadProgressBar');if(!f){alert("Dosya seçin.");return;}if(!projectId){alert("Proje ID yok.");return;}
+    const fNameStore=`${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;const fPath=`projects/${projectId}/${fNameStore}`;const fRef=storage.ref(fPath);try{const task=fRef.put(f);pBarC.style.display='block';task.on('state_changed',(s)=>{const prog=(s.bytesTransferred/s.totalBytes)*100;pBar.style.width=prog+'%';pBar.textContent=Math.round(prog)+'%';},(err)=>{console.error("Yükleme hatası:",err);alert(`Yükleme hatası: ${err.message}`);pBarC.style.display='none';},async ()=>{pBarC.style.display='none';pBar.style.width='0%';pBar.textContent='';const url=await task.snapshot.ref.getDownloadURL();const pRef=db.collection("projects").doc(projectId);await pRef.update({files:firebase.firestore.FieldValue.arrayUnion({name:f.name,url,path:fPath,uploadedAt:firebase.firestore.FieldValue.serverTimestamp()})});alert("Dosya yüklendi!");fin.value="";const pDoc=await pRef.get();if(pDoc.exists)renderFiles(pDoc.data().files||[]);});}catch(e){console.error("Yükleme başlatma hatası:",e);alert("Yükleme başlatılamadı.");pBarC.style.display='none';}}
+    async function deleteFile(idx,name,path){if(!confirm(`"${name}" silinsin mi?`))return;if(!projectId||!path){alert("Silinemedi, bilgi eksik.");return;}try{await storage.ref(path).delete();const pRef=db.collection("projects").doc(projectId);const pDoc=await pRef.get();if(pDoc.exists){let files=pDoc.data().files||[];files=files.filter(f=>f.path!==path);await pRef.update({files});renderFiles(files);alert(`"${name}" silindi.`);}}catch(e){console.error("Dosya silme hatası:",e);if(e.code==='storage/object-not-found'){alert("Dosya Storage'da yok. DB kaydı siliniyor.");const pRef=db.collection("projects").doc(projectId);const pDoc=await pRef.get();if(pDoc.exists){let files=pDoc.data().files||[];files=files.filter(f=>f.path!==path);await pRef.update({files});renderFiles(files);}}else{alert(`Silme hatası: ${e.message}`);}}}
+    async function generateExcelReport(){if(!projectId){alert("Proje bulunamadı.");return;}const pRef=db.collection("projects").doc(projectId);const pDoc=await pRef.get();if(!pDoc.exists){alert("Proje verisi yok.");return;}const p=pDoc.data();const wb=XLSX.utils.book_new();
+    const generalInfoData=[["Proje Adı",p.name||'N/A'],["Müşteri Adı",p.client||'N/A'],["Proje Durumu",p.status||defaultProjectStatus],["Kategoriler",(p.categories||[]).join(", ")||'N/A'],["Sözleşme Başlangıcı",p.startDate||'N/A'],["Sözleşme Bitişi",p.endDate||'N/A']];const wsGeneral=XLSX.utils.aoa_to_sheet(generalInfoData);XLSX.utils.book_append_sheet(wb,wsGeneral,"Genel Bilgiler");
+    const stagesHeaders=["Aşama Adı","Sorumlu Kişi","Tarih","Notlar","Durum"];const stagesBody=(p.stages||[]).map(s=>[s.name,s.responsible,s.date,s.notes||'',s.completed?"Tamamlandı":"Tamamlanmadı"]);const wsStages=XLSX.utils.aoa_to_sheet([stagesHeaders,...stagesBody]);XLSX.utils.book_append_sheet(wb,wsStages,"Aşamalar");
+    const expensesHeaders=["Açıklama","Tutar (TL)"];const expensesBody=(p.expenses||[]).map(e=>[e.desc,e.amount]);const wsExpenses=XLSX.utils.aoa_to_sheet([expensesHeaders,...expensesBody]);(expensesBody||[]).forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:1,r:i+1});if(wsExpenses[adr]){wsExpenses[adr].t='n';wsExpenses[adr].z='#,##0.00 TL';}});XLSX.utils.book_append_sheet(wb,wsExpenses,"Harcamalar");
+    const collectionsHeaders=["Tarih","Tip","Açıklama","Tutar/Değer (TL)"];const collectionsBody=(p.collections||[]).map(c=>{let amt=c.type==="Barter"&&c.barterDetails?c.barterDetails.value:c.amount;return[c.date,c.type,c.description,amt];});const wsCollections=XLSX.utils.aoa_to_sheet([collectionsHeaders,...collectionsBody]);(collectionsBody||[]).forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:3,r:i+1});if(wsCollections[adr]){wsCollections[adr].t='n';wsCollections[adr].z='#,##0.00 TL';}});XLSX.utils.book_append_sheet(wb,wsCollections,"Tahsilatlar");
+    const contractVal=p.contractValue||0;const totalExp=(p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0);const totalColl=(p.collections||[]).reduce((s,c)=>s+(c.type==="Barter"&&c.barterDetails?c.barterDetails.value:c.amount||0),0);const realProfit=contractVal-totalExp;const profitMargin=contractVal>0?(realProfit/contractVal)*100:0;const remainBal=contractVal-totalColl;
+    const financialData=[["Sözleşme Tutarı (TL)",contractVal],["Toplam Harcama (TL)",totalExp],["Gerçekleşen Kar (TL)",realProfit],["Kar Marjı (%)",profitMargin],["Toplam Tahsil Edilen (TL)",totalColl],["Kalan Bakiye (TL)",remainBal]];const wsFinancial=XLSX.utils.aoa_to_sheet(financialData);financialData.forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:1,r:i});if(wsFinancial[adr]){wsFinancial[adr].t='n';wsFinancial[adr].z=i===3?'0.00%':'#,##0.00 TL';if(i===3)wsFinancial[adr].v=profitMargin/100;}});XLSX.utils.book_append_sheet(wb,wsFinancial,"Finansal Özet");
+    if(p.files&&p.files.length>0){const filesHeaders=["Dosya Adı","Yüklenme Tarihi","URL"];const filesBody=(p.files||[]).map(f=>[f.name,f.uploadedAt?.toDate?f.uploadedAt.toDate().toLocaleDateString('tr-TR'):'N/A',f.url]);const wsFiles=XLSX.utils.aoa_to_sheet([filesHeaders,...filesBody]);XLSX.utils.book_append_sheet(wb,wsFiles,"Proje Dosyaları");}
+    const fileName=`${p.name?p.name.replace(/[^a-zA-Z0-9]/g,'_'):'proje'}_rapor.xlsx`;XLSX.writeFile(wb,fileName);alert("Excel raporu oluşturuldu ve indiriliyor.");}
+    function goBack(){window.location.href="index.html";}
+    function logout(){auth.signOut().then(()=>window.location.href="login.html").catch(e=>{console.error("Çıkış hatası:",e);alert("Çıkış hatası.");});}
   </script>
 </body>
 </html>
