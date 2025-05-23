@@ -26,11 +26,11 @@
         border-bottom: 2px solid #2980b9; padding-bottom: 8px;
     }
     label { display: block; margin: 12px 0 6px; font-weight: 600; }
-    input, button, select { /* select eklendi */
+    input, button, select {
       padding: 10px 12px; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc;
       outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; box-sizing: border-box;
     }
-    input:focus, select:focus { /* select eklendi */
+    input:focus, select:focus {
         border-color: #2980b9; box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
     }
     button {
@@ -52,7 +52,7 @@
     .btn-primary { font-weight: 600; padding: 10px 20px; }
     .input-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
     .input-group input { flex: 1; min-width: 200px; }
-    .input-group button { flex-shrink: 0; margin-top:0; /* Butonun kendi margin-top'unu sıfırla */ }
+    .input-group button { flex-shrink: 0; margin-top:0; }
 
     .category-checkbox-group {
         margin-top: 15px; margin-bottom: 10px; padding: 10px; border: 1px solid #eee;
@@ -61,9 +61,9 @@
     .category-checkbox-group legend {
         font-weight: 600; padding: 0 5px; margin-left: 5px; color: #34495e;
     }
-    .category-checkbox-group label { /* Checkbox label'ları için özel */
+    .category-checkbox-group label {
         display: inline-block; margin-right: 15px; font-weight: normal; cursor: pointer;
-        margin-top: 0; margin-bottom: 0; /* Global label stillerini ez */
+        margin-top: 0; margin-bottom: 0;
     }
     .category-checkbox-group input[type="checkbox"] {
         width: auto; margin-right: 5px; vertical-align: middle;
@@ -78,6 +78,7 @@
     }
     .status-baslamadi { background-color: #7f8c8d; }
     .status-devam-ediyor { background-color: #f39c12; }
+    .status-takip-ediliyor { background-color: #3498db; } /* Yeni durum stili */
     .status-tamamlandi { background-color: #2ecc71; }
 
     .filter-sort-container {
@@ -88,15 +89,14 @@
     .filter-sort-container > div {
         display: flex; flex-direction: column; flex-grow: 1; min-width: 180px;
     }
-    .filter-sort-container label { /* Filtre label'ları için özel */
-        margin-bottom: 5px; font-size: 0.9em; color: #555;
-        margin-top: 0; /* Global label stilini ez */
+    .filter-sort-container label {
+        margin-bottom: 5px; font-size: 0.9em; color: #555; margin-top: 0;
     }
     .filter-sort-container select, .filter-sort-container button {
         padding: 8px 10px; font-size: 0.95rem;
     }
     .filter-sort-container button {
-        flex-grow: 0; width: auto; margin-top:0; /* Buton için margin-top'u sıfırla */
+        flex-grow: 0; width: auto; margin-top:0;
     }
 
     @media (max-width: 768px) {
@@ -104,7 +104,7 @@
       header button { margin-left: 0 !important; align-self: flex-start; }
       .input-group { flex-direction: column; align-items: stretch; }
       .input-group input, .input-group button { width: 100%; margin-left: 0; }
-      .input-group button { margin-top: 10px; } /* Yeni proje ekle butonu için mobil */
+      .input-group button { margin-top: 10px; }
       .category-checkbox-group label { margin-bottom: 5px; }
       .filter-sort-container { flex-direction: column; align-items: stretch; }
       .filter-sort-container > div { min-width: 100%; }
@@ -149,9 +149,8 @@
     </div>
     <fieldset class="category-checkbox-group" id="newProjectCategories">
         <legend>Proje Kategorileri</legend>
-        <!-- Checkbox'lar JavaScript ile buraya eklenecek -->
     </fieldset>
-    <div class="input-group" style="margin-top:10px;"> <!-- Ekle butonu için ayrı grup -->
+    <div class="input-group" style="margin-top:10px;">
          <button class="btn-primary" onclick="addProject()">Ekle</button>
     </div>
 
@@ -164,6 +163,7 @@
                 <option value="">Tümü</option>
                 <option value="Başlamadı">Başlamadı</option>
                 <option value="Devam Ediyor">Devam Ediyor</option>
+                <option value="Takip Ediliyor">Takip Ediliyor</option>
                 <option value="Tamamlandı">Tamamlandı</option>
             </select>
         </div>
@@ -171,7 +171,6 @@
             <label for="filterCategory">Kategoriye Göre Filtrele:</label>
             <select id="filterCategory" onchange="applyFiltersAndSort()">
                 <option value="">Tümü</option>
-                <!-- Kategoriler JavaScript ile eklenecek -->
             </select>
         </div>
         <div>
@@ -190,7 +189,6 @@
             </select>
         </div>
         <div>
-             <!-- Sıfırla butonu için label gereksiz, doğrudan buton -->
             <button onclick="resetFiltersAndSort()" style="background-color:#7f8c8d; margin-top:27px;">Sıfırla</button>
         </div>
     </div>
@@ -231,6 +229,7 @@
     const projectStatuses = {
         "Başlamadı": "status-baslamadi",
         "Devam Ediyor": "status-devam-ediyor",
+        "Takip Ediliyor": "status-takip-ediliyor",
         "Tamamlandı": "status-tamamlandi"
     };
     const defaultStatus = "Başlamadı";
@@ -239,41 +238,21 @@
     function renderCategoryCheckboxes(containerId, prefix = "") {
         const container = document.getElementById(containerId);
         if (!container) return;
-        
         let legendText = 'Proje Kategorileri'; 
-        if (container.querySelector('legend')) {
-            legendText = container.querySelector('legend').textContent; 
-        }
+        if (container.querySelector('legend')) { legendText = container.querySelector('legend').textContent; }
         container.innerHTML = ""; 
-        
-        const legend = document.createElement('legend');
-        legend.textContent = legendText;
-        container.appendChild(legend);
-
+        const legend = document.createElement('legend'); legend.textContent = legendText; container.appendChild(legend);
         projectCategories.forEach(category => {
             const checkboxId = `${prefix}${category.replace(/\s+/g, '-').toLowerCase()}`;
             const wrapper = document.createElement('span'); 
-            wrapper.style.marginRight = "15px"; 
-            wrapper.style.display = "inline-block";
-
+            wrapper.style.marginRight = "15px"; wrapper.style.display = "inline-block";
             const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = checkboxId;
-            checkbox.value = category;
-            checkbox.name = `${prefix}project_category`;
-            checkbox.style.marginRight = "5px";
-            checkbox.style.verticalAlign = "middle";
-
+            checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.value = category;
+            checkbox.name = `${prefix}project_category`; checkbox.style.marginRight = "5px"; checkbox.style.verticalAlign = "middle";
             const label = document.createElement('label');
-            label.htmlFor = checkboxId;
-            label.textContent = category;
-            label.style.fontWeight = "normal";
-            label.style.cursor = "pointer";
-            label.style.verticalAlign = "middle";
-            
-            wrapper.appendChild(checkbox);
-            wrapper.appendChild(label);
-            container.appendChild(wrapper);
+            label.htmlFor = checkboxId; label.textContent = category;
+            label.style.fontWeight = "normal"; label.style.cursor = "pointer"; label.style.verticalAlign = "middle";
+            wrapper.appendChild(checkbox); wrapper.appendChild(label); container.appendChild(wrapper);
         });
     }
 
@@ -282,8 +261,7 @@
         if (!filterCategorySelect) return;
         projectCategories.forEach(category => {
             const option = document.createElement('option');
-            option.value = category;
-            option.textContent = category;
+            option.value = category; option.textContent = category;
             filterCategorySelect.appendChild(option);
         });
     }
@@ -291,27 +269,21 @@
     window.onload = function() {
         renderCategoryCheckboxes('newProjectCategories', 'new_');
         populateCategoryFilter();
-        // auth.onAuthStateChanged içinden applyFiltersAndSort çağrılacak
     };
 
     auth.onAuthStateChanged(async user => {
-      if (!user) {
-        window.location.href = "login.html"; 
-      } else {
+      if (!user) { window.location.href = "login.html"; } 
+      else {
         userId = user.uid;
         try {
           const userDoc = await db.collection("users").doc(userId).get();
           if (userDoc.exists) {
             currentUserRole = userDoc.data().role;
             document.getElementById("userRoleDisplay").textContent = currentUserRole === 'admin' ? 'Yönetici Görünümü' : 'Kullanıcı Görünümü';
-          } else {
-            currentUserRole = "user"; 
-            document.getElementById("userRoleDisplay").textContent = 'Kullanıcı Görünümü';
-          }
+          } else { currentUserRole = "user"; document.getElementById("userRoleDisplay").textContent = 'Kullanıcı Görünümü'; }
         } catch (error) {
           console.error("Kullanıcı rolü alınırken hata:", error);
-          currentUserRole = "user"; 
-          document.getElementById("userRoleDisplay").textContent = 'Kullanıcı Görünümü (Rol alınamadı)';
+          currentUserRole = "user"; document.getElementById("userRoleDisplay").textContent = 'Kullanıcı Görünümü (Rol alınamadı)';
         }
         applyFiltersAndSort(); 
       }
@@ -332,68 +304,35 @@
 
       try {
         let projectsQuery = db.collection("projects");
-
-        if (currentUserRole !== "admin") {
-          projectsQuery = projectsQuery.where("userId", "==", userId);
-        }
-
-        if (filters.status) {
-            projectsQuery = projectsQuery.where("status", "==", filters.status);
-        }
-        if (filters.category) {
-            projectsQuery = projectsQuery.where("categories", "array-contains", filters.category);
-        }
-
+        if (currentUserRole !== "admin") { projectsQuery = projectsQuery.where("userId", "==", userId); }
+        if (filters.status) { projectsQuery = projectsQuery.where("status", "==", filters.status); }
+        if (filters.category) { projectsQuery = projectsQuery.where("categories", "array-contains", filters.category); }
         let sortField = filters.sortField || (currentUserRole === "admin" ? "createdAt" : "name");
         let sortDirection = filters.sortDirection || "desc";
-        
         projectsQuery = projectsQuery.orderBy(sortField, sortDirection);
-        
-        if (sortField !== "name" && sortField !== "createdAt") { // Eğer ana sıralama alanı zaten benzersiz değilse, ikincil sıralama
-             projectsQuery = projectsQuery.orderBy("name", "asc"); // Daha tutarlı sonuçlar için
-        } else if (sortField === "name" && sortField !== "createdAt") {
-             projectsQuery = projectsQuery.orderBy("createdAt", "desc"); // Ada göre sıralarken, aynı isimler için tarihe göre
-        }
-
+        if (sortField !== "name" && sortField !== "createdAt") { projectsQuery = projectsQuery.orderBy("name", "asc"); }
+        else if (sortField === "name" && sortField !== "createdAt") { projectsQuery = projectsQuery.orderBy("createdAt", "desc");}
 
         const projectsSnapshot = await projectsQuery.get();
-        
-        if (projectsSnapshot.empty) {
-            noProjectsMessage.style.display = "block";
-        } else {
+        if (projectsSnapshot.empty) { noProjectsMessage.style.display = "block"; } 
+        else {
             noProjectsMessage.style.display = "none";
             projectsSnapshot.forEach(doc => {
-              const proj = doc.data();
-              const tr = document.createElement("tr");
-              
+              const proj = doc.data(); const tr = document.createElement("tr");
               let categoriesHtml = "N/A";
-              if (proj.categories && proj.categories.length > 0) {
-                  categoriesHtml = proj.categories.map(cat => `<span class="categories-display"><span>${cat}</span></span>`).join(" ");
-              }
-              const contractValueDisplay = (proj.contractValue != null && typeof proj.contractValue === 'number')
-                ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'})
-                : 'Belirtilmemiş';
-
-              tr.innerHTML = `
-                <td data-label="Proje Adı"><a href="project-detail.html?id=${doc.id}">${proj.name}</a></td>
-                <td data-label="Müşteri">${proj.client}</td>
-                <td data-label="Kategoriler">${categoriesHtml}</td>
-                <td data-label="Durum">${getStatusBadge(proj.status)}</td>
-                <td data-label="Sözleşme Bedeli">${contractValueDisplay}</td>
-                <td data-label="İşlem"><button class="btn-danger" onclick="deleteProject('${doc.id}', '${proj.name}')">Sil</button></td>
-              `;
+              if (proj.categories && proj.categories.length > 0) { categoriesHtml = proj.categories.map(cat => `<span class="categories-display"><span>${cat}</span></span>`).join(" ");}
+              const contractValueDisplay = (proj.contractValue != null && typeof proj.contractValue === 'number') ? proj.contractValue.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'}) : 'Belirtilmemiş';
+              tr.innerHTML = `<td data-label="Proje Adı"><a href="project-detail.html?id=${doc.id}">${proj.name}</a></td><td data-label="Müşteri">${proj.client}</td><td data-label="Kategoriler">${categoriesHtml}</td><td data-label="Durum">${getStatusBadge(proj.status)}</td><td data-label="Sözleşme Bedeli">${contractValueDisplay}</td><td data-label="İşlem"><button class="btn-danger" onclick="deleteProject('${doc.id}', '${proj.name}')">Sil</button></td>`;
               tbody.appendChild(tr);
             });
         }
       } catch (error) {
           console.error("Projeler yüklenirken hata oluştu: ", error);
-          noProjectsMessage.textContent = "Projeler yüklenirken bir hata oluştu.";
-          noProjectsMessage.style.display = "block";
+          noProjectsMessage.textContent = "Projeler yüklenirken bir hata oluştu."; noProjectsMessage.style.display = "block";
           if (error.code === 'failed-precondition') {
-              tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Veritabanı sorgusu için gerekli bir indeks eksik olabilir. Lütfen tarayıcı konsolunu kontrol edin ve Firebase'in önerdiği indeksi oluşturun. <a href="${error.message.substring(error.message.indexOf('https://'))}" target="_blank">İndeks Oluştur</a></td></tr>`;
-          } else {
-              tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Projeler yüklenirken bir hata oluştu.</td></tr>`;
-          }
+              const errorLink = error.message.substring(error.message.indexOf('https://'));
+              tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Veritabanı sorgusu için gerekli bir indeks eksik olabilir. Lütfen tarayıcı konsolunu kontrol edin ve Firebase'in önerdiği indeksi oluşturun. ${errorLink ? `<a href="${errorLink}" target="_blank">İndeks Oluştur</a>` : ''}</td></tr>`;
+          } else { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Projeler yüklenirken bir hata oluştu.</td></tr>`; }
       }
     }
     
@@ -402,66 +341,39 @@
         const selectedCategory = document.getElementById('filterCategory').value;
         const selectedSortField = document.getElementById('sortField').value;
         const selectedSortDirection = document.getElementById('sortDirection').value;
-
         const filters = {};
         if (selectedStatus) filters.status = selectedStatus;
         if (selectedCategory) filters.category = selectedCategory;
         if (selectedSortField) filters.sortField = selectedSortField;
         if (selectedSortDirection) filters.sortDirection = selectedSortDirection;
-        
         loadProjects(filters);
     }
 
     function resetFiltersAndSort() {
         document.getElementById('filterStatus').value = "";
         document.getElementById('filterCategory').value = "";
-        // currentUserRole burada tanımlı olmayabilir, bu yüzden auth.onAuthStateChanged içinde set edilmeli
-        // Şimdilik genel bir varsayılan kullanalım veya auth state'ini bekleyelim.
-        // Daha iyisi, bu fonksiyonu sadece rol bilindiğinde çağrılabilir yapmak.
-        // Ya da, en basit:
         document.getElementById('sortField').value = "createdAt"; 
         document.getElementById('sortDirection').value = "desc";
         applyFiltersAndSort();
     }
 
     async function addProject() {
-      const nameInput = document.getElementById("projectName");
-      const clientInput = document.getElementById("clientName");
-      const name = nameInput.value.trim();
-      const client = clientInput.value.trim();
-
-      if (!name || !client) {
-        alert("Proje adı ve müşteri adı alanları doldurulmalıdır!");
-        return;
-      }
-      if (!userId) {
-        alert("Kullanıcı oturumu bulunamadı. Lütfen tekrar giriş yapın.");
-        return;
-      }
-
+      const nameInput = document.getElementById("projectName"); const clientInput = document.getElementById("clientName");
+      const name = nameInput.value.trim(); const client = clientInput.value.trim();
+      if (!name || !client) { alert("Proje adı ve müşteri adı alanları doldurulmalıdır!"); return; }
+      if (!userId) { alert("Kullanıcı oturumu bulunamadı. Lütfen tekrar giriş yapın."); return; }
       const selectedCategories = [];
-      const checkboxes = document.querySelectorAll('#newProjectCategories input[type="checkbox"]:checked');
-      checkboxes.forEach(checkbox => {
-          selectedCategories.push(checkbox.value);
-      });
-
+      document.querySelectorAll('#newProjectCategories input[type="checkbox"]:checked').forEach(cb => {selectedCategories.push(cb.value);});
       const project = {
-        userId: userId, 
-        name, client, categories: selectedCategories, status: defaultStatus, 
-        contractValue: 0, expenses: [], stages: [], 
-        createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+        userId: userId, name, client, categories: selectedCategories, status: defaultStatus, 
+        contractValue: 0, expenses: [], stages: [], createdAt: firebase.firestore.FieldValue.serverTimestamp() 
       };
-
       try {
         await db.collection("projects").add(project);
         nameInput.value = ""; clientInput.value = "";
         document.querySelectorAll('#newProjectCategories input[type="checkbox"]').forEach(cb => cb.checked = false);
-        alert("Proje başarıyla eklendi.");
-        applyFiltersAndSort(); // Filtreleri koruyarak listeyi yenile
-      } catch (error) {
-        console.error("Proje eklenirken hata oluştu: ", error);
-        alert("Proje eklenirken bir hata oluştu. Lütfen tekrar deneyin.");
-      }
+        alert("Proje başarıyla eklendi."); applyFiltersAndSort(); 
+      } catch (error) { console.error("Proje eklenirken hata oluştu: ", error); alert("Proje eklenirken bir hata oluştu."); }
     }
 
     async function deleteProject(id, projectName) {
@@ -469,27 +381,16 @@
         try {
             if (currentUserRole !== 'admin') {
                 const projectDoc = await db.collection('projects').doc(id).get();
-                if (projectDoc.exists && projectDoc.data().userId !== userId) {
-                    alert('Bu projeyi silme yetkiniz yok.'); return;
-                }
+                if (projectDoc.exists && projectDoc.data().userId !== userId) { alert('Bu projeyi silme yetkiniz yok.'); return; }
             }
             await db.collection("projects").doc(id).delete();
-            alert(`"${projectName}" adlı proje başarıyla silindi.`);
-            applyFiltersAndSort(); // Filtreleri koruyarak listeyi yenile
-        } catch (error) {
-            console.error("Proje silinirken hata oluştu: ", error);
-            alert(`"${projectName}" adlı proje silinirken bir hata oluştu.`);
-        }
+            alert(`"${projectName}" adlı proje başarıyla silindi.`); applyFiltersAndSort(); 
+        } catch (error) { console.error("Proje silinirken hata oluştu: ", error); alert(`"${projectName}" adlı proje silinirken bir hata oluştu.`); }
     }
 
     function logout() {
-      auth.signOut().then(() => {
-        currentUserRole = null; 
-        window.location.href = "login.html"; 
-      }).catch((error) => {
-        console.error("Çıkış yapılırken hata:", error);
-        alert("Çıkış yapılırken bir hata oluştu.");
-      });
+      auth.signOut().then(() => { currentUserRole = null; window.location.href = "login.html"; })
+      .catch((error) => { console.error("Çıkış yapılırken hata:", error); alert("Çıkış yapılırken bir hata oluştu."); });
     }
   </script>
 </body>
