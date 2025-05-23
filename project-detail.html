@@ -100,12 +100,12 @@
 
     @media print { /* Yazdırma Stilleri */
       body { font-family: Arial, sans-serif; margin: 20mm; font-size: 10pt; }
-      header, main > div:last-child > button, main > section:nth-last-of-type(3) .input-group button,
-      main > section:nth-last-of-type(2) .input-group button,
+      header, main > div:last-child > button, main > section:nth-of-type(3) .input-group button, /* Harcama Ekle */
+      main > section:nth-of-type(5) .input-group button, /* Dosya Yükle */
       #uploadProgress, .delete-file-btn, #expensesTable button,
       .stage-input[type="checkbox"] + label, .category-checkbox-group input[type="checkbox"],
       .category-checkbox-group label[for^="detail_"],
-      #collectionsTable button
+      #collectionsTable button /* Tahsilat sil butonu */
        { display: none !important; }
       h3 { border-bottom: 1px solid #ccc; margin-top: 15px; margin-bottom: 10px; font-size: 14pt;}
       table { margin-top: 10px; font-size: 9pt; width: 100% !important; border: 1px solid #ccc !important; page-break-inside: auto; }
@@ -176,7 +176,7 @@
       <div class="input-group">
         <div style="flex: 2;"><label for="projectName">Proje Adı</label><input type="text" id="projectName" class="readonly" readonly /></div>
         <div style="flex: 2;"><label for="clientName">Müşteri Adı</label><input type="text" id="clientName" class="readonly" readonly /></div>
-        <div style="flex: 1;"><label for="projectStatus">Proje Durumu</label><select id="projectStatus" onchange="updateProjectStatus(this.value)"><option value="Başlamadı">Başlamadı</option><option value="Devam Ediyor">Devam Ediyor</option><option value="Tamamlandı">Tamamlandı</option></select></div>
+        <div style="flex: 1;"><label for="projectStatus">Proje Durumu</label><select id="projectStatus" onchange="updateProjectStatus(this.value)"><option value="Başlamadı">Başlamadı</option><option value="Devam Ediyor">Devam Ediyor</option><option value="Takip Ediliyor">Takip Ediliyor</option><option value="Tamamlandı">Tamamlandı</option></select></div>
       </div>
       <fieldset class="category-checkbox-group" id="projectCategoriesCheckboxesContainer"><legend>Proje Kategorileri</legend></fieldset>
       <h3>Aşamalar & Sorumlular</h3>
@@ -301,7 +301,7 @@
     function toggleCollectionDetails(){const t=document.getElementById('collectionType').value;document.getElementById('checkDetailsGroup').style.display=t==='Çek'?'block':'none';document.getElementById('barterDetailsGroup').style.display=t==='Barter'?'block':'none';document.getElementById('collectionAmountGroup').style.display=t==='Barter'?'none':'block';}
     async function addCollection(){const dateInput=document.getElementById('collectionDate').value;const type=document.getElementById('collectionType').value;const description=document.getElementById('collectionDescription').value.trim();let amount=0,checkDetails=null,barterDetails=null;if(!dateInput||!type){alert("Tarih ve tip seçin.");return;}
     if(type==="Nakit"||type==="Banka Transferi"){amount=parseCurrencyTR(document.getElementById('collectionAmount').value);if(isNaN(amount)||amount<=0){alert("Geçerli tutar.");return;}}else if(type==="Çek"){amount=parseCurrencyTR(document.getElementById('collectionAmount').value);const dueDate=document.getElementById('checkDueDate').value;const checkNo=document.getElementById('checkNumber').value.trim();const bank=document.getElementById('checkBank').value.trim();if(isNaN(amount)||amount<=0||!dueDate||!checkNo||!bank){alert("Çek detayları ve tutar.");return;}checkDetails={dueDate,checkNo,bank};}else if(type==="Barter"){const asset=document.getElementById('barterAsset').value.trim();const value=parseCurrencyTR(document.getElementById('barterValue').value);if(!asset||isNaN(value)||value<=0){alert("Barter varlık ve değer.");return;}barterDetails={asset,value};}
-    const newCollection={date:dateInput,type,description,amount:(type!=="Barter"?amount:null),checkDetails,barterDetails,addedAt:firebase.firestore.Timestamp.now()};
+    const newCollection={date:dateInput,type,description,amount:(type!=="Barter"?amount:null),checkDetails,barterDetails,addedAt:firebase.firestore.Timestamp.now()}; // Timestamp.now() KULLANILDI
     try{const projectRef=db.collection("projects").doc(projectId);await projectRef.update({collections:firebase.firestore.FieldValue.arrayUnion(newCollection)});['collectionDate','collectionDescription','checkDueDate','checkNumber','checkBank','barterAsset'].forEach(id=>document.getElementById(id).value="");document.getElementById('collectionType').value="Nakit";document.getElementById('collectionAmount').value=formatCurrencyTR(0);document.getElementById('barterValue').value=formatCurrencyTR(0);toggleCollectionDetails();const updatedDoc=await projectRef.get();if(updatedDoc.exists)renderCollections(updatedDoc.data().collections||[]);alert("Tahsilat eklendi.");}catch(error){console.error("Tahsilat eklenirken Firestore hatası:",error);alert(`Tahsilat eklenemedi. Hata: ${error.message}`);}}
     async function removeCollection(idx){if(!confirm("Bu tahsilat silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let cols=d.data().collections||[];cols.splice(idx,1);await ref.update({collections:cols});renderCollections(cols);alert("Tahsilat silindi.");}catch(e){console.error("Tahsilat silme hatası:",e);alert("Tahsilat silinemedi.");}}
     function updateCalculations(){const contract=parseCurrencyTR(document.getElementById("contractValue").value);let totalCost=0;document.querySelectorAll("#expensesTable tbody tr").forEach(r=>{totalCost+=parseCurrencyTR(r.cells[1]?r.cells[1].innerText:"0,00");});let totalColl=0;document.querySelectorAll("#collectionsTable tbody tr").forEach(r=>{totalColl+=parseCurrencyTR(r.cells[3]?r.cells[3].innerText:"0,00");});
