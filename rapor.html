@@ -38,21 +38,22 @@
         color: #34495e; margin-top: 25px; margin-bottom: 10px;
         border-bottom: 1px solid #2980b9; padding-bottom: 5px; font-size: 1.2rem;
     }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
-    th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; word-wrap: break-word; }
-    thead th { background-color: #f2f2f2; font-weight: 600; }
+    table.report-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+    .report-table th, .report-table td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; word-wrap: break-word; vertical-align: top;}
+    .report-table thead th { background-color: #f2f2f2; font-weight: 600; }
     .summary-section div { margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; }
     .summary-section strong { display: block; margin-bottom: 5px; font-size: 1.1em; color: #34495e; }
     .summary-section span { font-size: 1.3em; font-weight: 600; }
     .error-message { color: red; font-weight: bold; }
-    .report-table th, .report-table td { vertical-align: top; }
-     .report-table th.sortable { cursor: pointer; }
+    .report-table th.sortable { cursor: pointer; }
     .report-table th.sortable:hover { background-color: #e9ecef; }
     .report-table th.sortable::after {
-        content: ' \2195'; font-size: 0.8em; opacity: 0.5;
+        content: ' \00A0\2195'; /* Boşluk ve Yukarı aşağı ok */
+        font-size: 0.8em;
+        opacity: 0.5;
     }
-    .report-table th.sort-asc::after { content: ' \2191'; opacity: 1;}
-    .report-table th.sort-desc::after { content: ' \2193'; opacity: 1;}
+    .report-table th.sort-asc::after { content: ' \00A0\2191'; opacity: 1;} /* Yukarı ok */
+    .report-table th.sort-desc::after { content: ' \00A0\2193'; opacity: 1;} /* Aşağı ok */
   </style>
 </head>
 <body>
@@ -96,34 +97,23 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Proje Kategorileri Tanımı (index.html ve project-detail.html ile aynı olmalı)
     const projectCategories = ["Aydınlatma", "Otomasyon", "Taahhüt", "Danışmanlık", "Diğer"];
-    const defaultProjectStatus = "Başlamadı"; // Proje durumları için varsayılan (project-detail'den)
+    const defaultProjectStatus = "Başlamadı";
 
     auth.onAuthStateChanged(user => {
       if (!user) {
-        console.warn("Kullanıcı girişi yapılmamış. Bu sayfa normalde yetkili erişim gerektirir.");
-        // Opsiyonel: window.location.href = "login.html"; 
+        console.warn("Kullanıcı girişi yapılmamış.");
       } else {
         console.log("Yetkili kullanıcı, rapor sayfasına erişebilir.");
       }
     });
 
-    function goBackToDashboard() {
-        window.location.href = "index.html";
-    }
+    function goBackToDashboard() { window.location.href = "index.html"; }
 
     function formatCurrencyTR(numberStrOrNum) {
         let number = typeof numberStrOrNum === 'string' ? parseFloat(numberStrOrNum.replace(/\./g, '').replace(',', '.')) : numberStrOrNum;
         if (isNaN(number)) return "0,00";
         return number.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    // parseCurrencyTR bu dosyada doğrudan kullanılmıyor ama tutarlılık için kalabilir.
-    function parseCurrencyTR(formattedValue) { 
-        if (typeof formattedValue !== 'string' || !formattedValue.trim()) return 0;
-        const cleanedValue = formattedValue.replace(/\./g, '').replace(',', '.');
-        const number = parseFloat(cleanedValue);
-        return isNaN(number) ? 0 : number;
     }
 
     async function generateAnalysisReport() {
@@ -134,12 +124,10 @@
 
       resultsDiv.innerHTML = ""; 
       if (!startDateInput || !endDateInput) {
-        resultsDiv.innerHTML = "<p class='error-message'>Lütfen başlangıç ve bitiş tarihlerini seçin!</p>";
-        return;
+        resultsDiv.innerHTML = "<p class='error-message'>Lütfen başlangıç ve bitiş tarihlerini seçin!</p>"; return;
       }
       if (new Date(startDateInput) > new Date(endDateInput)) {
-        resultsDiv.innerHTML = "<p class='error-message'>Başlangıç tarihi, bitiş tarihinden sonra olamaz!</p>";
-        return;
+        resultsDiv.innerHTML = "<p class='error-message'>Başlangıç tarihi, bitiş tarihinden sonra olamaz!</p>"; return;
       }
 
       loadingIndicator.style.display = 'block';
@@ -148,9 +136,7 @@
       try {
         const projectsSnapshot = await db.collection("projects").get();
         let allProjects = [];
-        projectsSnapshot.forEach(doc => {
-          allProjects.push({ id: doc.id, ...doc.data() });
-        });
+        projectsSnapshot.forEach(doc => { allProjects.push({ id: doc.id, ...doc.data() }); });
 
         const projectsInDateRange = allProjects.filter(proj => {
             const projectStartDate = proj.startDate ? new Date(proj.startDate) : null;
@@ -164,15 +150,11 @@
 
         if (projectsInDateRange.length === 0) {
           resultsDiv.innerHTML = "<p>Belirtilen tarih aralığıyla kesişen proje bulunamadı.</p>";
-          loadingIndicator.style.display = 'none';
-          return;
+          loadingIndicator.style.display = 'none'; return;
         }
         
-        console.log("Filtrelenmiş Projeler:", projectsInDateRange);
         let reportHTML = `<h3>Rapor Dönemi: ${startDateInput} - ${endDateInput}</h3>`;
-
-        let totalContractValue = 0;
-        let totalActualExpenses = 0;
+        let totalContractValue = 0, totalActualExpenses = 0;
         projectsInDateRange.forEach(p => {
             totalContractValue += (p.contractValue || 0);
             (p.expenses || []).forEach(exp => { totalActualExpenses += (exp.amount || 0); });
@@ -191,15 +173,15 @@
 
         reportHTML += `<h3>Proje Detayları (Dönem İçi Kapsananlar)</h3>
             <table class="report-table" id="projectDetailTable"><thead><tr>
-            <th class="sortable" onclick="sortTable('projectDetailTable',0)">Proje Adı</th><th class="sortable" onclick="sortTable('projectDetailTable',1)">Müşteri</th>
-            <th>Kategoriler</th><th class="sortable" onclick="sortTable('projectDetailTable',3)">Durum</th>
+            <th class="sortable" onclick="sortTable('projectDetailTable',0,'string')">Proje Adı</th><th class="sortable" onclick="sortTable('projectDetailTable',1,'string')">Müşteri</th>
+            <th>Kategoriler</th><th class="sortable" onclick="sortTable('projectDetailTable',3,'string')">Durum</th>
             <th class="sortable" onclick="sortTable('projectDetailTable',4,'date')">Söz. Başlangıç</th><th class="sortable" onclick="sortTable('projectDetailTable',5,'date')">Söz. Bitiş</th>
             <th class="sortable" onclick="sortTable('projectDetailTable',6,'number')">Söz. Tutarı (TL)</th><th class="sortable" onclick="sortTable('projectDetailTable',7,'number')">Top. Harcama (TL)</th>
             <th class="sortable" onclick="sortTable('projectDetailTable',8,'number')">Net Kar/Zarar (TL)</th><th class="sortable" onclick="sortTable('projectDetailTable',9,'number')">Kar Marjı (%)</th>
             <th class="sortable" onclick="sortTable('projectDetailTable',10,'number')">Proje Süresi (Gün)</th>
             </tr></thead><tbody>`;
         projectsInDateRange.forEach(p => {
-            const pExp = (p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0); const pProfit=(p.contractValue||0)-pExp;
+            const pExp=(p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0); const pProfit=(p.contractValue||0)-pExp;
             const pMrg=(p.contractValue||0)>0?(pProfit/(p.contractValue||0))*100:0;
             const sDate=p.startDate?new Date(p.startDate):null; const eDate=p.endDate?new Date(p.endDate):null;
             let pDur="N/A"; if(sDate&&eDate&&eDate>=sDate){pDur=Math.ceil((eDate-sDate)/(1000*60*60*24))+1;}
@@ -212,7 +194,6 @@
         reportHTML += `</tbody></table>`;
 
         const categoryAnalysis = {};
-        // projectCategories burada tanımlı olmalı (globalde tanımlandı)
         projectCategories.forEach(cat => { categoryAnalysis[cat] = { count:0,totalContract:0,totalExpense:0,totalProfit:0,projects:[]}; });
         projectsInDateRange.forEach(p => {
             const pExp=(p.expenses||[]).reduce((s,e)=>s+(e.amount||0),0); const pProfit=(p.contractValue||0)-pExp;
@@ -221,7 +202,7 @@
 
         reportHTML += `<h3>Proje Tipi (Kategori) Bazlı Performans Analizi</h3>
             <table class="report-table" id="categoryAnalysisTable"><thead><tr>
-            <th class="sortable" onclick="sortTable('categoryAnalysisTable',0)">Kategori Adı</th><th class="sortable" onclick="sortTable('categoryAnalysisTable',1,'number')">Proje Sayısı</th>
+            <th class="sortable" onclick="sortTable('categoryAnalysisTable',0,'string')">Kategori Adı</th><th class="sortable" onclick="sortTable('categoryAnalysisTable',1,'number')">Proje Sayısı</th>
             <th class="sortable" onclick="sortTable('categoryAnalysisTable',2,'number')">Top. Söz. Bedeli (TL)</th><th class="sortable" onclick="sortTable('categoryAnalysisTable',3,'number')">Top. Harcama (TL)</th>
             <th class="sortable" onclick="sortTable('categoryAnalysisTable',4,'number')">Top. Net Kar/Zarar (TL)</th><th class="sortable" onclick="sortTable('categoryAnalysisTable',5,'number')">Ort. Kar Marjı (%)</th>
             <th>En Karlı Proje (Kar)</th><th>En Zararlı Proje (Zarar)</th>
@@ -246,36 +227,58 @@
       } catch (error) {
         console.error("Rapor oluşturulurken hata oluştu: ", error);
         resultsDiv.innerHTML = `<p class='error-message'>Rapor oluşturulurken bir hata oluştu. Konsolu kontrol edin. Hata: ${error.message}</p>`;
+        if (error.code === 'failed-precondition') { // Bu hata genellikle indeks eksikliğinden kaynaklanır
+             resultsDiv.innerHTML += `<p class='error-message'>Bu sorgu için bir Firestore indeksi gerekebilir. Lütfen tarayıcı konsolundaki hata mesajında belirtilen alanlar için (muhtemelen 'startDate' ve/veya 'endDate') bir indeks oluşturun.</p>`;
+        }
       } finally {
         loadingIndicator.style.display = 'none';
       }
     }
     
     let sortDirections = {}; 
-    function sortTable(tableId, columnIndex, type = 'string') {
-        const table = document.getElementById(tableId); if (!table) return;
-        const tbody = table.tBodies[0]; const rows = Array.from(tbody.rows);
-        const headerCell = table.tHead.rows[0].cells[columnIndex];
-        const currentDirection = sortDirections[`${tableId}-${columnIndex}`] || 'asc';
+    function sortTable(tableId, columnIndex, dataType = 'string') {
+        const table = document.getElementById(tableId);
+        if (!table || !table.tBodies[0] || table.tBodies[0].rows.length === 0) { return; }
+        const tbody = table.tBodies[0];
+        const rows = Array.from(tbody.rows);
+        const headerCells = table.tHead.rows[0].cells;
+        const headerCell = headerCells[columnIndex];
+
+        const currentSortKey = `${tableId}-${columnIndex}`;
+        const currentDirection = sortDirections[currentSortKey] || 'desc'; 
         const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-        sortDirections = {}; // Sadece bir sütun için aktif sıralama
-        sortDirections[`${tableId}-${columnIndex}`] = newDirection;
-        Array.from(table.tHead.rows[0].cells).forEach(th => th.classList.remove('sort-asc', 'sort-desc'));
+
+        sortDirections = {}; 
+        sortDirections[currentSortKey] = newDirection;
+
+        Array.from(headerCells).forEach(th => th.classList.remove('sort-asc', 'sort-desc'));
         headerCell.classList.add(newDirection === 'asc' ? 'sort-asc' : 'sort-desc');
 
-        rows.sort((a, b) => {
-            let valA = a.cells[columnIndex].textContent.trim();
-            let valB = b.cells[columnIndex].textContent.trim();
-            if (type === 'number') {
-                // Para formatını ve yüzdeyi sayıya çevir
-                const cleanValA = valA.replace(/[^\d,-]/g, '').replace(',', '.');
-                const cleanValB = valB.replace(/[^\d,-]/g, '').replace(',', '.');
-                valA = parseFloat(cleanValA) || 0; // NaN ise 0
-                valB = parseFloat(cleanValB) || 0;
-            } else if (type === 'date') {
-                // YYYY-MM-DD formatı için basit string karşılaştırması yeterli olabilir.
-                // Daha sağlamı: new Date(valA.split('.').reverse().join('-')) vs.
+        rows.sort((rowA, rowB) => {
+            let valA = rowA.cells[columnIndex].textContent.trim();
+            let valB = rowB.cells[columnIndex].textContent.trim();
+
+            if (dataType === 'number') {
+                const cleanA = valA.replace(/[^\d,-]/g, '').replace(',', '.');
+                const cleanB = valB.replace(/[^\d,-]/g, '').replace(',', '.');
+                valA = parseFloat(cleanA) || 0; 
+                valB = parseFloat(cleanB) || 0;
+            } else if (dataType === 'date') {
+                const parseDate = (dateStr) => {
+                    if (!dateStr || dateStr.toLowerCase() === "n/a") return 0; 
+                    let parts = dateStr.split('.'); 
+                    if (parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+                    parts = dateStr.split('-'); 
+                    if (parts.length === 3) return new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+                    return 0; 
+                };
+                valA = parseDate(valA);
+                valB = parseDate(valB);
+            } else { // string
+                valA = valA.toLowerCase();
+                valB = valB.toLowerCase();
             }
+
             if (valA < valB) return newDirection === 'asc' ? -1 : 1;
             if (valA > valB) return newDirection === 'asc' ? 1 : -1;
             return 0;
