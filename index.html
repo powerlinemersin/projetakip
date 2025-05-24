@@ -18,26 +18,73 @@
       background-color: #34495e; color: white; padding: 15px 30px; display: flex;
       align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    header img { height: 40px; width: auto; }
-    header h1 { font-weight: 600; font-size: 1.6rem; margin: 0; user-select: none; }
-    main { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
-    h3 {
-        color: #34495e; margin-top: 30px; margin-bottom: 15px;
-        border-bottom: 2px solid #2980b9; padding-bottom: 8px;
-    }
-    label { display: block; margin: 12px 0 6px; font-weight: 600; }
-    input, button, select {
-      padding: 10px 12px; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc;
-      outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; box-sizing: border-box;
-    }
-    input:focus, select:focus {
-        border-color: #2980b9; box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
-    }
-    button {
-      background-color: #2980b9; border: none; color: white; cursor: pointer;
-      font-weight: 600; transition: background-color 0.3s ease;
-    }
-    button:hover { background-color: #1c5980; }
+    header {
+  background-color: #34495e;
+  color: white;
+  padding: 15px 20px; /* Padding'i biraz ayarlayabiliriz */
+  display: flex;
+  align-items: center; /* Dikeyde ortalama */
+  justify-content: space-between; /* İçeriği dağıt: sol, orta, sağ */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logo-title-container {
+  display: flex;
+  flex-direction: column; /* Logo ve başlığı alt alta getir */
+  align-items: center;   /* Yatayda ortala */
+  text-align: center;    /* Metni ortala (h1 için de geçerli olur) */
+  /* flex-grow: 1; Bu, eğer sol ve sağ boşsa ortadaki bölümün tüm alanı kaplamasını sağlar,
+     ancak sol ve sağda elemanlar varsa (header-content-left/right) gerekmeyebilir veya
+     dengeli bir görünüm için üçüne de flex-grow:1 verilebilir. Şimdilik bu olmadan deneyelim. */
+}
+
+header img {
+  height: 40px; /* Veya istediğiniz boyut */
+  width: auto;
+  margin-bottom: 5px; /* Logo ile başlık arasına boşluk */
+}
+
+header h1 {
+  font-weight: 600;
+  font-size: 1.6rem; /* Veya istediğiniz boyut */
+  margin: 0; /* Varsayılan margin'i kaldır */
+}
+
+.header-content-left, .header-content-right {
+  display: flex;
+  align-items: center;
+  /* Bu iki div'e flex-basis veya min-width vererek ortadaki bölümün
+     gerçekten ortada kalmasını sağlayabiliriz, eğer sağda/solda eleman yoksa.
+     Şu anki yapıda çıkış butonu sağda olduğu için .header-content-right'ın içeriği var. */
+}
+
+.header-content-right button {
+    margin-top: 0; /* Butonun kendi global margin-top'unu sıfırlayalım */
+}
+
+/* Mobil görünümde header'ı tekrar düzenlemek gerekebilir */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column; /* Mobilde tüm header içeriği alt alta gelsin */
+    padding: 15px;
+  }
+  .logo-title-container {
+    order: 1; /* Logo ve başlık en üste gelsin */
+    margin-bottom: 10px;
+  }
+  .header-content-left {
+      display: none; /* Mobilde solu gizleyebiliriz veya farklı bir düzen */
+  }
+  .header-content-right {
+    order: 2; /* Çıkış butonu logo/başlığın altına gelsin */
+    width: 100%; /* Butonun mobilde tam genişlikte olmasını istiyorsanız */
+  }
+   .header-content-right button {
+      width: auto; /* Veya %100 eğer tam genişlik isteniyorsa */
+      padding: 8px 15px;
+      /* margin: 0 auto; Mobilde butonu ortalamak için */
+  }
+}
     table {
       width: 100%; border-collapse: collapse; background: white; margin-top: 25px;
       border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -136,11 +183,18 @@
 </head>
 <body>
  <header>
-  <div class="logo-title-wrapper" style="display: flex; align-items: center; gap: 15px;"> <!-- YENİ SARICI DIV -->
+  <header>
+  <div class="header-content-left">
+    <!-- Sol tarafa bir şey eklemek isterseniz burası boş kalabilir veya başka bir eleman eklenebilir -->
+    <!-- Şimdilik boş bırakarak ortadaki bölümün tam ortalanmasına yardımcı oluyoruz -->
+  </div>
+  <div class="logo-title-container">
     <img src="https://powerlinemersin.github.io/projetakip/logo.png" alt="Powerline Mersin" />
     <h1>Proje Takip Sistemi</h1>
   </div>
-  <button onclick="logout()" style="margin-left:auto; background:#e74c3c; color:white;">Çıkış Yap</button>
+  <div class="header-content-right">
+    <button onclick="logout()" style="background:#e74c3c; color:white;">Çıkış Yap</button>
+  </div>
 </header>
 
   <main>
