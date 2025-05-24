@@ -17,11 +17,19 @@
       font-family: 'Poppins', sans-serif; margin: 0; background-color: #f9fbfd; color: #2c3e50;
     }
     header {
-      background-color: #34495e; color: white; padding: 15px 30px; display: flex;
-      align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background-color: #34495e; color: white; padding: 15px 20px; display: flex;
+      align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    header img { height: 40px; width: auto; }
-    header h1 { font-weight: 600; font-size: 1.6rem; margin: 0; user-select: none; }
+    .header-content-left { flex: 1; }
+    .logo-title-container {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      flex: 2; 
+    }
+    header img { height: 40px; width: auto; margin-bottom: 5px; }
+    header h1 { font-weight: 600; font-size: 1.6rem; margin: 0; }
+    .header-content-right { flex: 1; display: flex; justify-content: flex-end; }
+    .header-content-right button { margin-top: 0; }
+    
     main { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
     h3 {
         color: #34495e; margin-top: 30px; margin-bottom: 15px;
@@ -32,6 +40,8 @@
       padding: 10px 12px; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc;
       outline: none; transition: border-color 0.3s ease; width: 100%; box-sizing: border-box;
     }
+    input:not([type="checkbox"]), select, textarea { width: 100%;}
+    input[type="checkbox"] { width: auto; }
     input:focus, select:focus, textarea:focus {
       border-color: #2980b9; box-shadow: 0 0 5px #2980b9;
     }
@@ -51,6 +61,7 @@
     tr:hover { background-color: #ecf6fc; }
     .input-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
     .input-group > div { flex: 1; min-width: 150px; }
+    .input-group button {margin-top:0;}
     .readonly { background-color: #f0f0f0; cursor: not-allowed; }
     input[type="text"].currency-input { text-align: right; }
     .category-checkbox-group {
@@ -65,7 +76,7 @@
         margin-top: 0; margin-bottom: 5px;
     }
     .category-checkbox-group input[type="checkbox"] {
-        width: auto; margin-right: 5px; vertical-align: middle;
+        margin-right: 5px; vertical-align: middle;
     }
     .stage-notes-input {
         width: 100%; min-height: 40px; padding: 6px; font-size: 0.9em;
@@ -97,7 +108,7 @@
         margin-left: 5px; margin-top: 10px;
     }
     #collectionsTable td, #collectionsTable th { font-size: 0.9em; }
-    .report-table th.sortable { cursor: pointer; } /* Sıralama için */
+    .report-table th.sortable { cursor: pointer; }
     .report-table th.sortable:hover { background-color: #e9ecef; }
     .report-table th.sortable::after { content: ' \00A0\2195'; font-size: 0.8em; opacity: 0.5; }
     .report-table th.sort-asc::after { content: ' \00A0\2191'; opacity: 1;}
@@ -105,12 +116,13 @@
 
     @media print { /* Yazdırma Stilleri */
       body { font-family: Arial, sans-serif; margin: 20mm; font-size: 10pt; }
-      header, main > div:last-child > button, main > section:nth-of-type(3) .input-group button,
-      main > section:nth-of-type(5) .input-group button,
-      #uploadProgress, .delete-file-btn, #expensesTable button,
+      header, main > div:last-child > button, 
+      main > section:nth-of-type(3) > .input-group > div:last-child > button, 
+      main > section:nth-of-type(5) > .input-group > div:last-child > button, 
+      #uploadProgress, .delete-file-btn, 
+      #expensesTable button, #collectionsTable button,
       .stage-input[type="checkbox"] + label, .category-checkbox-group input[type="checkbox"],
-      .category-checkbox-group label[for^="detail_"],
-      #collectionsTable button
+      .category-checkbox-group label[for^="detail_"]
        { display: none !important; }
       h3 { border-bottom: 1px solid #ccc; margin-top: 15px; margin-bottom: 10px; font-size: 14pt;}
       table { margin-top: 10px; font-size: 9pt; width: 100% !important; border: 1px solid #ccc !important; page-break-inside: auto; }
@@ -129,14 +141,19 @@
       #projectCategoriesCheckboxesContainer legend { font-weight: bold; margin-bottom: 3px; }
       #projectCategoriesCheckboxesContainer { border: none; padding: 0; margin-bottom: 10px; }
       .file-list li { background-color: transparent; border: none; padding: 2px 0; margin-bottom: 2px; }
-      main > section:nth-of-type(4) > div[style*="border:1px solid #ddd"] { display: none !important; }
+      main > section:nth-of-type(4) > div[style*="border:1px solid #ddd"] { display: none !important; } 
     }
     @media (max-width: 768px) {
-      header { flex-direction: column; gap: 10px; padding: 20px; }
+      header { flex-direction: column; padding: 15px; }
+      .logo-title-container { order: 1; margin-bottom: 10px; }
+      .header-content-left { display: none; }
+      .header-content-right { order: 2; width: 100%; justify-content: center; }
+      .header-content-right button { width: auto; }
+
       .input-group { flex-direction: column; align-items: stretch; }
-      .input-group > div { min-width: 100%; }
-      .input-group button { width: 100%; margin-top: 10px; }
-      .file-upload-input-group > div:last-child button { margin-top: 10px; }
+      .input-group input, .input-group > div > button, .input-group select, .input-group textarea { width: 100%; margin-left: 0; }
+      .input-group > div > button { margin-top: 10px; } 
+      .file-upload-input-group > div:last-child > button { margin-top: 10px; }
       .category-checkbox-group label { margin-bottom: 8px; }
       #stagesTable, #expensesTable, #collectionsTable { display: block; width: 100%; }
       #stagesTable thead, #expensesTable thead, #collectionsTable thead { display: none; }
@@ -164,7 +181,7 @@
       #collectionsTable tbody td:nth-of-type(1)::before { content: "Tarih:"; }
       #collectionsTable tbody td:nth-of-type(2)::before { content: "Tip:"; }
       #collectionsTable tbody td:nth-of-type(3)::before { content: "Açıklama / Detay:"; }
-      #collectionsTable tbody td:nth-of-type(4)::before { content: "Vade Tarihi:"; }
+      #collectionsTable tbody td:nth-of-type(4)::before { content: "Vade Tarihi:"; } 
       #collectionsTable tbody td:nth-of-type(5)::before { content: "Tutar/Değer (TL):"; }
       #collectionsTable tbody td:nth-of-type(6)::before { content: "İşlem:"; }
     }
@@ -172,9 +189,14 @@
 </head>
 <body>
   <header>
-    <img src="https://via.placeholder.com/150x40?text=Logo" alt="Şirket Logosu" />
-    <h1>Proje Detayları</h1>
-    <button onclick="logout()" style="margin-left:auto; background:#e74c3c; color:white;">Çıkış Yap</button>
+    <div class="header-content-left"></div>
+    <div class="logo-title-container">
+      <img src="https://powerlinemersin.github.io/projetakip/logo.png" alt="Powerline Mersin" />
+      <h1>Proje Detayları</h1>
+    </div>
+    <div class="header-content-right">
+      <button onclick="logout()" style="background:#e74c3c; color:white;">Çıkış Yap</button>
+    </div>
   </header>
   <main>
     <section>
@@ -227,13 +249,13 @@
 
     <section style="margin-top: 30px;">
         <h3>Tahsilatlar</h3>
-        <table id="collectionsTable" class="report-table"> <!-- report-table class'ı eklendi -->
+        <table id="collectionsTable" class="report-table"> 
             <thead>
                 <tr>
                     <th class="sortable" onclick="sortTable('collectionsTable', 0, 'date')">Tarih</th>
                     <th class="sortable" onclick="sortTable('collectionsTable', 1, 'string')">Tip</th>
                     <th>Açıklama / Detay</th>
-                    <th class="sortable" onclick="sortTable('collectionsTable', 3, 'date')">Vade Tarihi</th>
+                    <th class="sortable" onclick="sortTable('collectionsTable', 3, 'date')">Vade Tarihi</th> 
                     <th class="sortable" onclick="sortTable('collectionsTable', 4, 'number')" style="text-align:right;">Tutar/Değer (TL)</th>
                     <th>İşlem</th>
                 </tr>
@@ -264,7 +286,7 @@
         <div id="uploadProgress"><div id="uploadProgressBar"></div></div>
         <h4 style="margin-top: 20px;">Yüklenmiş Dosyalar:</h4>
         <ul id="fileList" class="file-list"></ul>
-        <p id="noFilesMessage" style="display:none;">Bu projeye henüz dosya yüklenmemiş.</p>
+        <p id="noFilesMessageCollections" style="display:none;">Bu projeye henüz dosya yüklenmemiş.</p> <!-- ID değiştirildi -->
     </section>
 
     <div style="margin-top: 30px; padding-bottom: 30px;">
@@ -275,25 +297,9 @@
   </main>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
-      authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
-      projectId: "projetakipsistemi-fbabd",
-      storageBucket: "projetakipsistemi-fbabd.appspot.com",
-      messagingSenderId: "335282912485",
-      appId: "1:335282912485:web:5ad9091ccf3cabd8f8280c"
-    };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    const storage = firebase.storage();
-
-    let projectId = null;
-    const predefinedStageNames = ["Keşif / Ön görüşme", "Teklif oluşturma", "Onay – sözleşme", "Malzeme temini", "Uygulama", "Test ve devreye alma", "Teslimat"];
-    const defaultProjectStatus = "Başlamadı";
-    const projectCategories = ["Aydınlatma", "Otomasyon", "Taahhüt", "Danışmanlık", "Diğer"];
-
+    const firebaseConfig = {apiKey:"AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",authDomain:"projetakipsistemi-fbabd.firebaseapp.com",projectId:"projetakipsistemi-fbabd",storageBucket:"projetakipsistemi-fbabd.appspot.com",messagingSenderId:"335282912485",appId:"1:335282912485:web:5ad9091ccf3cabd8f8280c"};
+    const app=firebase.initializeApp(firebaseConfig);const db=firebase.firestore();const auth=firebase.auth();const storage=firebase.storage();
+    let projectId=null;const predefinedStageNames=["Keşif / Ön görüşme","Teklif oluşturma","Onay – sözleşme","Malzeme temini","Uygulama","Test ve devreye alma","Teslimat"];const defaultProjectStatus="Başlamadı";const projectCategories=["Aydınlatma","Otomasyon","Taahhüt","Danışmanlık","Diğer"];
     function formatCurrencyTR(val){let n=typeof val==='string'?parseFloat(val.replace(/\./g,'').replace(',','.')):val;return isNaN(n)?"0,00":n.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});}
     function parseCurrencyTR(val){if(typeof val!=='string'||!val.trim())return 0;const cl=val.replace(/\./g,'').replace(',','.');const n=parseFloat(cl);return isNaN(n)?0:n;}
     function handleCurrencyInput(e){const i=e.target;let v=i.value;let nv=v.replace(/[^0-9,]/g,'');const p=nv.split(',');if(p.length>2){nv=p[0]+','+p.slice(1).join('');}i.value=nv;}
@@ -324,7 +330,7 @@
     const profit=contract-totalCost;const margin=contract>0?(profit/contract)*100:0;const remain=contract-totalColl;
     document.getElementById("totalExpenses").value=formatCurrencyTR(totalCost);document.getElementById("realizedProfit").value=formatCurrencyTR(profit);document.getElementById("realizedProfitMargin").value=margin.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById("totalCollections").value=formatCurrencyTR(totalColl);document.getElementById("remainingBalance").value=formatCurrencyTR(remain);}
     async function saveDetails(){const ref=db.collection("projects").doc(projectId);try{await ref.update({startDate:document.getElementById("startDate").value,endDate:document.getElementById("endDate").value,contractValue:parseCurrencyTR(document.getElementById("contractValue").value)});alert("Sözleşme bilgileri kaydedildi.");updateCalculations();}catch(e){console.error("Detay kaydetme hatası:",e);alert("Bilgiler kaydedilemedi.");}}
-    function renderFiles(files){const ul=document.getElementById("fileList");const msg=document.getElementById("noFilesMessage");ul.innerHTML="";if(files&&files.length>0){msg.style.display="none";files.forEach((f,i)=>{ul.innerHTML+=`<li><a href="${f.url}" target="_blank" title="İndir: ${f.name}">${f.name}</a><button class="delete-file-btn" onclick="deleteFile(${i},'${f.name}','${f.path}')">Sil</button></li>`;});}else{msg.style.display="block";}}
+    function renderFiles(files){const ul=document.getElementById("fileList");const msg=document.getElementById("noFilesMessageCollections"); /* ID Düzeltildi */ if(!msg && document.getElementById("noFilesMessage")) { /*Eski ID'yi de kontrol et, geçiş için*/ msg = document.getElementById("noFilesMessage");} if(ul && msg){ ul.innerHTML="";if(files&&files.length>0){msg.style.display="none";files.forEach((f,i)=>{ul.innerHTML+=`<li><a href="${f.url}" target="_blank" title="İndir: ${f.name}">${f.name}</a><button class="delete-file-btn" onclick="deleteFile(${i},'${f.name}','${f.path}')">Sil</button></li>`;});}else{msg.style.display="block";}}}
     async function uploadFile(){const fin=document.getElementById('fileUploadInput');const f=fin.files[0];const pBarC=document.getElementById('uploadProgress');const pBar=document.getElementById('uploadProgressBar');if(!f){alert("Dosya seçin.");return;}if(!projectId){alert("Proje ID yok.");return;}
     const fNameStore=`${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;const fPath=`projects/${projectId}/${fNameStore}`;const fRef=storage.ref(fPath);try{const task=fRef.put(f);pBarC.style.display='block';task.on('state_changed',(s)=>{const prog=(s.bytesTransferred/s.totalBytes)*100;pBar.style.width=prog+'%';pBar.textContent=Math.round(prog)+'%';},(err)=>{console.error("Yükleme hatası:",err);alert(`Yükleme hatası: ${err.message}`);pBarC.style.display='none';},async ()=>{pBarC.style.display='none';pBar.style.width='0%';pBar.textContent='';const url=await task.snapshot.ref.getDownloadURL();const pRef=db.collection("projects").doc(projectId);await pRef.update({files:firebase.firestore.FieldValue.arrayUnion({name:f.name,url,path:fPath,uploadedAt:firebase.firestore.FieldValue.serverTimestamp()})});alert("Dosya yüklendi!");fin.value="";const pDoc=await pRef.get();if(pDoc.exists)renderFiles(pDoc.data().files||[]);});}catch(e){console.error("Yükleme başlatma hatası:",e);alert("Yükleme başlatılamadı.");pBarC.style.display='none';}}
     async function deleteFile(idx,name,path){if(!confirm(`"${name}" silinsin mi?`))return;if(!projectId||!path){alert("Silinemedi, bilgi eksik.");return;}try{await storage.ref(path).delete();const pRef=db.collection("projects").doc(projectId);const pDoc=await pRef.get();if(pDoc.exists){let files=pDoc.data().files||[];files=files.filter(f=>f.path!==path);await pRef.update({files});renderFiles(files);alert(`"${name}" silindi.`);}}catch(e){console.error("Dosya silme hatası:",e);if(e.code==='storage/object-not-found'){alert("Dosya Storage'da yok. DB kaydı siliniyor.");const pRef=db.collection("projects").doc(projectId);const pDoc=await pRef.get();if(pDoc.exists){let files=pDoc.data().files||[];files=files.filter(f=>f.path!==path);await pRef.update({files});renderFiles(files);}}else{alert(`Silme hatası: ${e.message}`);}}}
@@ -337,35 +343,10 @@
     const financialData=[["Sözleşme Tutarı (TL)",contractVal],["Toplam Harcama (TL)",totalExp],["Gerçekleşen Kar (TL)",realProfit],["Kar Marjı (%)",profitMargin],["Toplam Tahsil Edilen (TL)",totalColl],["Kalan Bakiye (TL)",remainBal]];const wsFinancial=XLSX.utils.aoa_to_sheet(financialData);financialData.forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:1,r:i});if(wsFinancial[adr]){wsFinancial[adr].t='n';wsFinancial[adr].z=i===3?'0.00%':'#,##0.00 TL';if(i===3)wsFinancial[adr].v=profitMargin/100;}});XLSX.utils.book_append_sheet(wb,wsFinancial,"Finansal Özet");
     if(p.files&&p.files.length>0){const filesHeaders=["Dosya Adı","Yüklenme Tarihi","URL"];const filesBody=(p.files||[]).map(f=>[f.name,f.uploadedAt?.toDate?f.uploadedAt.toDate().toLocaleDateString('tr-TR'):'N/A',f.url]);const wsFiles=XLSX.utils.aoa_to_sheet([filesHeaders,...filesBody]);XLSX.utils.book_append_sheet(wb,wsFiles,"Proje Dosyaları");}
     const fileName=`${p.name?p.name.replace(/[^a-zA-Z0-9]/g,'_'):'proje'}_rapor.xlsx`;XLSX.writeFile(wb,fileName);alert("Excel raporu oluşturuldu ve indiriliyor.");}
-    
-    let sortDirections = {}; 
-    function sortTable(tableId, columnIndex, dataType = 'string') {
-        const table = document.getElementById(tableId);
-        if (!table || !table.tBodies[0] || table.tBodies[0].rows.length === 0) { return; }
-        const tbody = table.tBodies[0]; const rows = Array.from(tbody.rows);
-        const headerCells = table.tHead.rows[0].cells; const headerCell = headerCells[columnIndex];
-        const currentSortKey = `${tableId}-${columnIndex}`;
-        let newDirection = 'asc'; if (sortDirections[currentSortKey] === 'asc') { newDirection = 'desc'; }
-        for (let i = 0; i < headerCells.length; i++) { headerCells[i].classList.remove('sort-asc', 'sort-desc'); }
-        sortDirections = {}; sortDirections[currentSortKey] = newDirection;
-        headerCell.classList.add(newDirection === 'asc' ? 'sort-asc' : 'sort-desc');
-        rows.sort((rowA, rowB) => {
-            let valA = rowA.cells[columnIndex].textContent.trim(); let valB = rowB.cells[columnIndex].textContent.trim();
-            if (dataType === 'number') {
-                const cleanA = valA.replace(/[^\d,-]/g, '').replace(',', '.'); const cleanB = valB.replace(/[^\d,-]/g, '').replace(',', '.');
-                valA = parseFloat(cleanA) || 0; valB = parseFloat(cleanB) || 0;
-            } else if (dataType === 'date') {
-                const parseDate = (dateStr) => { if (!dateStr || dateStr.toLowerCase() === "n/a" || dateStr.trim() === "-") return 0; 
-                    let parts = dateStr.split('-'); if (parts.length === 3 && parts[0].length === 4) return new Date(parts[0], parts[1] - 1, parts[2]).getTime();
-                    parts = dateStr.split('.'); if (parts.length === 3 && parts[2].length === 4) return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
-                    const parsed = new Date(dateStr).getTime(); return isNaN(parsed) ? (newDirection === 'asc' ? Infinity : -Infinity) : parsed;};
-                valA = parseDate(valA); valB = parseDate(valB);
-            } else { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
-            if (valA < valB) return newDirection === 'asc' ? -1 : 1; if (valA > valB) return newDirection === 'asc' ? 1 : -1; return 0;
-        });
-        rows.forEach(row => tbody.appendChild(row));
-    }
-
+    let sortDirections={};function sortTable(tableId,columnIndex,dataType='string'){const table=document.getElementById(tableId);if(!table||!table.tBodies[0]||table.tBodies[0].rows.length===0){return;}const tbody=table.tBodies[0];const rows=Array.from(tbody.rows);const headerCells=table.tHead.rows[0].cells;const headerCell=headerCells[columnIndex];const currentSortKey=`${tableId}-${columnIndex}`;let newDirection='asc';if(sortDirections[currentSortKey]==='asc'){newDirection='desc';}
+    for(let i=0;i<headerCells.length;i++){headerCells[i].classList.remove('sort-asc','sort-desc');}sortDirections={};sortDirections[currentSortKey]=newDirection;headerCell.classList.add(newDirection==='asc'?'sort-asc':'sort-desc');
+    rows.sort((rowA,rowB)=>{let valA=rowA.cells[columnIndex].textContent.trim();let valB=rowB.cells[columnIndex].textContent.trim();if(dataType==='number'){const cleanA=valA.replace(/[^\d,-]/g,'').replace(',','.');const cleanB=valB.replace(/[^\d,-]/g,'').replace(',','.');valA=parseFloat(cleanA)||0;valB=parseFloat(cleanB)||0;}else if(dataType==='date'){const parseDate=(dateStr)=>{if(!dateStr||dateStr.toLowerCase()==="n/a"||dateStr.trim()==="-")return 0;let parts=dateStr.split('-');if(parts.length===3&&parts[0].length===4)return new Date(parts[0],parts[1]-1,parts[2]).getTime();parts=dateStr.split('.');if(parts.length===3&&parts[2].length===4)return new Date(parts[2],parts[1]-1,parts[0]).getTime();const parsed=new Date(dateStr).getTime();return isNaN(parsed)?(newDirection==='asc'?Infinity:-Infinity):parsed;};valA=parseDate(valA);valB=parseDate(valB);}else{valA=valA.toLowerCase();valB=valB.toLowerCase();}
+    if(valA<valB)return newDirection==='asc'?-1:1;if(valA>valB)return newDirection==='asc'?1:-1;return 0;});rows.forEach(row=>tbody.appendChild(row));}
     function goBack(){window.location.href="index.html";}
     function logout(){auth.signOut().then(()=>window.location.href="login.html").catch(e=>{console.error("Çıkış hatası:",e);alert("Çıkış hatası.");});}
   </script>
