@@ -97,6 +97,11 @@
         margin-left: 5px; margin-top: 10px;
     }
     #collectionsTable td, #collectionsTable th { font-size: 0.9em; }
+    .report-table th.sortable { cursor: pointer; } /* Sıralama için */
+    .report-table th.sortable:hover { background-color: #e9ecef; }
+    .report-table th.sortable::after { content: ' \00A0\2195'; font-size: 0.8em; opacity: 0.5; }
+    .report-table th.sort-asc::after { content: ' \00A0\2191'; opacity: 1;}
+    .report-table th.sort-desc::after { content: ' \00A0\2193'; opacity: 1;}
 
     @media print { /* Yazdırma Stilleri */
       body { font-family: Arial, sans-serif; margin: 20mm; font-size: 10pt; }
@@ -159,7 +164,7 @@
       #collectionsTable tbody td:nth-of-type(1)::before { content: "Tarih:"; }
       #collectionsTable tbody td:nth-of-type(2)::before { content: "Tip:"; }
       #collectionsTable tbody td:nth-of-type(3)::before { content: "Açıklama / Detay:"; }
-      #collectionsTable tbody td:nth-of-type(4)::before { content: "Vade Tarihi:"; } /* Responsive için eklendi */
+      #collectionsTable tbody td:nth-of-type(4)::before { content: "Vade Tarihi:"; }
       #collectionsTable tbody td:nth-of-type(5)::before { content: "Tutar/Değer (TL):"; }
       #collectionsTable tbody td:nth-of-type(6)::before { content: "İşlem:"; }
     }
@@ -222,16 +227,13 @@
 
     <section style="margin-top: 30px;">
         <h3>Tahsilatlar</h3>
-        <table id="collectionsTable">
-          <section style="margin-top: 30px;">
-        <h3>Tahsilatlar</h3>
         <table id="collectionsTable" class="report-table"> <!-- report-table class'ı eklendi -->
             <thead>
                 <tr>
                     <th class="sortable" onclick="sortTable('collectionsTable', 0, 'date')">Tarih</th>
                     <th class="sortable" onclick="sortTable('collectionsTable', 1, 'string')">Tip</th>
-                    <th>Açıklama / Detay</th> <!-- Açıklama genellikle sıralanmaz -->
-                    <th class="sortable" onclick="sortTable('collectionsTable', 3, 'date')">Vade Tarihi</th> 
+                    <th>Açıklama / Detay</th>
+                    <th class="sortable" onclick="sortTable('collectionsTable', 3, 'date')">Vade Tarihi</th>
                     <th class="sortable" onclick="sortTable('collectionsTable', 4, 'number')" style="text-align:right;">Tutar/Değer (TL)</th>
                     <th>İşlem</th>
                 </tr>
@@ -318,7 +320,7 @@
     const newCollection={date:dateInput,type,description,amount:(type!=="Barter"?amount:null),checkDetails,barterDetails,addedAt:firebase.firestore.Timestamp.now()};
     try{const projectRef=db.collection("projects").doc(projectId);await projectRef.update({collections:firebase.firestore.FieldValue.arrayUnion(newCollection)});['collectionDate','collectionDescription','checkDueDate','checkNumber','checkBank','barterAsset'].forEach(id=>document.getElementById(id).value="");document.getElementById('collectionType').value="Nakit";document.getElementById('collectionAmount').value=formatCurrencyTR(0);document.getElementById('barterValue').value=formatCurrencyTR(0);toggleCollectionDetails();const updatedDoc=await projectRef.get();if(updatedDoc.exists)renderCollections(updatedDoc.data().collections||[]);alert("Tahsilat eklendi.");}catch(error){console.error("Tahsilat eklenirken Firestore hatası:",error);alert(`Tahsilat eklenemedi. Hata: ${error.message}`);}}
     async function removeCollection(idx){if(!confirm("Bu tahsilat silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let cols=d.data().collections||[];cols.splice(idx,1);await ref.update({collections:cols});renderCollections(cols);alert("Tahsilat silindi.");}catch(e){console.error("Tahsilat silme hatası:",e);alert("Tahsilat silinemedi.");}}
-    function updateCalculations(){const contract=parseCurrencyTR(document.getElementById("contractValue").value);let totalCost=0;document.querySelectorAll("#expensesTable tbody tr").forEach(r=>{totalCost+=parseCurrencyTR(r.cells[1]?r.cells[1].innerText:"0,00");});let totalColl=0;document.querySelectorAll("#collectionsTable tbody tr").forEach(r=>{totalColl+=parseCurrencyTR(r.cells[4]?r.cells[4].innerText:"0,00");}); /* Tutar sütun indexi 4 oldu */
+    function updateCalculations(){const contract=parseCurrencyTR(document.getElementById("contractValue").value);let totalCost=0;document.querySelectorAll("#expensesTable tbody tr").forEach(r=>{totalCost+=parseCurrencyTR(r.cells[1]?r.cells[1].innerText:"0,00");});let totalColl=0;document.querySelectorAll("#collectionsTable tbody tr").forEach(r=>{totalColl+=parseCurrencyTR(r.cells[4]?r.cells[4].innerText:"0,00");});
     const profit=contract-totalCost;const margin=contract>0?(profit/contract)*100:0;const remain=contract-totalColl;
     document.getElementById("totalExpenses").value=formatCurrencyTR(totalCost);document.getElementById("realizedProfit").value=formatCurrencyTR(profit);document.getElementById("realizedProfitMargin").value=margin.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById("totalCollections").value=formatCurrencyTR(totalColl);document.getElementById("remainingBalance").value=formatCurrencyTR(remain);}
     async function saveDetails(){const ref=db.collection("projects").doc(projectId);try{await ref.update({startDate:document.getElementById("startDate").value,endDate:document.getElementById("endDate").value,contractValue:parseCurrencyTR(document.getElementById("contractValue").value)});alert("Sözleşme bilgileri kaydedildi.");updateCalculations();}catch(e){console.error("Detay kaydetme hatası:",e);alert("Bilgiler kaydedilemedi.");}}
@@ -335,6 +337,35 @@
     const financialData=[["Sözleşme Tutarı (TL)",contractVal],["Toplam Harcama (TL)",totalExp],["Gerçekleşen Kar (TL)",realProfit],["Kar Marjı (%)",profitMargin],["Toplam Tahsil Edilen (TL)",totalColl],["Kalan Bakiye (TL)",remainBal]];const wsFinancial=XLSX.utils.aoa_to_sheet(financialData);financialData.forEach((r,i)=>{const adr=XLSX.utils.encode_cell({c:1,r:i});if(wsFinancial[adr]){wsFinancial[adr].t='n';wsFinancial[adr].z=i===3?'0.00%':'#,##0.00 TL';if(i===3)wsFinancial[adr].v=profitMargin/100;}});XLSX.utils.book_append_sheet(wb,wsFinancial,"Finansal Özet");
     if(p.files&&p.files.length>0){const filesHeaders=["Dosya Adı","Yüklenme Tarihi","URL"];const filesBody=(p.files||[]).map(f=>[f.name,f.uploadedAt?.toDate?f.uploadedAt.toDate().toLocaleDateString('tr-TR'):'N/A',f.url]);const wsFiles=XLSX.utils.aoa_to_sheet([filesHeaders,...filesBody]);XLSX.utils.book_append_sheet(wb,wsFiles,"Proje Dosyaları");}
     const fileName=`${p.name?p.name.replace(/[^a-zA-Z0-9]/g,'_'):'proje'}_rapor.xlsx`;XLSX.writeFile(wb,fileName);alert("Excel raporu oluşturuldu ve indiriliyor.");}
+    
+    let sortDirections = {}; 
+    function sortTable(tableId, columnIndex, dataType = 'string') {
+        const table = document.getElementById(tableId);
+        if (!table || !table.tBodies[0] || table.tBodies[0].rows.length === 0) { return; }
+        const tbody = table.tBodies[0]; const rows = Array.from(tbody.rows);
+        const headerCells = table.tHead.rows[0].cells; const headerCell = headerCells[columnIndex];
+        const currentSortKey = `${tableId}-${columnIndex}`;
+        let newDirection = 'asc'; if (sortDirections[currentSortKey] === 'asc') { newDirection = 'desc'; }
+        for (let i = 0; i < headerCells.length; i++) { headerCells[i].classList.remove('sort-asc', 'sort-desc'); }
+        sortDirections = {}; sortDirections[currentSortKey] = newDirection;
+        headerCell.classList.add(newDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+        rows.sort((rowA, rowB) => {
+            let valA = rowA.cells[columnIndex].textContent.trim(); let valB = rowB.cells[columnIndex].textContent.trim();
+            if (dataType === 'number') {
+                const cleanA = valA.replace(/[^\d,-]/g, '').replace(',', '.'); const cleanB = valB.replace(/[^\d,-]/g, '').replace(',', '.');
+                valA = parseFloat(cleanA) || 0; valB = parseFloat(cleanB) || 0;
+            } else if (dataType === 'date') {
+                const parseDate = (dateStr) => { if (!dateStr || dateStr.toLowerCase() === "n/a" || dateStr.trim() === "-") return 0; 
+                    let parts = dateStr.split('-'); if (parts.length === 3 && parts[0].length === 4) return new Date(parts[0], parts[1] - 1, parts[2]).getTime();
+                    parts = dateStr.split('.'); if (parts.length === 3 && parts[2].length === 4) return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+                    const parsed = new Date(dateStr).getTime(); return isNaN(parsed) ? (newDirection === 'asc' ? Infinity : -Infinity) : parsed;};
+                valA = parseDate(valA); valB = parseDate(valB);
+            } else { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+            if (valA < valB) return newDirection === 'asc' ? -1 : 1; if (valA > valB) return newDirection === 'asc' ? 1 : -1; return 0;
+        });
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
     function goBack(){window.location.href="index.html";}
     function logout(){auth.signOut().then(()=>window.location.href="login.html").catch(e=>{console.error("Çıkış hatası:",e);alert("Çıkış hatası.");});}
   </script>
