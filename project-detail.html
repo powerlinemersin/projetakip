@@ -223,13 +223,16 @@
     <section style="margin-top: 30px;">
         <h3>Tahsilatlar</h3>
         <table id="collectionsTable">
+          <section style="margin-top: 30px;">
+        <h3>Tahsilatlar</h3>
+        <table id="collectionsTable" class="report-table"> <!-- report-table class'ı eklendi -->
             <thead>
                 <tr>
-                    <th>Tarih</th>
-                    <th>Tip</th>
-                    <th>Açıklama / Detay</th>
-                    <th>Vade Tarihi</th> 
-                    <th style="text-align:right;">Tutar/Değer (TL)</th>
+                    <th class="sortable" onclick="sortTable('collectionsTable', 0, 'date')">Tarih</th>
+                    <th class="sortable" onclick="sortTable('collectionsTable', 1, 'string')">Tip</th>
+                    <th>Açıklama / Detay</th> <!-- Açıklama genellikle sıralanmaz -->
+                    <th class="sortable" onclick="sortTable('collectionsTable', 3, 'date')">Vade Tarihi</th> 
+                    <th class="sortable" onclick="sortTable('collectionsTable', 4, 'number')" style="text-align:right;">Tutar/Değer (TL)</th>
                     <th>İşlem</th>
                 </tr>
             </thead>
