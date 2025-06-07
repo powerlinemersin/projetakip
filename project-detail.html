@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script> <!-- Firebase Functions Client SDK eklendi -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script> 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -126,7 +126,7 @@
         color: red; font-weight: normal;
     }
 
-    @media print { /* Yazdırma Stilleri */
+    @media print { 
       body { font-family: Arial, sans-serif; margin: 20mm; font-size: 10pt; }
       header, main > div:last-child > button, 
       main > section:nth-of-type(3) > .input-group > div:last-child > button, 
@@ -173,7 +173,7 @@
       #stagesTable tbody, #expensesTable tbody, #collectionsTable tbody { display: block; width: 100%; }
       #stagesTable tr, #expensesTable tr, #collectionsTable tr {
         display: block; margin-bottom: 15px; background: white; border-radius: 8px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 10px; border: 1px solid #ddd;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 15px; border: 1px solid #ddd;
       }
       #stagesTable td, #expensesTable td, #collectionsTable td {
         display: flex; justify-content: space-between; padding: 8px 0;
@@ -269,7 +269,7 @@
                     <th class="sortable" onclick="sortTable('collectionsTable', 1, 'string')">Tip</th>
                     <th>Açıklama / Detay</th>
                     <th class="sortable" onclick="sortTable('collectionsTable', 3, 'date')">Vade Tarihi</th> 
-                    <th class="sortable" onclick="sortTable('collectionsTable', 4, 'number')" style="text-align:right;">Tutar/Değer (TL)</th>
+                    <th style="text-align:right;">Tutar/Değer (TL)</th>
                     <th>İşlem</th>
                 </tr>
             </thead>
@@ -282,11 +282,11 @@
                 <div><label for="collectionDate">Tarih:</label><input type="date" id="collectionDate" onchange="fetchExchangeRatesForCollectionDate(this.value)"/></div>
                 <div><label for="collectionType">Tip:</label><select id="collectionType" onchange="toggleCollectionDetails()"><option value="Nakit">Nakit</option><option value="Banka Transferi">Banka Transferi</option><option value="Çek">Çek</option><option value="Barter">Barter</option></select></div>
             </div>
-            <div id="exchangeRateDisplay" class="exchange-rate-display" style="display:none;">
+            <div id="exchangeRateDisplay" class="exchange-rate-display"> 
                 <span>USD: <span id="usdRate">Yükleniyor...</span> TL</span>
                 <span>EUR: <span id="eurRate">Yükleniyor...</span> TL</span>
             </div>
-            <div id="collectionAmountGroup"> 
+            <div id="collectionAmountGroup" style="display:block;"> 
                 <label for="collectionAmount">Tutar (TL):</label>
                 <input type="text" id="collectionAmount" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/>
             </div>
@@ -331,7 +331,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     const storage = firebase.storage();
-    const functions = firebase.functions(); // Firebase Functions Client SDK'sı başlatıldı
+    const functions = firebase.functions(); 
 
     let projectId = null;
     const predefinedStageNames = ["Keşif / Ön görüşme", "Teklif oluşturma", "Onay – sözleşme", "Malzeme temini", "Uygulama", "Test ve devreye alma", "Teslimat"];
