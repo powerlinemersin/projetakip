@@ -10,9 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <!-- YENİ EKLENECEK SATIR -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script> 
-
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script> <!-- Firebase Functions Client SDK eklendi -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -137,7 +135,7 @@
       #expensesTable button, #collectionsTable button,
       .stage-input[type="checkbox"] + label, .category-checkbox-group input[type="checkbox"],
       .category-checkbox-group label[for^="detail_"],
-      .exchange-rate-display /* Kur gösterimini yazdırmada gizle */
+      .exchange-rate-display 
        { display: none !important; }
       h3 { border-bottom: 1px solid #ccc; margin-top: 15px; margin-bottom: 10px; font-size: 14pt;}
       table { margin-top: 10px; font-size: 9pt; width: 100% !important; border: 1px solid #ccc !important; page-break-inside: auto; }
@@ -284,12 +282,14 @@
                 <div><label for="collectionDate">Tarih:</label><input type="date" id="collectionDate" onchange="fetchExchangeRatesForCollectionDate(this.value)"/></div>
                 <div><label for="collectionType">Tip:</label><select id="collectionType" onchange="toggleCollectionDetails()"><option value="Nakit">Nakit</option><option value="Banka Transferi">Banka Transferi</option><option value="Çek">Çek</option><option value="Barter">Barter</option></select></div>
             </div>
-            <!-- Kur gösterim alanı -->
             <div id="exchangeRateDisplay" class="exchange-rate-display" style="display:none;">
-                <span>USD: <span id="usdRate">N/A</span> TL</span>
-                <span>EUR: <span id="eurRate">N/A</span> TL</span>
+                <span>USD: <span id="usdRate">Yükleniyor...</span> TL</span>
+                <span>EUR: <span id="eurRate">Yükleniyor...</span> TL</span>
             </div>
-            <div id="collectionAmountGroup"><label for="collectionAmount">Tutar (TL):</label><input type="text" id="collectionAmount" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/></div>
+            <div id="collectionAmountGroup"> 
+                <label for="collectionAmount">Tutar (TL):</label>
+                <input type="text" id="collectionAmount" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/>
+            </div>
             <div id="checkDetailsGroup" class="collection-details-fields"><h5>Çek Detayları</h5><label for="checkDueDate">Vade Tarihi:</label><input type="date" id="checkDueDate" /><label for="checkNumber">Çek No:</label><input type="text" id="checkNumber" placeholder="Çek Numarası" /><label for="checkBank">Banka:</label><input type="text" id="checkBank" placeholder="Banka Adı" /></div>
             <div id="barterDetailsGroup" class="collection-details-fields"><h5>Barter Detayları</h5><label for="barterAsset">Takas Edilen Varlık:</label><input type="text" id="barterAsset" placeholder="Örn: Daire - A Blok No:5, Ford Transit" /><label for="barterValue">Belirlenen Değer (TL):</label><input type="text" id="barterValue" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event)"/></div>
             <div><label for="collectionDescription">Açıklama/Not:</label><textarea id="collectionDescription" rows="3" placeholder="Tahsilatla ilgili ek notlar..."></textarea></div>
@@ -347,7 +347,7 @@
     auth.onAuthStateChanged(u=>{if(!u){window.location.href="login.html";}else{const p=new URLSearchParams(window.location.search);projectId=p.get("id");if(projectId){loadProject();}else{alert("Proje ID yok.");goBack();}}});
     async function loadProject(){if(!projectId)return;try{renderDetailCategoryCheckboxes();const ref=db.collection("projects").doc(projectId);const doc=await ref.get();if(!doc.exists){alert("Proje bulunamadı.");goBack();return;}const p=doc.data();document.getElementById("projectName").value=p.name||"";document.getElementById("clientName").value=p.client||"";document.getElementById("startDate").value=p.startDate||"";document.getElementById("endDate").value=p.endDate||"";document.getElementById("contractValue").value=formatCurrencyTR(p.contractValue||0);document.getElementById("projectStatus").value=p.status||defaultProjectStatus;if(p.categories&&Array.isArray(p.categories)){p.categories.forEach(cat=>{const id=`detail_${cat.replace(/\s+/g,'-').toLowerCase()}`;const cb=document.getElementById(id);if(cb)cb.checked=true;});}
     let stages=p.stages||[];let updStg=false;if(!p.stages||p.stages.length===0){stages=predefinedStageNames.map(n=>({name:n,responsible:"",date:"",notes:"",completed:false}));updStg=true;}else if(stages.length!==predefinedStageNames.length||stages.some((s,i)=>s.name!==predefinedStageNames[i])){const newStg=predefinedStageNames.map(n=>{const es=stages.find(s1=>s1.name===n);return{name:n,responsible:es?.responsible||"",date:es?.date||"",notes:es?.notes||"",completed:es?.completed||false};});stages=newStg;updStg=true;}if(updStg&&stages.length>0){await ref.update({stages:stages});}
-    renderStages(stages);renderExpenses(p.expenses||[]);renderCollections(p.collections||[]);renderFiles(p.files||[]);updateCalculations();}catch(e){console.error("Proje yükleme hatası:",e);alert("Detaylar yüklenemedi.");}}
+    renderStages(stages);renderExpenses(p.expenses||[]);renderCollections(p.collections||[]);renderFiles(p.files||[]);updateCalculations(); toggleCollectionDetails(); /* Sayfa yüklendiğinde tahsilat formunun başlangıç durumunu ayarla */ }catch(e){console.error("Proje yükleme hatası:",e);alert("Detaylar yüklenemedi.");}}
     function renderStages(data){const tb=document.querySelector("#stagesTable tbody");tb.innerHTML="";predefinedStageNames.forEach((sName,i)=>{let s=data.find(st=>st.name===sName)||( {name:sName,responsible:"",date:"",notes:"",completed:false});tb.insertAdjacentHTML("beforeend",`<tr><td>${s.name}</td><td><input type="text" value="${s.responsible||''}" data-idx="${i}" data-field="responsible" class="stage-input"></td><td><input type="date" value="${s.date||''}" data-idx="${i}" data-field="date" class="stage-input"></td><td><textarea class="stage-notes-input stage-input" data-idx="${i}" data-field="notes">${s.notes||''}</textarea></td><td><input type="checkbox" ${s.completed?"checked":""} data-idx="${i}" data-field="completed" class="stage-input"></td></tr>`);});
     tb.querySelectorAll(".stage-input").forEach(inp=>{const idx=parseInt(inp.dataset.idx),fld=inp.dataset.field;inp.addEventListener((fld==="completed"?"change":(inp.tagName==='TEXTAREA'?"blur":"blur")),e=>saveStageField(idx,fld,(fld==="completed"?e.target.checked:e.target.value)));});}
     async function saveStageField(idx,fld,val){if(!projectId)return;try{const ref=db.collection("projects").doc(projectId);const doc=await ref.get();if(!doc.exists)return;let stg=doc.data().stages||[];if(!stg.length||stg.length!==predefinedStageNames.length||stg.some((s,i)=>s.name!==predefinedStageNames[i])){stg=predefinedStageNames.map(n=>{const es=stg.find(s1=>s1.name===n);return{name:n,responsible:es?.responsible||"",date:es?.date||"",notes:es?.notes||"",completed:es?.completed||false};});}
@@ -387,46 +387,6 @@
     if(valA<valB)return newDirection==='asc'?-1:1;if(valA>valB)return newDirection==='asc'?1:-1;return 0;});rows.forEach(row=>tbody.appendChild(row));}
     function goBack(){window.location.href="index.html";}
     function logout(){auth.signOut().then(()=>window.location.href="login.html").catch(e=>{console.error("Çıkış hatası:",e);alert("Çıkış hatası.");});}
-
-    // KUR ÇEKME VE GÖSTERME FONKSİYONLARI
-    async function fetchExchangeRatesForCollectionDate(dateString) {
-        const usdRateSpan = document.getElementById('usdRate');
-        const eurRateSpan = document.getElementById('eurRate');
-        const displayDiv = document.getElementById('exchangeRateDisplay');
-
-        usdRateSpan.textContent = 'Yükleniyor...';
-        eurRateSpan.textContent = 'Yükleniyor...';
-        displayDiv.style.display = 'flex'; // Göster
-
-        if (!dateString) {
-            usdRateSpan.textContent = 'N/A';
-            eurRateSpan.textContent = 'N/A';
-            displayDiv.style.display = 'none'; // Tarih seçilmezse gizle
-            return;
-        }
-
-        try {
-            const getRates = firebase.functions().httpsCallable('getExchangeRateForDate'); // Function adı
-            const result = await getRates({ date: dateString }); // Tarihi gönder
-
-            if (result.data && result.data.success) {
-                const rates = result.data.rates;
-                usdRateSpan.textContent = rates.USD ? rates.USD.toFixed(4) : 'N/A';
-                eurRateSpan.textContent = rates.EUR ? rates.EUR.toFixed(4) : 'N/A';
-                console.log(`Kurlar çekildi (${result.data.source}):`, rates);
-            } else {
-                console.error("Kur çekme başarılı değil:", result.data);
-                usdRateSpan.textContent = 'Hata';
-                eurRateSpan.textContent = 'Hata';
-                alert(`Kur bilgisi alınamadı: ${result.data.message || 'Bilinmeyen Hata'}`);
-            }
-        } catch (error) {
-            console.error("Kur çekme fonksiyonu çağrılırken hata:", error);
-            usdRateSpan.textContent = 'Hata';
-            eurRateSpan.textContent = 'Hata';
-            alert(`Kur bilgisi alınamadı. Hata: ${error.message}`);
-        }
-    }
   </script>
 </body>
 </html>
