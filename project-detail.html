@@ -67,7 +67,7 @@
   </table>
 
   <div class="input-group" style="margin-top: 20px;">
-    <div><label for="startDate">Sözleşme Başlangıcı</label><input type="date" id="startDate" /></div>
+    <div><label for="startDate">Sözleşme Başlangıcı</label><input type="date" id="startDate" onchange="toggleContractRateDisplay()" /></div>
     <div><label for="endDate">Sözleşme Bitişi</label><input type="date" id="endDate" /></div>
   </div>
 
@@ -85,6 +85,10 @@
           </select>
         </div>
         <div id="contractRates" style="display:none;"></div>
+      </div>
+      <div>
+        <label for="contractRateDate">Kur Tarihi (Opsiyonel)</label>
+        <input type="date" id="contractRateDate" onchange="fetchRatesAndUpdateCalculations('contractRates', this.value, true)" />
       </div>
     </div>
     <button onclick="saveDetails()">Sözleşme Bilgilerini Kaydet</button>
@@ -344,6 +348,10 @@
         document.getElementById("contractCurrency").value = p.contractCurrency || "TRY";
       }
 
+      if (p.contractDateForRate) {
+        document.getElementById("contractRateDate").value = p.contractDateForRate;
+      }
+
       await updateCalculations();
     } catch (e) {
       console.error("Proje yükleme hatası:", e);
@@ -522,7 +530,10 @@
 
   async function fetchRatesAndUpdateCalculations(displayDivId, dateString, isContract = false) {
     const displayDiv = document.getElementById(displayDivId);
-    if (!displayDiv) return;
+    if (!displayDiv) {
+      console.warn("Kur gösterim alanı bulunamadı:", displayDivId);
+      return;
+    }
     displayDiv.style.display = "block";
     displayDiv.innerHTML = "Kur bilgisi alınıyor...";
     const rates = await getOrFetchRates(dateString);
@@ -533,6 +544,16 @@
       if (!isContract && dateString) alert(`${dateString} için kur bilgisi alınamadı.`);
     }
     await updateCalculations();
+  }
+
+  async function toggleContractRateDisplay() {
+    const contractCurrency = document.getElementById("contractCurrency").value;
+    const contractRateSection = document.getElementById("contractRateDate").parentElement;
+    if (contractCurrency === "TRY") {
+      contractRateSection.style.display = "none";
+    } else {
+      contractRateSection.style.display = "block";
+    }
   }
 
 </script>
