@@ -1,40 +1,45 @@
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const axios = require("axios");
+const xml2js = require("xml2js");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { logger } = require("firebase-functions"); // Opsiyonel, loglama için
+const { logger } = require("firebase-functions");
+const cors = require("cors")({origin: true}); // CORS paketini import et ve origin'i true yap (veya spesifik domain)
 
-// ... (admin, axios, xml2js importları ve admin.initializeApp() aynı kalacak) ...
+admin.initializeApp();
+const db = admin.firestore();
 
 exports.getExchangeRateForDate = onCall(
     { 
-        region: "europe-west1", // Bölgeyi obje içinde belirtin
-        // memory: "256MiB", // Opsiyonel: Bellek ayarı
-        // timeoutSeconds: 60, // Opsiyonel: Zaman aşımı ayarı
+        region: "europe-west1", 
+        timeoutSeconds: 30,
+        memory: "128MiB",
+        // cors: true // v2 onCall için bu seçenek doğrudan desteklenmeyebilir, manuel handler gerekebilir
+                    // veya HTTP fonksiyonuna çevirip cors middleware'ini kullanabiliriz.
+                    // Şimdilik onCall'da bırakalım ve client-side'da cors hatası devam ederse
+                    // HTTP fonksiyona çevirmeyi düşünelim.
+                    // Aslında, onCall fonksiyonları için Firebase otomatik CORS handle eder.
+                    // Sorunumuz büyük ihtimalle client-side'daki fonksiyon çağırma şekliyle ilgili olabilir
+                    // veya preflight request'te bir sorun oluyor.
+                    // Preflight requestler için callable functions'ta özel bir ayar gerekmez.
+                    // Hata mesajı "No 'Access-Control-Allow-Origin' header" diyor.
+                    // Bu, fonksiyonun kendisi bir HTTP fonksiyonu olsaydı daha anlamlı olurdu.
+                    // Callable functions için Firebase bu headerları kendisi yönetmeli.
     }, 
-    async (request) => { // context yerine request objesi gelir, içinde auth ve data var
+    async (request) => {
     
-    // Opsiyonel: Kimlik doğrulama kontrolü
+    // Kimlik doğrulama kontrolü (kaldırıldı, gerekirse eklenebilir)
     // if (!request.auth) {
     //   logger.error("Authentication Error: User is not authenticated.");
     //   throw new HttpsError('unauthenticated', 'Bu fonksiyonu çağırmak için kimlik doğrulaması gereklidir.');
     // }
 
-    const dateString = request.data.date; // data, request.data içinden alınır
+    const dateString = request.data.date; 
     if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-        logger.error("Invalid argument: Date format is incorrect.", { receivedDate: dateString });
+        logger.error("Geçersiz tarih formatı:", { receivedDate: dateString });
         throw new HttpsError('invalid-argument', 'Lütfen YYYY-AA-GG formatında geçerli bir tarih girin.');
     }
 
-    // ... (fonksiyonun geri kalan mantığı büyük ölçüde aynı kalacak) ...
-    // Sadece HttpsError fırlatırken `functions.https.HttpsError` yerine `HttpsError` kullanın.
-    // Ve console.log yerine logger.info, logger.error vb. kullanabilirsiniz.
-
-    // Örnek hata fırlatma:
-    // throw new HttpsError('not-found', `TCMB'den ${dateString} için kur bilgisi bulunamadı.`);
-
-    // Fonksiyonun geri kalanını bir önceki mesajdaki gibi, HttpsError ve logger düzeltmeleriyle yazın.
-    // Özellikle catch bloklarındaki throw new functions.https.HttpsError(...) kısımlarını
-    // throw new HttpsError(...) olarak değiştirin.
-    
-    // --- Fonksiyonun geri kalanını buraya ekleyin (bir önceki mesajdaki gibi, HttpsError ve logger'ı güncelleyerek) ---
     const parts = dateString.split('-');
     const year = parts[0];
     const month = parts[1];
@@ -56,9 +61,9 @@ exports.getExchangeRateForDate = onCall(
             if (docData.error && docData.lastFetched) {
                 const lastFetchedDate = docData.lastFetched.toDate();
                 const hoursSinceLastFetch = (new Date() - lastFetchedDate) / (1000 * 60 * 60);
-                if (hoursSinceLastFetch < 6 && (docData.error === "TCMB_404" || docData.error === "No rates found or parse error")) {
+                if (hoursSinceLastFetch < 6 && (docData.error === "TCMB_404" || docData.error === "No valid rates found or parse error")) {
                     logger.warn(`Daha önce ${dateString} için hata alınmış (${docData.error}), ${hoursSinceLastFetch.toFixed(1)} saat içinde tekrar denenmeyecek.`);
-                    throw new HttpsError('not-found', `TCMB'den ${dateString} için daha önce veri bulunamadı (${docData.error}).`);
+                    throw new HttpsError('not-found', `TCMB'den ${dateString} için daha önce veri bulunamadı (${docData.error}). Tekrar denemek için bir süre bekleyin.`);
                 }
             }
         }
@@ -76,7 +81,8 @@ exports.getExchangeRateForDate = onCall(
                     if (currencyCode === "USD" || currencyCode === "EUR") {
                         const forexSelling = currency.ForexSelling;
                         if (forexSelling && typeof forexSelling === 'string' && forexSelling.trim() !== "") {
-                            fetchedRates[currencyCode] = parseFloat(forexSelling.replace(",", "."));
+                            const rateValue = parseFloat(forexSelling.replace(",", "."));
+                            if (!isNaN(rateValue)) { fetchedRates[currencyCode] = rateValue; }
                         }
                     }
                 }
@@ -88,26 +94,22 @@ exports.getExchangeRateForDate = onCall(
             logger.info(`Yeni kur bilgisi Firestore'a kaydedildi (${dateString}):`, fetchedRates);
             return { success: true, rates: fetchedRates, source: "TCMB" };
         } else {
-            logger.warn(`TCMB'den ${dateString} için geçerli kur bilgisi bulunamadı veya parse edilemedi. Dönen XML:`, JSON.stringify(result, null, 2));
+            logger.warn(`TCMB'den ${dateString} için geçerli kur bilgisi (USD/EUR) bulunamadı veya parse edilemedi. Dönen XML:`, JSON.stringify(result, null, 2).substring(0, 500));
             await ratesDocRef.set({ rates: {}, lastFetched: admin.firestore.FieldValue.serverTimestamp(), error: "No valid rates found or parse error" }, { merge: true });
             throw new HttpsError('not-found', `TCMB'den ${dateString} için geçerli kur bilgisi (USD/EUR) bulunamadı.`);
         }
     } catch (error) {
-        logger.error(`Kur çekme/kaydetme hatası (${dateString}):`, error.message, error);
-        let errorCode = 'internal';
-        let errorMessage = `Kur bilgisi alınırken bir sunucu hatası oluştu (${dateString}).`;
-
+        logger.error(`Kur çekme/kaydetme hatası (${dateString}):`, { message: error.message, code: error.code, details: error.details, responseStatus: error.response?.status });
+        let userErrorCode = 'internal'; let userErrorMessage = `Kur bilgisi alınırken bir sunucu hatası oluştu (${dateString}).`;
+        if (error instanceof HttpsError) { throw error; }
         if (error.isAxiosError) {
             if (error.response) {
-                logger.error("TCMB Yanıt Verisi:", error.response.data); logger.error("TCMB Yanıt Durumu:", error.response.status);
                 if (error.response.status === 404) {
-                    errorCode = 'not-found'; errorMessage = `TCMB'den ${dateString} için kur verisi bulunamadı (muhtemelen tatil veya hafta sonu).`;
+                    userErrorCode = 'not-found'; userErrorMessage = `TCMB'den ${dateString} için kur verisi bulunamadı (muhtemelen tatil veya hafta sonu).`;
                     await ratesDocRef.set({ rates: {}, lastFetched: admin.firestore.FieldValue.serverTimestamp(), error: "TCMB_404" }, { merge: true }).catch(dbError => logger.error("Error saving 404 status to Firestore:", dbError));
                 }
-            } else if (error.request) { errorCode = 'unavailable'; errorMessage = `TCMB sunucusundan yanıt alınamadı (${dateString}).`; }
-        } else if (error.code && typeof error.code === 'string') { errorCode = error.code; errorMessage = error.message; }
-        
-        if (!(error instanceof HttpsError)) { throw new HttpsError(errorCode, errorMessage); } 
-        else { throw error; }
+            } else if (error.request) { userErrorCode = 'unavailable'; userErrorMessage = `TCMB sunucusundan yanıt alınamadı (${dateString}).`; }
+        }
+        throw new HttpsError(userErrorCode, userErrorMessage);
     }
 });
