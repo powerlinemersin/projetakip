@@ -167,7 +167,14 @@
   </main>
 
   <script>
-    const firebaseConfig = {
+          // Firebase yapılandırması
+const firebaseConfig = { /* ... */ };
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const storage = firebase.storage();
+// Functions servisini belirli bir bölgeyle initialize etmeyi dene:
+const functions = firebase.app().functions('europe-west1'); // FONKSİYONUNUZUN DEPLOY EDİLDİĞİ BÖLGEYİ YAZIN
       apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
       authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
       projectId: "projetakipsistemi-fbabd",
