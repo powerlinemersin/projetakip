@@ -42,22 +42,12 @@
     h2, h3 {
       color: #333;
     }
-    .input-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-    .input-group > div {
-      flex: 1;
-      min-width: 200px;
-    }
     label {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
     }
-    input[type="text"], input[type="date"], textarea, select {
+    input[type="text"], input[type="date"], select {
       width: 100%;
       padding: 8px;
       border: 1px solid #ccc;
@@ -153,38 +143,13 @@
     <div class="input-group">
       <div>
         <label for="contractValue">Sözleşme Tutarı</label>
-        <div class="currency-select-group">
-          <input type="text" id="contractValue" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" />
-          <select id="contractCurrency" onchange="toggleContractRateDisplay()">
-            <option value="TRY">TL</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-          </select>
-        </div>
-        <div id="contractRates" style="display:none;"></div>
-      </div>
-      <div>
-        <label for="contractRateDate">Kur Tarihi (Opsiyonel)</label>
-        <input type="date" id="contractRateDate" onchange="fetchRatesAndUpdateCalculations('contractRates', this.value, true)" />
+        <input type="text" id="contractValue" placeholder="0,00" readonly class="readonly" />
       </div>
     </div>
-    <button onclick="saveDetails()">Sözleşme Bilgilerini Kaydet</button>
     <p id="profitSummary" style="font-weight:bold; margin-top: 10px;"></p>
   </section>
 
   <section style="margin-top: 30px;">
-    <h3>Harcama Ekle</h3>
-    <div class="input-group">
-      <div><label for="expenseDesc">Açıklama</label><input type="text" id="expenseDesc" /></div>
-      <div><label for="expenseAmount">Tutar</label><input type="text" id="expenseAmount" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" /></div>
-      <div><label for="expenseCurrency">Para Birimi</label><select id="expenseCurrency"><option value="TRY">TL</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
-      <div><label for="expenseDate">Harcama Tarihi</label><input type="date" id="expenseDate" /></div>
-    </div>
-    <div id="expenseRates" style="display:none;"></div>
-    <button onclick="addExpense()">Harcama Ekle</button>
-  </section>
-
-  <section>
     <h3>Harcama Listesi</h3>
     <p id="noExpensesMessage" style="color:#999;">Bu projeye henüz harcama eklenmemiş.</p>
     <table id="expensesTable">
@@ -196,7 +161,6 @@
           <th>Kur Tarihi</th>
           <th>Kur Oranı</th>
           <th style="text-align:right;">Tutar (TL)</th>
-          <th>İşlem</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -204,47 +168,6 @@
   </section>
 
   <section style="margin-top: 30px;">
-    <h3>Tahsilat Ekle</h3>
-    <div class="input-group">
-      <div><label for="collectionDate">Tahsilat Tarihi</label><input type="date" id="collectionDate" /></div>
-      <div>
-        <label for="collectionType">Tip</label>
-        <select id="collectionType" onchange="toggleCollectionDetails()">
-          <option value="Nakit">Nakit</option>
-          <option value="Banka Havalesi">Banka Havalesi</option>
-          <option value="Çek">Çek</option>
-          <option value="Barter">Barter</option>
-        </select>
-      </div>
-      <div id="checkDetails" style="display:none;">
-        <label for="checkNo">Çek No</label>
-        <input type="text" id="checkNo" />
-        <label for="checkDueDate">Vade Tarihi</label>
-        <input type="date" id="checkDueDate" />
-        <label for="checkBank">Banka</label>
-        <input type="text" id="checkBank" />
-      </div>
-      <div id="barterDetails" style="display:none;">
-        <label for="barterItem">Varlık</label>
-        <input type="text" id="barterItem" />
-        <label for="barterValue">Değer</label>
-        <input type="text" id="barterValue" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" />
-        <label for="barterCurrency">Para Birimi</label>
-        <select id="barterCurrency">
-          <option value="TRY">TL</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-        </select>
-      </div>
-      <div>
-        <label for="collectionDescription">Açıklama/Not:</label>
-        <textarea id="collectionDescription" rows="3" placeholder="Tahsilatla ilgili ek notlar..."></textarea>
-      </div>
-    </div>
-    <button onclick="addCollection()" style="margin-top:15px;">Tahsilat Ekle</button>
-  </section>
-
-  <section>
     <h3>Tahsilat Listesi</h3>
     <p id="noCollectionsMessage" style="color:#999;">Bu projeye henüz tahsilat eklenmemiş.</p>
     <table id="collectionsTable">
@@ -258,7 +181,6 @@
           <th>Kur Tarihi</th>
           <th>Kur Oranı</th>
           <th style="text-align:right;">Tutar/Değer (TL)</th>
-          <th>İşlem</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -267,39 +189,21 @@
 
   <section style="margin-top: 30px;">
     <h3>Proje Dosyaları</h3>
-    <div class="input-group file-upload-input-group">
-      <div style="flex-basis: 40%;">
-        <label for="fileUploadInput">Dosya Seç</label>
-        <input type="file" id="fileUploadInput" />
-      </div>
-      <div style="flex-basis: 40%;">
-        <label for="fileDescriptionInput">Dosya Açıklaması (Opsiyonel)</label>
-        <input type="text" id="fileDescriptionInput" placeholder="Örn: Sözleşme V1, Teklif Onay Yazısı" />
-      </div>
-      <div style="flex-basis: 15%; min-width: 100px;">
-        <button onclick="uploadFile()" style="width:100%;">Yükle</button>
-      </div>
-    </div>
-    <div id="uploadProgress"><div id="uploadProgressBar"></div></div>
-    <h4 style="margin-top: 20px;">Yüklenmiş Dosyalar:</h4>
-    <ul id="fileList" class="file-list"></ul>
-    <p id="noProjectFilesMessage" style="display:none;">Bu projeye henüz dosya yüklenmemiş.</p>
+    <ul id="fileList"></ul>
+    <p id="noProjectFilesMessage" style="color:#999;">Bu projeye ait dosya yok.</p>
   </section>
 
-  <div style="margin-top: 30px; padding-bottom: 30px;">
-    <button onclick="saveDetails()">Sözleşme Bilgilerini Kaydet</button>
-    <button onclick="generateExcelReport()" style="margin-left:10px; background:#27ae60;">Rapor İndir (Excel)</button>
-    <button onclick="goBack()" style="margin-left:10px; background:#7f8c8d;">Geri Dön</button>
+  <div style="margin-top: 30px;">
+    <button onclick="goBack()">Geri Dön</button>
   </div>
 </main>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script> 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script> 
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script> 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.8/xlsx.full.min.js"></script> 
 
 <script>
+  // Firebase yapılandırması
   const firebaseConfig = {
     apiKey: "AIzaSyAGo34K8pKUPPjq0Dd2U6L6BqXDbexlZ1I",
     authDomain: "projetakipsistemi-fbabd.firebaseapp.com",
@@ -332,57 +236,16 @@
     });
   }
 
-  async function saveDetails() {
-    if (!projectId) return;
-    const dataToUpdate = {
-      status: document.getElementById("projectStatus").value
-    };
-    try {
-      await db.collection("projects").doc(projectId).update(dataToUpdate);
-      alert("Sözleşme bilgileri kaydedildi.");
-    } catch(e) {
-      console.error("Detay kaydetme hatası:", e);
-      alert("Bilgiler kaydedilemedi.");
-    }
-  }
-
-  async function updateCalculations() {
-    if (!projectId) return;
-    const doc = await db.collection("projects").doc(projectId).get();
-    if (!doc.exists) return;
-    const p = doc.data();
-
-    let totalExpensesInTRY = 0;
-    let contractInTRY = 0;
-
-    if (p.expenses && Array.isArray(p.expenses)) {
-      totalExpensesInTRY = p.expenses.reduce((sum, e) => sum + (e.amountInTRY || 0), 0);
-    }
-
-    if (p.originalContractAmount && typeof p.originalContractAmount === 'number') {
-      contractInTRY = p.originalContractAmount;
-    }
-
-    const profit = contractInTRY - totalExpensesInTRY;
-    const margin = contractInTRY > 0 ? (profit / contractInTRY * 100).toFixed(2) : 0;
-
-    const profitSummary = document.getElementById("profitSummary");
-    profitSummary.innerHTML = `
-      Toplam Harcama (TL): ${formatCurrencyTR(totalExpensesInTRY)} |
-      Sözleşme (TL): ${formatCurrencyTR(contractInTRY)} |
-      Kar: <span style="color:${profit >= 0 ? 'green' : 'red'}">${formatCurrencyTR(profit)}</span> |
-      Kar Marjı: ${margin}%
-    `;
-  }
-
   async function loadProject() {
-    const p = new URLSearchParams(window.location.search);
-    projectId = p.get("id");
+    const params = new URLSearchParams(window.location.search);
+    projectId = params.get("id");
+
     if (!projectId) {
-      alert("Proje ID yok.");
+      alert("Proje ID'si bulunamadı.");
       goBack();
       return;
     }
+
     try {
       const doc = await db.collection("projects").doc(projectId).get();
       if (!doc.exists) {
@@ -390,54 +253,55 @@
         goBack();
         return;
       }
+
       const p = doc.data();
-      document.getElementById("projectName").value = p.name || "";
-      document.getElementById("clientName").value = p.client || "";
-      document.getElementById("startDate").value = p.startDate || "";
-      document.getElementById("endDate").value = p.endDate || "";
+
+      document.getElementById("projectName").value = p.name || "N/A";
+      document.getElementById("clientName").value = p.client || "N/A";
       document.getElementById("projectStatus").value = p.status || "Başlamadı";
 
       const checkboxes = document.querySelectorAll("#projectCategoriesCheckboxesContainer input[type='checkbox']");
       checkboxes.forEach(cb => cb.checked = p.categories?.includes(cb.value));
 
-      renderExpenses(p.expenses || []);
-      renderCollections(p.collections || []);
-      renderFiles(p.files || []);
+      document.getElementById("contractValue").value = formatCurrencyTR(p.contractValue || 0);
 
-      if (p.originalContractAmount !== undefined) {
-        document.getElementById("contractValue").value = formatCurrencyTR(p.originalContractAmount);
-        document.getElementById("contractCurrency").value = p.contractCurrency || "TRY";
+      if (p.expenses && Array.isArray(p.expenses)) {
+        renderExpenses(p.expenses);
+      } else {
+        document.getElementById("noExpensesMessage").style.display = "block";
       }
 
-      if (p.contractDateForRate) {
-        document.getElementById("contractRateDate").value = p.contractDateForRate;
+      if (p.collections && Array.isArray(p.collections)) {
+        renderCollections(p.collections);
+      } else {
+        document.getElementById("noCollectionsMessage").style.display = "block";
       }
 
-      await updateCalculations();
+      if (p.files && p.files.length > 0) {
+        renderFiles(p.files);
+      } else {
+        document.getElementById("noProjectFilesMessage").style.display = "block";
+      }
+
     } catch (e) {
       console.error("Proje yükleme hatası:", e);
-      alert("Detaylar yüklenemedi.");
+      alert("Proje detayları yüklenirken bir hata oluştu.");
+      goBack();
     }
   }
 
   function renderExpenses(expenses) {
     const tbody = document.querySelector("#expensesTable tbody");
     tbody.innerHTML = "";
-    if (expenses.length === 0) {
-      document.getElementById("noExpensesMessage").style.display = "block";
-      return;
-    }
-    document.getElementById("noExpensesMessage").style.display = "none";
-    expenses.forEach((exp, idx) => {
+    expenses.forEach(exp => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${exp.desc}</td>
+        <td>${exp.desc || "-"}</td>
         <td style="text-align:right;">${formatCurrencyTR(exp.originalAmount)}</td>
-        <td>${exp.currency}</td>
-        <td>${exp.exchangeRateDate || '-'}</td>
-        <td>${exp.exchangeRate ? formatCurrencyTR(exp.exchangeRate) : '-'}</td>
+        <td>${exp.currency || "TRY"}</td>
+        <td>${exp.exchangeRateDate || "-"}</td>
+        <td>${exp.exchangeRate ? formatCurrencyTR(exp.exchangeRate) : "-"}</td>
         <td style="text-align:right;">${formatCurrencyTR(exp.amountInTRY)}</td>
-        <td><button class="btn-danger" onclick="removeExpense(${idx})">Sil</button></td>
       `;
       tbody.appendChild(tr);
     });
@@ -446,23 +310,17 @@
   function renderCollections(collections) {
     const tbody = document.querySelector("#collectionsTable tbody");
     tbody.innerHTML = "";
-    if (collections.length === 0) {
-      document.getElementById("noCollectionsMessage").style.display = "block";
-      return;
-    }
-    document.getElementById("noCollectionsMessage").style.display = "none";
-    collections.forEach((col, idx) => {
+    collections.forEach(col => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${col.date || '-'}</td>
-        <td>${col.type || '-'}</td>
-        <td>${col.checkDetails?.dueDate || '-'}</td>
-        <td>${col.originalAmount ? formatCurrencyTR(col.originalAmount) : '-'}</td>
-        <td>${col.currency || 'TRY'}</td>
-        <td>${col.exchangeRateDate || '-'}</td>
-        <td>${col.exchangeRate ? formatCurrencyTR(col.exchangeRate) : '-'}</td>
+        <td>${col.date || "-"}</td>
+        <td>${col.type || "-"}</td>
+        <td>${col.checkDetails?.dueDate || "-"}</td>
+        <td style="text-align:right;">${formatCurrencyTR(col.originalAmount || 0)}</td>
+        <td>${col.currency || "TRY"}</td>
+        <td>${col.exchangeRateDate || "-"}</td>
+        <td>${col.exchangeRate ? formatCurrencyTR(col.exchangeRate) : "-"}</td>
         <td style="text-align:right;">${formatCurrencyTR(col.amountInTRY || 0)}</td>
-        <td><button class="btn-danger" onclick="removeCollection(${idx})">Sil</button></td>
       `;
       tbody.appendChild(tr);
     });
@@ -471,85 +329,37 @@
   function renderFiles(files) {
     const ul = document.getElementById("fileList");
     ul.innerHTML = "";
-    if (!files || files.length === 0) {
-      document.getElementById("noProjectFilesMessage").style.display = "block";
-      return;
-    }
-    document.getElementById("noProjectFilesMessage").style.display = "none";
     files.forEach(file => {
       const li = document.createElement("li");
-      li.innerHTML = `<span>${file.description || file.name}</span><button class="delete-file-btn" onclick="downloadFile('${file.url}', '${file.name}')">İndir</button>`;
+      li.innerHTML = `<span>${file.description || file.name}</span>`;
       ul.appendChild(li);
     });
   }
 
-  async function addExpense() {
-    // Harcama ekleme kısmı burada ama sadece yetkili kullanıcılar yapabilir
+  function updateProjectStatus(status) {
+    db.collection("projects").doc(projectId).update({ status });
   }
 
-  async function removeExpense(idx) {
-    if (!confirm("Bu harcama silinsin mi?")) return;
-    try {
-      const ref = db.collection("projects").doc(projectId);
-      const d = await ref.get();
-      let ex = d.data().expenses || [];
-      ex.splice(idx, 1);
-      await ref.update({ expenses: ex });
-      renderExpenses(ex);
-      await updateCalculations();
-    } catch (e) {
-      console.error("Harcama silme hatası:", e);
-      alert("Harcama silinemedi.");
-    }
-  }
-
-  async function generateExcelReport() {
-    if (!projectId) {
-      alert("Proje bulunamadı.");
-      return;
-    }
-    const pDoc = await db.collection("projects").doc(projectId).get();
-    if (!pDoc.exists) {
-      alert("Proje verisi yok.");
-      return;
-    }
-    const p = pDoc.data();
-    const wb = XLSX.utils.book_new();
-    const generalInfoData = [
-      ["Proje Adı", p.name || 'N/A'],
-      ["Müşteri Adı", p.client || 'N/A'],
-      ["Proje Durumu", p.status || 'N/A'],
-      ["Kategoriler", (p.categories || []).join(", ")],
-      ["Sözleşme Başlangıcı", p.startDate || 'N/A'],
-      ["Sözleşme Bitişi", p.endDate || 'N/A'],
-      ["Sözleşme Tutarı (Orijinal)", p.originalContractAmount !== undefined ? `${formatCurrencyTR(p.originalContractAmount)} ${p.contractCurrency}` : '-'],
-      ["Sözleşme Tutarı (TL)", formatCurrencyTR(p.contractValue || 0)],
-      ["Kur Tarihi", p.contractDateForRate || 'N/A']
-    ];
-    const wsGeneral = XLSX.utils.aoa_to_sheet(generalInfoData);
-    XLSX.utils.book_append_sheet(wb, wsGeneral, "Genel Bilgi");
-
-    const expensesHeaders = ["Açıklama", "Tarih", "Orijinal Tutar", "P.B.", "Kur Tarihi", "Kur Oranı", "Tutar (TL)"];
-    const expensesBody = (p.expenses || []).map(e => [e.desc, e.date, formatCurrencyTR(e.originalAmount), e.currency, e.exchangeRateDate, formatCurrencyTR(e.exchangeRate), formatCurrencyTR(e.amountInTRY)]);
-    const wsExpenses = XLSX.utils.aoa_to_sheet([expensesHeaders, ...expensesBody]);
-    XLSX.utils.book_append_sheet(wb, wsExpenses, "Harcamalar");
-
-    XLSX.writeFile(wb, `Proje_${p.name}.xlsx`);
-  }
-
-  async function goBack() {
+  function goBack() {
     window.location.href = "index.html";
   }
 
-  async function logout() {
-    await auth.signOut();
-    window.location.href = "login.html";
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "login.html";
+    }).catch(err => {
+      console.error("Çıkış yapılırken hata:", err);
+    });
   }
 
-  async function toggleContractRateDisplay() {
-    const contractCurrency = document.getElementById("contractCurrency").value;
-    document.getElementById("contractRateDate").parentElement.style.display = contractCurrency === "TRY" ? "none" : "block";
-  }
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      renderDetailCategoryCheckboxes();
+      loadProject();
+    }
+  });
 
 </script>
 
