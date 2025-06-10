@@ -106,7 +106,9 @@
     <img src="https://powerlinemersin.github.io/projetakip/logo.png"  alt="Logo" />
     <h1>Proje Detayları</h1>
   </div>
-  <button onclick="logout()" style="background:#e74c3c; color:white;">Çıkış Yap</button>
+  <div class="header-content-right">
+    <button onclick="logout()" style="background:#e74c3c; color:white;">Çıkış Yap</button>
+  </div>
 </header>
 
 <main>
@@ -336,8 +338,8 @@
     });
   }
 
-  function updateProjectStatus(status) {
-    db.collection("projects").doc(projectId).update({ status });
+  function updateProjectStatus(newSt) {
+    db.collection("projects").doc(projectId).update({ status: newSt });
   }
 
   function goBack() {
