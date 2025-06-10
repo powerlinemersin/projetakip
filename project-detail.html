@@ -202,11 +202,6 @@
         inputElement.value = formatCurrencyTR(numericValue);
         
         if (fieldName === 'contractValue') {
-            // Sözleşme tutarı için kur çekme, _originalDate'i kullanarak.
-            // _originalDate'i, sözleşme tutarı ilk yüklendiğinde veya saveDetails'da set ediyoruz.
-            // Eğer kullanıcı sözleşme tutarını giriyorsa, o anki tarihi veya başlangıç tarihini baz alabiliriz.
-            // Şimdilik, loadProject'te set edilen tarihi kullanacak. Eğer elle değiştiriliyorsa ve kur farklı bir tarihe göre alınmalıysa
-            // bu _originalDate'in de güncellenmesi gerekir. En basit yöntem, saveDetails sırasında contractDateForRate'i de kaydetmek.
             const dateForRate = document.getElementById('contractValue')._originalDate || document.getElementById('startDate').value || new Date().toISOString().split('T')[0];
             await fetchRatesAndUpdateCalculations('contractRates', dateForRate, true);
         } else {
@@ -216,6 +211,7 @@
 
     function renderDetailCategoryCheckboxes(){const c=document.getElementById('projectCategoriesCheckboxesContainer');if(!c)return;let lg=c.querySelector('legend');if(!lg){lg=document.createElement('legend');lg.textContent='Proje Kategorileri';}c.innerHTML="";c.appendChild(lg);projectCategories.forEach(cat=>{const id=`detail_${cat.replace(/\s+/g,'-').toLowerCase()}`;const wr=document.createElement('span');wr.style.marginRight="15px";wr.style.display="inline-block";const cb=document.createElement('input');cb.type='checkbox';cb.id=id;cb.value=cat;cb.name='project_category_detail';cb.style.marginRight="5px";cb.style.verticalAlign="middle";cb.onchange=updateProjectCategories;const lb=document.createElement('label');lb.htmlFor=id;lb.textContent=cat;lb.style.fontWeight="normal";lb.style.cursor="pointer";lb.style.verticalAlign="middle";wr.appendChild(cb);wr.appendChild(lb);c.appendChild(wr);});}
     async function updateProjectCategories(){if(!projectId)return;const sel=[];document.querySelectorAll('#projectCategoriesCheckboxesContainer input[type="checkbox"]:checked').forEach(cb=>sel.push(cb.value));try{await db.collection("projects").doc(projectId).update({categories:sel});console.log("Kategoriler güncellendi:",sel);}catch(e){console.error("Kategori güncelleme hatası:",e);alert("Kategoriler güncellenemedi.");}}
+    
     auth.onAuthStateChanged(u=>{if(!u){window.location.href="login.html";}else{const p=new URLSearchParams(window.location.search);projectId=p.get("id");if(projectId){loadProject();}else{alert("Proje ID yok.");goBack();}}});
     
     async function getOrFetchRates(dateString) {
@@ -243,22 +239,31 @@
     async function fetchRatesAndUpdateCalculations(displayDivId, dateString, isContract = false) {
         const displayDiv = document.getElementById(displayDivId);
         if (!displayDiv) { console.warn("Kur gösterim alanı bulunamadı:", displayDivId); return;}
-        if (!dateString) { displayDiv.style.display = 'none'; if(isContract) {const cr = document.getElementById('contractValueTRY'); if(cr) cr.style.display='none';} return; }
-
-        let usdSpanId = `${displayDivId.replace('Rates','')}UsdRate`;
-        let eurSpanId = `${displayDivId.replace('Rates','')}EurRate`;
-        if(isContract) { usdSpanId = 'contractValueTRYRate'; eurSpanId = null; /* Sözleşmede sadece TL karşılığı */ }
-
-        const usdRateSpan = document.getElementById(usdSpanId);
-        const eurRateSpan = eurSpanId ? document.getElementById(eurSpanId) : null;
-
-        if(!usdRateSpan) { console.warn("USD kur span'ı bulunamadı:", usdSpanId); return; }
         
-        const ratesDisplayTarget = isContract ? document.getElementById('contractValueTRY') : displayDiv;
-        if(!ratesDisplayTarget) return;
+        let usdSpan, eurSpan; // Span elementlerini tanımla
+        if (isContract) {
+            usdSpan = document.getElementById('contractValueTRYRate'); // Sözleşme için TL karşılığı span'ı
+            eurSpan = null; // Sözleşme için EUR span'ı yok
+            if(!usdSpan) { console.warn("Sözleşme TL karşılığı span'ı bulunamadı."); return; }
+             displayDiv.style.display = 'block'; // Gösterim div'ini görünür yap
+             usdSpan.textContent = 'Hesaplanıyor...';
+        } else {
+            usdSpan = document.getElementById(`${displayDivId.replace('Rates','')}UsdRate`);
+            eurSpan = document.getElementById(`${displayDivId.replace('Rates','')}EurRate`);
+            if(!usdSpan || !eurSpan) { console.warn("USD/EUR kur span'ları bulunamadı:", displayDivId); return; }
+            displayDiv.style.display = 'flex'; // Gösterim div'ini görünür yap
+            usdSpan.textContent = 'Yükleniyor...';
+            eurSpan.textContent = 'Yükleniyor...';
+        }
 
-        if (isContract) { usdRateSpan.textContent = 'Hesaplanıyor...'; ratesDisplayTarget.style.display = 'block'; }
-        else { usdRateSpan.textContent = 'Yükleniyor...'; if(eurRateSpan) eurRateSpan.textContent = 'Yükleniyor...'; ratesDisplayTarget.style.display = 'flex';}
+        if (!dateString) {
+            usdSpan.textContent = isContract ? "" : 'N/A';
+            if (eurSpan) eurSpan.textContent = 'N/A';
+            if (!isContract || (isContract && document.getElementById('contractCurrency').value === 'TRY') ) {
+                 displayDiv.style.display = 'none'; // Tarih yoksa veya TRY ise gizle
+            }
+            return;
+        }
         
         const rates = await getOrFetchRates(dateString);
 
@@ -266,17 +271,17 @@
             if (isContract) {
                 const contractValOriginal = parseCurrencyTR(document.getElementById('contractValue').value);
                 const contractCurr = document.getElementById('contractCurrency').value;
-                if (contractCurr === 'USD' && rates.USD) { usdRateSpan.textContent = formatCurrencyTR(contractValOriginal * rates.USD) + " TL"; }
-                else if (contractCurr === 'EUR' && rates.EUR) { usdRateSpan.textContent = formatCurrencyTR(contractValOriginal * rates.EUR) + " TL"; }
-                else if (contractCurr === 'TRY') { ratesDisplayTarget.style.display = 'none'; }
-                else { usdRateSpan.textContent = 'Kur yok'; }
+                if (contractCurr === 'USD' && rates.USD) { usdSpan.textContent = formatCurrencyTR(contractValOriginal * rates.USD) + " TL"; }
+                else if (contractCurr === 'EUR' && rates.EUR) { usdSpan.textContent = formatCurrencyTR(contractValOriginal * rates.EUR) + " TL"; }
+                else if (contractCurr === 'TRY') { displayDiv.style.display = 'none'; }
+                else { usdSpan.textContent = 'Kur yok'; }
             } else {
-                usdRateSpan.textContent = rates.USD ? rates.USD.toFixed(4) : 'N/A';
-                if (eurRateSpan) eurRateSpan.textContent = rates.EUR ? rates.EUR.toFixed(4) : 'N/A';
+                usdSpan.textContent = rates.USD ? rates.USD.toFixed(4) : 'N/A';
+                if (eurSpan) eurSpan.textContent = rates.EUR ? rates.EUR.toFixed(4) : 'N/A';
             }
         } else {
-            usdRateSpan.textContent = 'Hata'; if (eurRateSpan) eurRateSpan.textContent = 'Hata';
-            if (isContract) ratesDisplayTarget.style.display = 'none';
+            usdSpan.textContent = 'Hata'; if (eurSpan) eurSpan.textContent = 'Hata';
+            if (isContract) displayDiv.style.display = 'none';
         }
         await updateCalculations(); 
     }
@@ -313,7 +318,7 @@
     let descDisp=col.description||'';let dueDateDisp='-';if(col.type==="Çek"&&col.checkDetails){descDisp+=`${descDisp?' <br> ':''}Çek No: ${col.checkDetails.checkNo||'N/A'}, Banka: ${col.checkDetails.bank||'N/A'}`;dueDateDisp=col.checkDetails.dueDate||'N/A';}else if(col.type==="Barter"&&col.barterDetails){descDisp+=`${descDisp?' - ':''}Takas: ${col.barterDetails.asset||'Belirtilmemiş'}`;}
     tb.insertAdjacentHTML("beforeend",`<tr><td>${col.date||'N/A'}</td><td>${col.type||'N/A'}</td><td>${descDisp}</td><td>${dueDateDisp}</td><td style="text-align:right;">${originalAmountDisp}</td><td>${currencyDisp}</td><td style="text-align:right;">${amountTRYDisp}</td><td><button class="delete-file-btn" style="padding:5px 8px;" onclick="removeCollection(${idx})">Sil</button></td></tr>`);});}else{msg.style.display="block";}updateCalculations();}
     
-    function toggleCollectionDetails(){const t=document.getElementById('collectionType').value;document.getElementById('checkDetailsGroup').style.display=t==='Çek'?'block':'none';document.getElementById('barterDetailsGroup').style.display=t==='Barter'?'block':'none';const collectionAmountDiv = document.getElementById('collectionAmountGroup'); const collectionCurrencySelect = document.getElementById('collectionCurrency'); if (collectionAmountDiv) collectionAmountDiv.style.display=t==='Barter'?'none':'block'; if(t!=='Barter'){ if(collectionCurrencySelect) collectionCurrencySelect.value = 'TRY'; fetchRatesAndUpdateCalculations('collectionRates', document.getElementById('collectionDate').value); } else { document.getElementById('collectionRates').style.display='none';}}
+    function toggleCollectionDetails(){const t=document.getElementById('collectionType').value;document.getElementById('checkDetailsGroup').style.display=t==='Çek'?'block':'none';document.getElementById('barterDetailsGroup').style.display=t==='Barter'?'block':'none';const collectionAmountDiv = document.getElementById('collectionAmountGroup'); const collectionCurrencySelect = document.getElementById('collectionCurrency'); if (collectionAmountDiv) collectionAmountDiv.style.display=t==='Barter'?'none':'block'; if(t!=='Barter'){ if(collectionCurrencySelect) collectionCurrencySelect.value = 'TRY'; fetchRatesAndUpdateCalculations('collectionRates', document.getElementById('collectionDate').value); } else { const cr = document.getElementById('collectionRates'); if(cr) cr.style.display='none';}}
     
     async function addCollection(){const dateInput=document.getElementById('collectionDate').value;const type=document.getElementById('collectionType').value;const description=document.getElementById('collectionDescription').value.trim();let originalAmount=0,currency="",amountInTRY=0,checkDetails=null,barterDetails=null;if(!dateInput||!type){alert("Tarih ve tip seçin.");return;}
     if(type==="Nakit"||type==="Banka Transferi"||type==="Çek"){originalAmount=parseCurrencyTR(document.getElementById('collectionAmount').value);currency=document.getElementById('collectionCurrency').value;if(isNaN(originalAmount)||originalAmount<=0){alert("Geçerli tutar.");return;}amountInTRY=originalAmount;if(currency!=="TRY"){const rates=await getOrFetchRates(dateInput);if(!rates||!rates[currency]){if(!confirm(`${dateInput} için ${currency} kuru bulunamadı. Tahsilatı ${formatCurrencyTR(originalAmount)} TL olarak mı kaydetmek istersiniz?`))return;}else{amountInTRY=originalAmount*rates[currency];}}
@@ -325,41 +330,25 @@
     toggleCollectionDetails();document.getElementById('collectionRates').style.display='none';
     const updatedDoc=await projectRef.get();if(updatedDoc.exists)renderCollections(updatedDoc.data().collections||[]);alert("Tahsilat eklendi.");}catch(error){console.error("Tahsilat eklenirken Firestore hatası:",error);alert(`Tahsilat eklenemedi. Hata: ${error.message}`);}}
     
-    async function removeCollection(idx){if(!confirm("Bu tahsilat silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let cols=d.data().collections||[];cols.splice(idx,1);await ref.update({collections:cols});renderCollections(cols);alert("Tahsilat silindi.");}catch(e){console.error("Tahsilat silme hatası:",e);alert("Tahsilat silinemedi.");}}
+    async function removeCollection(idx){if(!confirm("Bu tahsilat silinsin mi?"))return;try{const ref=db.collection("projects").doc(projectId);const d=await ref.get();if(!d.exists)return;let cols=d.data().collections||[];cols.splice(idx,1);await ref.update({collections:cols});renderCollections(cols);await updateCalculations();}catch(e){console.error("Tahsilat silme hatası:",e);alert("Tahsilat silinemedi.");}}
     
     async function updateCalculations() {
-        const contractValueInput = document.getElementById('contractValue');
-        const contractCurrency = document.getElementById('contractCurrency').value;
-        let contractOriginalAmount = parseCurrencyTR(contractValueInput.value);
-        let contractInTRY = contractOriginalAmount; 
-
-        const projectRef = db.collection("projects").doc(projectId);
-        if (!projectRef) return; // Proje yüklenmemişse hesaplama yapma
-        const projectDocSnapshot = await projectRef.get();
-        if (!projectDocSnapshot.exists) return;
-        const projectData = projectDocSnapshot.data();
-
-        // Sözleşme tutarını TL'ye çevir (eğer TRY değilse ve kur varsa)
-        // Firestore'dan gelen contractValue zaten TL olmalı, originalContractAmount ve contractCurrency'yi kullan
-        if (projectData.contractCurrency && projectData.contractCurrency !== "TRY" && projectData.originalContractAmount !== undefined) {
-            const contractDate = projectData.contractDateForRate || projectData.startDate || new Date().toISOString().split('T')[0];
-            const rates = await getOrFetchRates(contractDate); 
-            if (rates && rates[projectData.contractCurrency]) {
-                contractInTRY = projectData.originalContractAmount * rates[projectData.contractCurrency];
-            } else {
-                console.warn(`Sözleşme için ${projectData.contractCurrency} kuru (${contractDate}) bulunamadı. Güncel sözleşme değeri TL olarak kullanılacak.`);
-                contractInTRY = projectData.contractValue; // Firestore'daki TL değerini kullan
-            }
-        } else {
-            contractInTRY = projectData.contractValue || 0; // Eğer TRY ise veya originalContractAmount yoksa
-        }
-
-
+        if (!projectId) return; // Proje ID yoksa hesaplama yapma
+        let contractInTRY = 0;
         let totalExpensesInTRY = 0;
-        (projectData.expenses || []).forEach(exp => { totalExpensesInTRY += (exp.amountInTRY || exp.amount || 0); });
-
         let totalCollectionsInTRY = 0;
-        (projectData.collections || []).forEach(col => { totalCollectionsInTRY += (col.amountInTRY || (col.barterDetails ? col.barterDetails.valueInTRY : col.amount) || 0); });
+
+        try {
+            const projectDoc = await db.collection("projects").doc(projectId).get();
+            if (projectDoc.exists) {
+                const p = projectDoc.data();
+                contractInTRY = p.contractValue || 0; // Firestore'daki TL değerini al
+                (p.expenses || []).forEach(exp => { totalExpensesInTRY += (exp.amountInTRY || 0); });
+                (p.collections || []).forEach(col => { totalCollectionsInTRY += (col.amountInTRY || 0); });
+            }
+        } catch (error) {
+            console.error("Hesaplama için proje verileri çekilirken hata:", error);
+        }
         
         const profit = contractInTRY - totalExpensesInTRY;
         const margin = contractInTRY > 0 ? (profit / contractInTRY) * 100 : 0;
@@ -375,9 +364,8 @@
     async function saveDetails(){
         const originalAmount = parseCurrencyTR(document.getElementById("contractValue").value);
         const currency = document.getElementById("contractCurrency").value;
-        const dateForRateInput = document.getElementById("startDate").value; // Sözleşme başlangıç tarihini kur tarihi için alalım
-        const dateForRate = dateForRateInput || new Date().toISOString().split('T')[0]; 
-        document.getElementById('contractValue')._originalDate = dateForRate; // Gizli özelliğe ata
+        const dateForRate = document.getElementById("startDate").value || new Date().toISOString().split('T')[0]; 
+        document.getElementById('contractValue')._originalDate = dateForRate; 
         
         let valueInTRY = originalAmount;
         if (currency !== "TRY") {
@@ -385,10 +373,8 @@
             if (rates && rates[currency]) {
                 valueInTRY = originalAmount * rates[currency];
             } else {
-                alert(`${currency} kuru (${dateForRate}) alınamadığı için sözleşme tutarının TL karşılığı güncellenemedi. Lütfen geçerli bir tarih seçin veya kuru manuel girin (bu özellik henüz yok). Orijinal tutar ve para birimi kaydedilecek, TL karşılığı olarak orijinal tutar yazılacaktır.`);
-                valueInTRY = originalAmount; // Kur çekilemezse, TL karşılığını orijinal tutar olarak kaydet (bu durumda currency TRY olmalı)
-                                         // VEYA valueInTRY = null; ve kullanıcıyı uyar.
-                                         // Şimdilik bu mantıkla devam, kullanıcı TRY seçmeli bu durumda.
+                alert(`${currency} kuru (${dateForRate}) alınamadı. Lütfen geçerli bir başlangıç tarihi seçin veya kuru manuel girin. Orijinal tutar ve para birimi kaydedilecek, TL karşılığı olarak orijinal tutar yazılacaktır (bu yanlış olabilir).`);
+                valueInTRY = originalAmount; // Geçici fallback, idealde null veya hata olmalı
             }
         }
         
@@ -400,7 +386,6 @@
             contractValue: valueInTRY, 
             contractDateForRate: dateForRate 
         };
-
         try {
             const ref = db.collection("projects").doc(projectId);
             await ref.update(dataToUpdate);
@@ -410,7 +395,7 @@
         } catch(e){ console.error("Detay kaydetme hatası:",e); alert("Bilgiler kaydedilemedi.");}
     }
 
-    function renderFiles(files){const ul=document.getElementById("fileList");const msg=document.getElementById("noProjectFilesMessage"); if(!ul || !msg) { console.error("Dosya listesi veya mesaj elementi bulunamadı!"); return; } ul.innerHTML="";if(files&&files.length>0){msg.style.display="none";files.forEach((f,i)=>{ul.innerHTML+=`<li><div><a href="${f.url}" target="_blank" class="file-name" title="İndir: ${f.name}">${f.name}</a>${f.description ? `<span class="file-description">${f.description}</span>` : ''}</div><button class="delete-file-btn" onclick="deleteFile(${i},'${f.name}','${f.path}')">Sil</button></li>`;});}else{msg.style.display="block";}}
+    function renderFiles(files){const ul=document.getElementById("fileList");const msg=document.getElementById("noProjectFilesMessage"); if(!ul || !msg) { return; } ul.innerHTML="";if(files&&files.length>0){msg.style.display="none";files.forEach((f,i)=>{ul.innerHTML+=`<li><div><a href="${f.url}" target="_blank" class="file-name" title="İndir: ${f.name}">${f.name}</a>${f.description ? `<span class="file-description">${f.description}</span>` : ''}</div><button class="delete-file-btn" onclick="deleteFile(${i},'${f.name}','${f.path}')">Sil</button></li>`;});}else{msg.style.display="block";}}
     async function uploadFile(){const fin=document.getElementById('fileUploadInput');const desInp=document.getElementById('fileDescriptionInput');const f=fin.files[0];const des=desInp.value.trim();const pBarC=document.getElementById('uploadProgress');const pBar=document.getElementById('uploadProgressBar');if(!f){alert("Dosya seçin.");return;}if(!projectId){alert("Proje ID yok.");return;}
     const fNameStore=`${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;const fPath=`projects/${projectId}/${fNameStore}`;const fRef=storage.ref(fPath);try{const task=fRef.put(f);pBarC.style.display='block';task.on('state_changed',(s)=>{const prog=(s.bytesTransferred/s.totalBytes)*100;pBar.style.width=prog+'%';pBar.textContent=Math.round(prog)+'%';},(err)=>{console.error("Yükleme hatası:",err);alert(`Yükleme hatası: ${err.code} - ${err.message}`);pBarC.style.display='none';},async ()=>{pBarC.style.display='none';pBar.style.width='0%';pBar.textContent='';const url=await task.snapshot.ref.getDownloadURL();const pRef=db.collection("projects").doc(projectId);await pRef.update({files:firebase.firestore.FieldValue.arrayUnion({name:f.name,url,path:fPath,description:des,uploadedAt:firebase.firestore.FieldValue.serverTimestamp()})});alert("Dosya yüklendi!");fin.value="";desInp.value="";const pDoc=await pRef.get();if(pDoc.exists)renderFiles(pDoc.data().files||[]);});}catch(e){console.error("Yükleme başlatma hatası:",e);alert("Yükleme başlatılamadı.");pBarC.style.display='none';}}
     async function deleteFile(idx,name,path){if(!confirm(`"${name}" silinsin mi?`))return;if(!projectId||!path){alert("Silinemedi, bilgi eksik.");return;}try{await storage.ref(path).delete();const pRef=db.collection("projects").doc(projectId);const pDoc=await pRef.get();if(pDoc.exists){let files=pDoc.data().files||[];files=files.filter(f=>f.path!==path);await pRef.update({files});renderFiles(files);alert(`"${name}" silindi.`);}}catch(e){console.error("Dosya silme hatası:",e);if(e.code==='storage/object-not-found'){alert("Dosya Storage'da yok. DB kaydı siliniyor.");const pRef=db.collection("projects").doc(projectId);const pDoc=await pRef.get();if(pDoc.exists){let files=pDoc.data().files||[];files=files.filter(f=>f.path!==path);await pRef.update({files});renderFiles(files);}}else{alert(`Silme hatası: ${e.message}`);}}}
@@ -429,6 +414,6 @@
     if(valA<valB)return newDirection==='asc'?-1:1;if(valA>valB)return newDirection==='asc'?1:-1;return 0;});rows.forEach(row=>tbody.appendChild(row));}
     function goBack(){window.location.href="index.html";}
     function logout(){auth.signOut().then(()=>window.location.href="login.html").catch(e=>{console.error("Çıkış hatası:",e);alert("Çıkış hatası.");});}
-</script>
+  </script>
 </body>
 </html>
