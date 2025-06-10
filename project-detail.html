@@ -195,6 +195,61 @@
     <p id="noProjectFilesMessage" style="color:#999;">Bu projeye ait dosya yok.</p>
   </section>
 
+  <!-- Harcama Ekleme Formu -->
+  <section style="margin-top: 30px;">
+    <h3>Harcama Ekle</h3>
+    <div class="input-group">
+      <div>
+        <label for="expenseDate">Harcama Tarihi:</label>
+        <input type="date" id="expenseDate" />
+      </div>
+      <div>
+        <label for="expenseDesc">Açıklama:</label>
+        <input type="text" id="expenseDesc" placeholder="Açıklama" />
+      </div>
+      <div>
+        <label for="expenseAmount">Tutar:</label>
+        <input type="text" id="expenseAmount" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event, 'expenseAmount')" />
+        <select id="expenseCurrency">
+          <option value="TRY" selected>TRY</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+      </div>
+    </div>
+    <button onclick="addExpense()">Harcama Ekle</button>
+  </section>
+
+  <!-- Tahsilat Ekleme Formu -->
+  <section style="margin-top: 30px;">
+    <h3>Tahsilat Ekle</h3>
+    <div class="input-group">
+      <div>
+        <label for="collectionDate">Tahsilat Tarihi:</label>
+        <input type="date" id="collectionDate" />
+      </div>
+      <div>
+        <label for="collectionType">Tip:</label>
+        <select id="collectionType">
+          <option value="Nakit">Nakit</option>
+          <option value="Banka Transferi">Banka Transferi</option>
+          <option value="Çek">Çek</option>
+          <option value="Barter">Barter</option>
+        </select>
+      </div>
+      <div>
+        <label for="collectionAmount">Tutar:</label>
+        <input type="text" id="collectionAmount" class="currency-input" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event, 'collectionAmount')" />
+        <select id="collectionCurrency">
+          <option value="TRY" selected>TRY</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+      </div>
+    </div>
+    <button onclick="addCollection()">Tahsilat Ekle</button>
+  </section>
+
   <div style="margin-top: 30px;">
     <button onclick="goBack()">Geri Dön</button>
   </div>
@@ -363,6 +418,107 @@
     }
   });
 
+  // Harcama Ekleme Fonksiyonu
+  async function addExpense() {
+    const desc = document.getElementById("expenseDesc").value.trim();
+    const amountInput = document.getElementById("expenseAmount");
+    const originalAmount = parseCurrencyTR(amountInput.value);
+    const currency = document.getElementById("expenseCurrency").value;
+    const expenseDate = document.getElementById("expenseDate").value || new Date().toISOString().split('T')[0];
+
+    if (!desc || isNaN(originalAmount) || originalAmount <= 0) {
+      alert("Geçerli açıklama ve tutar girin.");
+      return;
+    }
+
+    let amountInTRY = originalAmount;
+    if (currency !== "TRY") {
+      const rates = await getOrFetchRates(expenseDate);
+      if (rates && rates[currency]) {
+        amountInTRY = originalAmount * rates[currency];
+      } else {
+        if (!confirm(`${expenseDate} için ${currency} kuru bulunamadı. Harcamayı ${formatCurrencyTR(originalAmount)} TL olarak mı kaydetmek istersiniz?`)) {
+          return;
+        }
+      }
+    }
+
+    const newExpense = {
+      desc,
+      originalAmount,
+      currency,
+      amountInTRY,
+      date: expenseDate,
+      addedAt: firebase.firestore.Timestamp.now()
+    };
+
+    try {
+      const ref = db.collection("projects").doc(projectId);
+      await ref.update({ expenses: firebase.firestore.FieldValue.arrayUnion(newExpense) });
+      document.getElementById("expenseDesc").value = "";
+      amountInput.value = formatCurrencyTR(0);
+      document.getElementById("expenseCurrency").value = "TRY";
+      document.getElementById("expenseDate").value = "";
+      const updatedDoc = await ref.get();
+      if (updatedDoc.exists) {
+        renderExpenses(updatedDoc.data().expenses || []);
+        await updateCalculations();
+      }
+    } catch (e) {
+      console.error("Harcama ekleme hatası:", e);
+      alert("Harcama eklenemedi.");
+    }
+  }
+
+  // Tahsilat Ekleme Fonksiyonu
+  async function addCollection() {
+    const date = document.getElementById("collectionDate").value;
+    const type = document.getElementById("collectionType").value;
+    const amountInput = document.getElementById("collectionAmount");
+    const originalAmount = parseCurrencyTR(amountInput.value);
+    const currency = document.getElementById("collectionCurrency").value;
+
+    if (!date || !type || isNaN(originalAmount) || originalAmount <= 0) {
+      alert("Geçerli tarih, tip ve tutar girin.");
+      return;
+    }
+
+    let amountInTRY = originalAmount;
+    if (currency !== "TRY") {
+      const rates = await getOrFetchRates(date);
+      if (rates && rates[currency]) {
+        amountInTRY = originalAmount * rates[currency];
+      } else {
+        if (!confirm(`${date} için ${currency} kuru bulunamadı. Tahsilatı ${formatCurrencyTR(originalAmount)} TL olarak mı kaydetmek istersiniz?`)) {
+          return;
+        }
+      }
+    }
+
+    const newCollection = {
+      date,
+      type,
+      originalAmount,
+      currency,
+      amountInTRY,
+      addedAt: firebase.firestore.Timestamp.now()
+    };
+
+    try {
+      const ref = db.collection("projects").doc(projectId);
+      await ref.update({ collections: firebase.firestore.FieldValue.arrayUnion(newCollection) });
+      const updatedDoc = await ref.get();
+      if (updatedDoc.exists) {
+        renderCollections(updatedDoc.data().collections || []);
+        await updateCalculations();
+      }
+    } catch (error) {
+      console.error("Tahsilat eklenirken Firestore hatası:", error);
+      alert(`Tahsilat eklenemedi. Hata: ${error.message}`);
+    }
+  }
+
+  // Diğer yardımcı fonksiyonlar...
 </script>
 
 </body>
