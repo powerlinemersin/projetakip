@@ -4,7 +4,6 @@ const axios = require("axios");
 const xml2js = require("xml2js");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
-const cors = require("cors")({origin: true}); // CORS paketini import et ve origin'i true yap (veya spesifik domain)
 
 admin.initializeApp();
 const db = admin.firestore();
