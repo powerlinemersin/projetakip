@@ -98,6 +98,17 @@
     .btn-danger:hover {
       background-color: #c0392b;
     }
+    .file-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+    }
+    @media (max-width: 600px) {
+      .input-group > div {
+        flex: 1 1 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -158,7 +169,7 @@
     <div class="input-group">
       <div>
         <label for="contractValue">Sözleşme Tutarı</label>
-        <input type="text" id="contractValue" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event, 'contractValue')" />
+        <input type="text" id="contractValue" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" />
         <select id="contractCurrency" onchange="toggleContractRateDisplay()">
           <option value="TRY">TL</option>
           <option value="USD">USD</option>
@@ -166,8 +177,8 @@
         </select>
       </div>
       <div>
-        <label for="contractRateDate">Kur Tarihi (Opsiyonel)</label>
-        <input type="date" id="contractRateDate" onchange="fetchRatesAndUpdateCalculations('contractRates', this.value, true)" />
+        <label for="startDate">Sözleşme Başlangıç Tarihi</label>
+        <input type="date" id="startDate" onchange="fetchRatesAndUpdateCalculations('contractRates', this.value, true)" />
       </div>
     </div>
     <div id="contractRates" style="display:none;"></div>
@@ -179,7 +190,7 @@
     <h3>Harcama Ekle</h3>
     <div class="input-group">
       <div><label for="expenseDesc">Açıklama</label><input type="text" id="expenseDesc" /></div>
-      <div><label for="expenseAmount">Tutar</label><input type="text" id="expenseAmount" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event, 'expenseAmount')" /></div>
+      <div><label for="expenseAmount">Tutar</label><input type="text" id="expenseAmount" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" /></div>
       <div><label for="expenseCurrency">Para Birimi</label><select id="expenseCurrency"><option value="TRY">TL</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
       <div><label for="expenseDate">Harcama Tarihi</label><input type="date" id="expenseDate" /></div>
     </div>
@@ -211,7 +222,7 @@
     <div class="input-group">
       <div><label for="collectionDate">Tahsilat Tarihi</label><input type="date" id="collectionDate" /></div>
       <div><label for="collectionType">Tip</label><select id="collectionType"><option value="Nakit">Nakit</option><option value="Banka Havalesi">Banka Havalesi</option><option value="Çek">Çek</option><option value="Barter">Barter</option></select></div>
-      <div><label for="collectionAmount">Tutar</label><input type="text" id="collectionAmount" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event, 'collectionAmount')" /></div>
+      <div><label for="collectionAmount">Tutar</label><input type="text" id="collectionAmount" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" /></div>
       <div><label for="collectionCurrency">Para Birimi</label><select id="collectionCurrency"><option value="TRY">TL</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
     </div>
     <button onclick="addCollection()">Tahsilat Ekle</button>
@@ -303,6 +314,7 @@
       document.getElementById("clientName").value = p.client || "";
       document.getElementById("projectStatus").value = p.status || "Başlamadı";
 
+      // Kategoriler
       const checkboxes = document.querySelectorAll("#projectCategoriesCheckboxesContainer input[type='checkbox']");
       checkboxes.forEach(cb => cb.checked = p.categories?.includes(cb.value));
 
@@ -324,14 +336,20 @@
         document.getElementById("noCollectionsMessage").style.display = "block";
       }
 
-      // Sözleşme bilgileri
+      // Sözleşme bilgisi
       if (p.contractValue !== undefined) {
         document.getElementById("contractValue").value = formatCurrencyTR(p.contractValue);
         document.getElementById("contractCurrency").value = p.contractCurrency || "TRY";
       }
 
+      if (p.startDate) {
+        document.getElementById("startDate").value = p.startDate;
+      }
+
+      // Kur bilgisi güncelle
       if (p.contractDateForRate) {
-        document.getElementById("contractRateDate").value = p.contractDateForRate;
+        document.getElementById("contractRates").style.display = "block";
+        document.getElementById("contractRates").innerHTML = `TCMB Döviz Kurları (${p.contractDateForRate}):<br/>1 USD = ${formatCurrencyTR(p.contractRate)} TL<br/>1 EUR = ${formatCurrencyTR(p.eurRate)} TL`;
       }
 
       updateCalculations();
@@ -366,7 +384,7 @@
         await ref.update({ stages });
       }
     } catch (error) {
-      console.error("Aşama tarihi güncelleme hatası:", error);
+      console.error("Aşama tarihi güncellenirken hata:", error);
     }
   }
 
@@ -389,27 +407,21 @@
     const status = document.getElementById("projectStatus").value;
     const contractValue = parseCurrencyTR(document.getElementById("contractValue").value);
     const currency = document.getElementById("contractCurrency").value;
-    const dateForRateEl = document.getElementById("startDate");
+    const startDate = document.getElementById("startDate").value;
 
     const dataToUpdate = {
       status,
       contractValue,
-      contractCurrency: currency
+      contractCurrency: currency,
+      startDate
     };
-
-    if (currency !== "TRY") {
-      const rates = await getOrFetchRates(dateForRateEl.value);
-      if (rates) {
-        dataToUpdate.contractRate = rates[currency];
-      }
-    }
 
     try {
       await db.collection("projects").doc(projectId).update(dataToUpdate);
       alert("Sözleşme bilgileri kaydedildi.");
     } catch (e) {
       console.error("Kayıt hatası:", e);
-      alert("Kayıt başarısız.");
+      alert("Kayıt başarısız oldu.");
     }
   }
 
@@ -426,24 +438,36 @@
     }
 
     let amountInTRY = originalAmount;
+    let exchangeRate = 1;
+    let exchangeRateDate = expenseDate;
+
     if (currency !== "TRY") {
       const rates = await getOrFetchRates(expenseDate);
       if (rates && rates[currency]) {
-        amountInTRY = originalAmount * rates[currency];
+        exchangeRate = rates[currency];
+        amountInTRY = originalAmount * exchangeRate;
       } else {
-        if (!confirm(`${currency} kuru alınamadı. TL olarak mı kaydedilsin?`)) return;
+        if (!confirm(`${currency} kuru bulunamadı. TL olarak mı kaydedilsin?`)) return;
       }
     }
 
     const newExpense = {
-      desc, originalAmount, currency, amountInTRY, date: expenseDate
+      desc,
+      originalAmount,
+      currency,
+      amountInTRY,
+      date: expenseDate,
+      exchangeRateDate,
+      exchangeRate
     };
 
     try {
       await db.collection("projects").doc(projectId).update({ expenses: firebase.firestore.FieldValue.arrayUnion(newExpense) });
-      amountInput.value = formatCurrencyTR(0);
       document.getElementById("expenseDesc").value = "";
+      amountInput.value = formatCurrencyTR(0);
+      document.getElementById("expenseCurrency").value = "TRY";
       document.getElementById("expenseDate").value = "";
+
       const updatedDoc = await db.collection("projects").doc(projectId).get();
       renderExpenses(updatedDoc.data().expenses || []);
       updateCalculations();
@@ -495,18 +519,16 @@
   async function addCollection() {
     const date = document.getElementById("collectionDate").value;
     const type = document.getElementById("collectionType").value;
-    const description = document.getElementById("collectionDescription").value.trim();
-    let originalAmount = 0, currency = "", amountInTRY = 0, checkDetails = null, barterDetails = null;
+    const amountInput = document.getElementById("collectionAmount");
+    const originalAmount = parseCurrencyTR(amountInput.value);
+    const currency = document.getElementById("collectionCurrency").value;
 
-    if (!date || !type) {
-      alert("Tarih ve tip seçin.");
+    if (!date || !type || isNaN(originalAmount) || originalAmount <= 0) {
+      alert("Geçerli tarih, tip ve tutar girin.");
       return;
     }
 
-    const amountInput = document.getElementById("collectionAmount");
-    originalAmount = parseCurrencyTR(amountInput.value);
-    currency = document.getElementById("collectionCurrency").value;
-
+    let amountInTRY = originalAmount;
     if (currency !== "TRY") {
       const rates = await getOrFetchRates(date);
       if (rates && rates[currency]) {
@@ -517,7 +539,11 @@
     }
 
     const newCollection = {
-      date, type, originalAmount, currency, amountInTRY, description
+      date,
+      type,
+      originalAmount,
+      currency,
+      amountInTRY
     };
 
     try {
@@ -545,13 +571,13 @@
     collections.forEach((col, idx) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${col.date || '-'}</td>
-        <td>${col.type || '-'}</td>
+        <td>${col.date || "-"}</td>
+        <td>${col.type || "-"}</td>
         <td style="text-align:right;">${formatCurrencyTR(col.originalAmount || col.amount || 0)}</td>
-        <td>${col.currency || 'TRY'}</td>
-        <td>${col.exchangeRateDate || '-'}</td>
-        <td>${col.exchangeRate ? formatCurrencyTR(col.exchangeRate) : '-'}</td>
-        <td style="text-align:right;">${formatCurrencyTR(col.amountInTRY || col.amount || 0)}</td>
+        <td>${col.currency || "TRY"}</td>
+        <td>${col.exchangeRateDate || "-"}</td>
+        <td>${col.exchangeRate ? formatCurrencyTR(col.exchangeRate) : "-"}</td>
+        <td style="text-align:right;">${formatCurrencyTR(col.amountInTRY || 0)}</td>
         <td><button class="btn-danger" onclick="removeCollection(${idx})">Sil</button></td>
       `;
       tbody.appendChild(tr);
@@ -576,28 +602,24 @@
 
   async function updateCalculations() {
     if (!projectId) return;
-    try {
-      const doc = await db.collection("projects").doc(projectId).get();
-      if (!doc.exists) return;
-      const p = doc.data();
+    const doc = await db.collection("projects").doc(projectId).get();
+    if (!doc.exists) return;
+    const p = doc.data();
 
-      let totalExpensesInTRY = 0;
-      if (p.expenses && Array.isArray(p.expenses)) {
-        totalExpensesInTRY = p.expenses.reduce((sum, e) => sum + (e.amountInTRY || 0), 0);
-      }
-
-      let contractInTRY = p.contractValue || 0;
-      const profit = contractInTRY - totalExpensesInTRY;
-      const margin = contractInTRY > 0 ? (profit / contractInTRY * 100).toFixed(2) : 0;
-
-      document.getElementById("profitSummary").innerHTML = `
-        Toplam Harcama (TL): ${formatCurrencyTR(totalExpensesInTRY)} |
-        Sözleşme (TL): ${formatCurrencyTR(contractInTRY)} |
-        Kar: <span style="color:${profit >= 0 ? 'green' : 'red'}">${formatCurrencyTR(profit)}</span> |
-        Kar Marjı: ${margin}%`;
-    } catch (e) {
-      console.error("Hesaplama hatası:", e);
+    let totalExpensesInTRY = 0;
+    if (p.expenses && Array.isArray(p.expenses)) {
+      totalExpensesInTRY = p.expenses.reduce((sum, e) => sum + (e.amountInTRY || 0), 0);
     }
+
+    const contractInTRY = p.contractValue || 0;
+    const profit = contractInTRY - totalExpensesInTRY;
+    const margin = contractInTRY > 0 ? (profit / contractInTRY * 100).toFixed(2) : "0.00";
+
+    document.getElementById("profitSummary").innerHTML = `
+      Toplam Harcama (TL): ${formatCurrencyTR(totalExpensesInTRY)} |
+      Sözleşme (TL): ${formatCurrencyTR(contractInTRY)} |
+      Kar: <span style="color:${profit >= 0 ? 'green' : 'red'}">${formatCurrencyTR(profit)}</span> |
+      Kar Marjı: %${margin}`;
   }
 
   async function fetchRatesAndUpdateCalculations(displayDivId, dateString, isContract = false) {
@@ -605,39 +627,34 @@
     if (!displayDiv) return;
     displayDiv.style.display = "block";
     displayDiv.innerHTML = "Kur bilgisi alınıyor...";
+
     const rates = await getOrFetchRates(dateString);
     if (rates) {
       displayDiv.innerHTML = `TCMB Döviz Kurları (${dateString}):<br/>1 USD = ${rates.USD ? formatCurrencyTR(rates.USD) : '-'} TL<br/>1 EUR = ${rates.EUR ? formatCurrencyTR(rates.EUR) : '-'} TL`;
     } else {
       displayDiv.innerHTML = "Kur bilgisi alınamadı.";
     }
+
     await updateCalculations();
   }
 
   async function getOrFetchRates(dateString) {
-    // Gerçek zamanlı kur verilerini Firestore'dan veya başka bir servisten çekebilirsiniz
-    // Burada basitçe sabit kur örnekleri kullanıyoruz
-    return { USD: 8.5, EUR: 9.2 }; // Örnek kurlar
+    try {
+      const getRatesFunction = firebase.app().functions('europe-west1').httpsCallable('getExchangeRateForDate');
+      const result = await getRatesFunction({ date: dateString });
+      if (result.data.success) {
+        return result.data.rates;
+      }
+      return {};
+    } catch (error) {
+      console.error("Kur çekerken hata:", error);
+      return {};
+    }
   }
 
-  function handleCurrencyInput(event) {
-    const inputElement = event.target;
-    inputElement.value = inputElement.value.replace(/[^0-9]/g, '');
-  }
-
-  function formatCurrencyOnBlur(event, fieldName) {
-    const inputElement = event.target;
-    const numericValue = parseCurrencyTR(inputElement.value);
-    inputElement.value = formatCurrencyTR(numericValue);
-  }
-
-  function logout() {
-    auth.signOut().then(() => {
-      window.location.href = "login.html";
-    }).catch(err => {
-      console.error("Çıkış yapılırken hata:", err);
-      alert("Çıkış hatası.");
-    });
+  function toggleContractRateDisplay() {
+    const contractCurrency = document.getElementById("contractCurrency").value;
+    document.getElementById("startDate").parentElement.style.display = contractCurrency === "TRY" ? "none" : "block";
   }
 
   function updateProjectStatus(status) {
@@ -646,6 +663,14 @@
 
   function goBack() {
     window.location.href = "index.html";
+  }
+
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "login.html";
+    }).catch(err => {
+      console.error("Çıkış yapılırken hata:", err);
+    });
   }
 
   auth.onAuthStateChanged(user => {
@@ -658,7 +683,7 @@
         renderDetailCategoryCheckboxes();
         loadProject();
       } else {
-        alert("Proje ID'si yok.");
+        alert("Proje ID yok.");
         goBack();
       }
     }
