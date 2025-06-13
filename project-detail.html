@@ -33,11 +33,12 @@
     }
     main {
       max-width: 1000px;
-      margin: 20px auto;
+      margin: auto;
       background: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
     }
     h2, h3 {
       color: #333;
@@ -80,6 +81,11 @@
     .readonly {
       background-color: #eee;
       color: #555;
+    }
+    .category-checkbox-group label {
+      display: inline-block;
+      margin-right: 15px;
+      margin-bottom: 10px;
     }
     .btn-danger {
       background-color: #e74c3c;
@@ -152,7 +158,7 @@
     <div class="input-group">
       <div>
         <label for="contractValue">Sözleşme Tutarı</label>
-        <input type="text" id="contractValue" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" />
+        <input type="text" id="contractValue" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event, 'contractValue')" />
         <select id="contractCurrency" onchange="toggleContractRateDisplay()">
           <option value="TRY">TL</option>
           <option value="USD">USD</option>
@@ -173,7 +179,7 @@
     <h3>Harcama Ekle</h3>
     <div class="input-group">
       <div><label for="expenseDesc">Açıklama</label><input type="text" id="expenseDesc" /></div>
-      <div><label for="expenseAmount">Tutar</label><input type="text" id="expenseAmount" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" /></div>
+      <div><label for="expenseAmount">Tutar</label><input type="text" id="expenseAmount" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event, 'expenseAmount')" /></div>
       <div><label for="expenseCurrency">Para Birimi</label><select id="expenseCurrency"><option value="TRY">TL</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
       <div><label for="expenseDate">Harcama Tarihi</label><input type="date" id="expenseDate" /></div>
     </div>
@@ -205,7 +211,7 @@
     <div class="input-group">
       <div><label for="collectionDate">Tahsilat Tarihi</label><input type="date" id="collectionDate" /></div>
       <div><label for="collectionType">Tip</label><select id="collectionType"><option value="Nakit">Nakit</option><option value="Banka Havalesi">Banka Havalesi</option><option value="Çek">Çek</option><option value="Barter">Barter</option></select></div>
-      <div><label for="collectionAmount">Tutar</label><input type="text" id="collectionAmount" placeholder="0,00" oninput="this.value = formatCurrencyTR(this.value)" /></div>
+      <div><label for="collectionAmount">Tutar</label><input type="text" id="collectionAmount" placeholder="0,00" oninput="handleCurrencyInput(event)" onblur="formatCurrencyOnBlur(event, 'collectionAmount')" /></div>
       <div><label for="collectionCurrency">Para Birimi</label><select id="collectionCurrency"><option value="TRY">TL</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
     </div>
     <button onclick="addCollection()">Tahsilat Ekle</button>
@@ -382,17 +388,25 @@
     if (!projectId) return;
     const status = document.getElementById("projectStatus").value;
     const contractValue = parseCurrencyTR(document.getElementById("contractValue").value);
-    const contractCurrency = document.getElementById("contractCurrency").value;
-    const contractDateForRate = document.getElementById("contractRateDate").value;
+    const currency = document.getElementById("contractCurrency").value;
+    const dateForRateEl = document.getElementById("startDate");
+
+    const dataToUpdate = {
+      status,
+      contractValue,
+      contractCurrency: currency
+    };
+
+    if (currency !== "TRY") {
+      const rates = await getOrFetchRates(dateForRateEl.value);
+      if (rates) {
+        dataToUpdate.contractRate = rates[currency];
+      }
+    }
 
     try {
-      await db.collection("projects").doc(projectId).update({
-        status,
-        contractValue,
-        contractCurrency,
-        contractDateForRate
-      });
-      alert("Bilgiler kaydedildi.");
+      await db.collection("projects").doc(projectId).update(dataToUpdate);
+      alert("Sözleşme bilgileri kaydedildi.");
     } catch (e) {
       console.error("Kayıt hatası:", e);
       alert("Kayıt başarısız.");
@@ -406,7 +420,7 @@
     const currency = document.getElementById("expenseCurrency").value;
     const expenseDate = document.getElementById("expenseDate").value || new Date().toISOString().split('T')[0];
 
-    if (!desc || originalAmount <= 0) {
+    if (!desc || isNaN(originalAmount) || originalAmount <= 0) {
       alert("Geçerli açıklama ve tutar girin.");
       return;
     }
@@ -470,8 +484,7 @@
       let ex = d.data().expenses || [];
       ex.splice(idx, 1);
       await ref.update({ expenses: ex });
-      const updatedDoc = await ref.get();
-      renderExpenses(updatedDoc.data().expenses || []);
+      renderExpenses(ex);
       updateCalculations();
     } catch (e) {
       console.error("Harcama silme hatası:", e);
@@ -482,16 +495,18 @@
   async function addCollection() {
     const date = document.getElementById("collectionDate").value;
     const type = document.getElementById("collectionType").value;
-    const amountInput = document.getElementById("collectionAmount");
-    const originalAmount = parseCurrencyTR(amountInput.value);
-    const currency = document.getElementById("collectionCurrency").value;
+    const description = document.getElementById("collectionDescription").value.trim();
+    let originalAmount = 0, currency = "", amountInTRY = 0, checkDetails = null, barterDetails = null;
 
-    if (!date || originalAmount <= 0) {
-      alert("Geçerli tarih ve tutar girin.");
+    if (!date || !type) {
+      alert("Tarih ve tip seçin.");
       return;
     }
 
-    let amountInTRY = originalAmount;
+    const amountInput = document.getElementById("collectionAmount");
+    originalAmount = parseCurrencyTR(amountInput.value);
+    currency = document.getElementById("collectionCurrency").value;
+
     if (currency !== "TRY") {
       const rates = await getOrFetchRates(date);
       if (rates && rates[currency]) {
@@ -502,7 +517,7 @@
     }
 
     const newCollection = {
-      date, type, originalAmount, currency, amountInTRY
+      date, type, originalAmount, currency, amountInTRY, description
     };
 
     try {
@@ -536,7 +551,7 @@
         <td>${col.currency || 'TRY'}</td>
         <td>${col.exchangeRateDate || '-'}</td>
         <td>${col.exchangeRate ? formatCurrencyTR(col.exchangeRate) : '-'}</td>
-        <td style="text-align:right;">${formatCurrencyTR(col.amountInTRY || 0)}</td>
+        <td style="text-align:right;">${formatCurrencyTR(col.amountInTRY || col.amount || 0)}</td>
         <td><button class="btn-danger" onclick="removeCollection(${idx})">Sil</button></td>
       `;
       tbody.appendChild(tr);
@@ -551,8 +566,7 @@
       let cols = d.data().collections || [];
       cols.splice(idx, 1);
       await ref.update({ collections: cols });
-      const updatedDoc = await ref.get();
-      renderCollections(updatedDoc.data().collections || []);
+      renderCollections(cols);
       updateCalculations();
     } catch (e) {
       console.error("Tahsilat silme hatası:", e);
@@ -601,13 +615,29 @@
   }
 
   async function getOrFetchRates(dateString) {
-    // Şirket içi kullanım için sabit kur oranı örnekleri
-    return { USD: 8.5, EUR: 9.2 }; // Basit örnek kurlar
+    // Gerçek zamanlı kur verilerini Firestore'dan veya başka bir servisten çekebilirsiniz
+    // Burada basitçe sabit kur örnekleri kullanıyoruz
+    return { USD: 8.5, EUR: 9.2 }; // Örnek kurlar
   }
 
-  async function toggleContractRateDisplay() {
-    const contractCurrency = document.getElementById("contractCurrency").value;
-    document.getElementById("contractRateDate").parentElement.style.display = contractCurrency === "TRY" ? "none" : "block";
+  function handleCurrencyInput(event) {
+    const inputElement = event.target;
+    inputElement.value = inputElement.value.replace(/[^0-9]/g, '');
+  }
+
+  function formatCurrencyOnBlur(event, fieldName) {
+    const inputElement = event.target;
+    const numericValue = parseCurrencyTR(inputElement.value);
+    inputElement.value = formatCurrencyTR(numericValue);
+  }
+
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "login.html";
+    }).catch(err => {
+      console.error("Çıkış yapılırken hata:", err);
+      alert("Çıkış hatası.");
+    });
   }
 
   function updateProjectStatus(status) {
@@ -616,14 +646,6 @@
 
   function goBack() {
     window.location.href = "index.html";
-  }
-
-  function logout() {
-    auth.signOut().then(() => {
-      window.location.href = "login.html";
-    }).catch(err => {
-      console.error("Çıkış yapılırken hata:", err);
-    });
   }
 
   auth.onAuthStateChanged(user => {
