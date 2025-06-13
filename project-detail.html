@@ -33,12 +33,11 @@
     }
     main {
       max-width: 1000px;
-      margin: auto;
+      margin: 20px auto;
       background: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-top: 20px;
     }
     h2, h3 {
       color: #333;
@@ -48,7 +47,7 @@
       margin-bottom: 5px;
       font-weight: bold;
     }
-    input[type="text"], input[type="date"], select, textarea {
+    input[type="text"], input[type="date"], select {
       width: 100%;
       padding: 8px;
       border: 1px solid #ccc;
@@ -61,7 +60,6 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      margin-top: 10px;
     }
     button:hover {
       background-color: #2980b9;
@@ -82,11 +80,6 @@
     .readonly {
       background-color: #eee;
       color: #555;
-    }
-    .category-checkbox-group label {
-      display: inline-block;
-      margin-right: 15px;
-      margin-bottom: 10px;
     }
     .btn-danger {
       background-color: #e74c3c;
@@ -171,7 +164,7 @@
         <input type="date" id="contractRateDate" onchange="fetchRatesAndUpdateCalculations('contractRates', this.value, true)" />
       </div>
     </div>
-    <div id="contractRates" style="margin-top:10px;"></div>
+    <div id="contractRates" style="display:none;"></div>
     <button onclick="saveDetails()">Kaydet</button>
     <p id="profitSummary" style="font-weight:bold; margin-top: 10px;"></p>
   </section>
@@ -238,15 +231,14 @@
     </table>
   </section>
 
-  <section style="margin-top: 30px;">
+  <div style="margin-top: 30px;">
     <button onclick="goBack()">Geri Dön</button>
-  </section>
+  </div>
 </main>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script> 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script> 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.8/xlsx.full.min.js"></script> 
 
 <script>
   const firebaseConfig = {
@@ -266,6 +258,10 @@
   function formatCurrencyTR(val) {
     let n = typeof val === 'string' ? parseFloat(val.replace(/\./g,'').replace(',','.')) : val;
     return isNaN(n) ? "0,00" : n.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  function parseCurrencyTR(val) {
+    return parseFloat(val.replace(/\./g, '').replace(',', '.'));
   }
 
   async function renderDetailCategoryCheckboxes() {
@@ -304,22 +300,25 @@
       const checkboxes = document.querySelectorAll("#projectCategoriesCheckboxesContainer input[type='checkbox']");
       checkboxes.forEach(cb => cb.checked = p.categories?.includes(cb.value));
 
-      if (p.stages && Array.isArray(p.stages)) {
-        renderStages(p.stages);
-      }
+      // Aşamalar
+      const stages = p.stages || [];
+      renderStages(stages);
 
+      // Harcamalar
       if (p.expenses && Array.isArray(p.expenses)) {
         renderExpenses(p.expenses);
       } else {
         document.getElementById("noExpensesMessage").style.display = "block";
       }
 
+      // Tahsilatlar
       if (p.collections && Array.isArray(p.collections)) {
         renderCollections(p.collections);
       } else {
         document.getElementById("noCollectionsMessage").style.display = "block";
       }
 
+      // Sözleşme bilgileri
       if (p.contractValue !== undefined) {
         document.getElementById("contractValue").value = formatCurrencyTR(p.contractValue);
         document.getElementById("contractCurrency").value = p.contractCurrency || "TRY";
@@ -344,7 +343,7 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${stage.name}</td>
-        <td><input type="date" data-stage-index="${idx}" value="${stage.date || ''}" onchange="updateStageDate(${idx}, this.value)" /></td>
+        <td><input type="date" data-index="${idx}" value="${stage.date || ''}" onchange="updateStageDate(${idx}, this.value)" /></td>
         <td><input type="checkbox" ${stage.completed ? 'checked' : ''} onchange="toggleStageCompleted(${idx}, this.checked)" /></td>
       `;
       tbody.appendChild(tr);
@@ -359,11 +358,9 @@
       if (index >= 0 && index < stages.length) {
         stages[index].date = date;
         await ref.update({ stages });
-        alert("Aşama tarihi güncellendi.");
       }
     } catch (error) {
       console.error("Aşama tarihi güncelleme hatası:", error);
-      alert("Aşama tarihi güncellenemedi.");
     }
   }
 
@@ -375,11 +372,9 @@
       if (index >= 0 && index < stages.length) {
         stages[index].completed = completed;
         await ref.update({ stages });
-        alert("Aşama tamamlanma durumu güncellendi.");
       }
     } catch (error) {
       console.error("Aşama tamamlama hatası:", error);
-      alert("Aşama tamamlanma durumu güncellenemedi.");
     }
   }
 
@@ -390,15 +385,13 @@
     const contractCurrency = document.getElementById("contractCurrency").value;
     const contractDateForRate = document.getElementById("contractRateDate").value;
 
-    const dataToUpdate = {
-      status,
-      contractValue,
-      contractCurrency,
-      contractDateForRate
-    };
-
     try {
-      await db.collection("projects").doc(projectId).update(dataToUpdate);
+      await db.collection("projects").doc(projectId).update({
+        status,
+        contractValue,
+        contractCurrency,
+        contractDateForRate
+      });
       alert("Bilgiler kaydedildi.");
     } catch (e) {
       console.error("Kayıt hatası:", e);
@@ -406,56 +399,37 @@
     }
   }
 
-  function updateCalculations() {
-    const doc = db.collection("projects").doc(projectId).get().then(d => {
-      if (!d.exists) return;
-      const p = d.data();
-
-      let totalExpensesInTRY = 0;
-      if (p.expenses && Array.isArray(p.expenses)) {
-        totalExpensesInTRY = p.expenses.reduce((sum, e) => sum + (e.amountInTRY || 0), 0);
-      }
-
-      const contractInTRY = p.contractValue || 0;
-      const profit = contractInTRY - totalExpensesInTRY;
-      const margin = contractInTRY > 0 ? (profit / contractInTRY * 100).toFixed(2) : 0;
-
-      document.getElementById("profitSummary").innerHTML = `
-        Toplam Harcama (TL): ${formatCurrencyTR(totalExpensesInTRY)} |
-        Sözleşme (TL): ${formatCurrencyTR(contractInTRY)} |
-        Kar: <span style="color:${profit >= 0 ? 'green' : 'red'}">${formatCurrencyTR(profit)}</span> |
-        Kar Marjı: ${margin}%`;
-    });
-  }
-
   async function addExpense() {
     const desc = document.getElementById("expenseDesc").value.trim();
-    const amount = parseCurrencyTR(document.getElementById("expenseAmount").value);
+    const amountInput = document.getElementById("expenseAmount");
+    const originalAmount = parseCurrencyTR(amountInput.value);
     const currency = document.getElementById("expenseCurrency").value;
-    const expenseDate = document.getElementById("expenseDate").value;
+    const expenseDate = document.getElementById("expenseDate").value || new Date().toISOString().split('T')[0];
 
-    if (!desc || amount <= 0) {
+    if (!desc || originalAmount <= 0) {
       alert("Geçerli açıklama ve tutar girin.");
       return;
     }
 
-    let amountInTRY = amount;
+    let amountInTRY = originalAmount;
     if (currency !== "TRY") {
       const rates = await getOrFetchRates(expenseDate);
       if (rates && rates[currency]) {
-        amountInTRY = amount * rates[currency];
+        amountInTRY = originalAmount * rates[currency];
       } else {
-        if (!confirm(`${currency} kuru bulunamadı. TL olarak mı kaydedilsin?`)) return;
+        if (!confirm(`${currency} kuru alınamadı. TL olarak mı kaydedilsin?`)) return;
       }
     }
 
     const newExpense = {
-      desc, originalAmount: amount, currency, amountInTRY, date: expenseDate
+      desc, originalAmount, currency, amountInTRY, date: expenseDate
     };
 
     try {
       await db.collection("projects").doc(projectId).update({ expenses: firebase.firestore.FieldValue.arrayUnion(newExpense) });
-      alert("Harcama eklendi.");
+      amountInput.value = formatCurrencyTR(0);
+      document.getElementById("expenseDesc").value = "";
+      document.getElementById("expenseDate").value = "";
       const updatedDoc = await db.collection("projects").doc(projectId).get();
       renderExpenses(updatedDoc.data().expenses || []);
       updateCalculations();
@@ -496,7 +470,8 @@
       let ex = d.data().expenses || [];
       ex.splice(idx, 1);
       await ref.update({ expenses: ex });
-      renderExpenses(ex);
+      const updatedDoc = await ref.get();
+      renderExpenses(updatedDoc.data().expenses || []);
       updateCalculations();
     } catch (e) {
       console.error("Harcama silme hatası:", e);
@@ -504,11 +479,139 @@
     }
   }
 
-  // Tahsilat fonksiyonlarını buraya ekleyebilirsin (istersek ekle)
-  // Ama şimdilik sadece harcama varsa bile çalışır halde bırakıyoruz
+  async function addCollection() {
+    const date = document.getElementById("collectionDate").value;
+    const type = document.getElementById("collectionType").value;
+    const amountInput = document.getElementById("collectionAmount");
+    const originalAmount = parseCurrencyTR(amountInput.value);
+    const currency = document.getElementById("collectionCurrency").value;
 
-  function parseCurrencyTR(val) {
-    return parseFloat(val.replace(/\./g, '').replace(',', '.'));
+    if (!date || originalAmount <= 0) {
+      alert("Geçerli tarih ve tutar girin.");
+      return;
+    }
+
+    let amountInTRY = originalAmount;
+    if (currency !== "TRY") {
+      const rates = await getOrFetchRates(date);
+      if (rates && rates[currency]) {
+        amountInTRY = originalAmount * rates[currency];
+      } else {
+        if (!confirm(`${currency} kuru alınamadı. TL olarak mı kaydedilsin?`)) return;
+      }
+    }
+
+    const newCollection = {
+      date, type, originalAmount, currency, amountInTRY
+    };
+
+    try {
+      await db.collection("projects").doc(projectId).update({ collections: firebase.firestore.FieldValue.arrayUnion(newCollection) });
+      amountInput.value = formatCurrencyTR(0);
+      document.getElementById("collectionDate").value = "";
+      document.getElementById("collectionType").value = "Nakit";
+      const updatedDoc = await db.collection("projects").doc(projectId).get();
+      renderCollections(updatedDoc.data().collections || []);
+      updateCalculations();
+    } catch (e) {
+      console.error("Tahsilat ekleme hatası:", e);
+      alert("Tahsilat eklenemedi.");
+    }
+  }
+
+  function renderCollections(collections) {
+    const tbody = document.querySelector("#collectionsTable tbody");
+    tbody.innerHTML = "";
+    if (collections.length === 0) {
+      document.getElementById("noCollectionsMessage").style.display = "block";
+      return;
+    }
+    document.getElementById("noCollectionsMessage").style.display = "none";
+    collections.forEach((col, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${col.date || '-'}</td>
+        <td>${col.type || '-'}</td>
+        <td style="text-align:right;">${formatCurrencyTR(col.originalAmount || col.amount || 0)}</td>
+        <td>${col.currency || 'TRY'}</td>
+        <td>${col.exchangeRateDate || '-'}</td>
+        <td>${col.exchangeRate ? formatCurrencyTR(col.exchangeRate) : '-'}</td>
+        <td style="text-align:right;">${formatCurrencyTR(col.amountInTRY || 0)}</td>
+        <td><button class="btn-danger" onclick="removeCollection(${idx})">Sil</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function removeCollection(idx) {
+    if (!confirm("Bu tahsilat silinsin mi?")) return;
+    try {
+      const ref = db.collection("projects").doc(projectId);
+      const d = await ref.get();
+      let cols = d.data().collections || [];
+      cols.splice(idx, 1);
+      await ref.update({ collections: cols });
+      const updatedDoc = await ref.get();
+      renderCollections(updatedDoc.data().collections || []);
+      updateCalculations();
+    } catch (e) {
+      console.error("Tahsilat silme hatası:", e);
+      alert("Tahsilat silinemedi.");
+    }
+  }
+
+  async function updateCalculations() {
+    if (!projectId) return;
+    try {
+      const doc = await db.collection("projects").doc(projectId).get();
+      if (!doc.exists) return;
+      const p = doc.data();
+
+      let totalExpensesInTRY = 0;
+      if (p.expenses && Array.isArray(p.expenses)) {
+        totalExpensesInTRY = p.expenses.reduce((sum, e) => sum + (e.amountInTRY || 0), 0);
+      }
+
+      let contractInTRY = p.contractValue || 0;
+      const profit = contractInTRY - totalExpensesInTRY;
+      const margin = contractInTRY > 0 ? (profit / contractInTRY * 100).toFixed(2) : 0;
+
+      document.getElementById("profitSummary").innerHTML = `
+        Toplam Harcama (TL): ${formatCurrencyTR(totalExpensesInTRY)} |
+        Sözleşme (TL): ${formatCurrencyTR(contractInTRY)} |
+        Kar: <span style="color:${profit >= 0 ? 'green' : 'red'}">${formatCurrencyTR(profit)}</span> |
+        Kar Marjı: ${margin}%`;
+    } catch (e) {
+      console.error("Hesaplama hatası:", e);
+    }
+  }
+
+  async function fetchRatesAndUpdateCalculations(displayDivId, dateString, isContract = false) {
+    const displayDiv = document.getElementById(displayDivId);
+    if (!displayDiv) return;
+    displayDiv.style.display = "block";
+    displayDiv.innerHTML = "Kur bilgisi alınıyor...";
+    const rates = await getOrFetchRates(dateString);
+    if (rates) {
+      displayDiv.innerHTML = `TCMB Döviz Kurları (${dateString}):<br/>1 USD = ${rates.USD ? formatCurrencyTR(rates.USD) : '-'} TL<br/>1 EUR = ${rates.EUR ? formatCurrencyTR(rates.EUR) : '-'} TL`;
+    } else {
+      displayDiv.innerHTML = "Kur bilgisi alınamadı.";
+    }
+    await updateCalculations();
+  }
+
+  async function getOrFetchRates(dateString) {
+    // Şirket içi kullanım için sabit kur oranı örnekleri
+    return { USD: 8.5, EUR: 9.2 }; // Basit örnek kurlar
+  }
+
+  async function toggleContractRateDisplay() {
+    const contractCurrency = document.getElementById("contractCurrency").value;
+    document.getElementById("contractRateDate").parentElement.style.display = contractCurrency === "TRY" ? "none" : "block";
+  }
+
+  function updateProjectStatus(status) {
+    db.collection("projects").doc(projectId).update({ status });
   }
 
   function goBack() {
@@ -523,18 +626,19 @@
     });
   }
 
-  async function getOrFetchRates(dateString) {
-    // Burada kur çekme işlemi yer alıyor
-    // Şirket içi kullanım için sabit oranlar da kullanılabilir
-    return { USD: 8.5, EUR: 9.2 }; // örnek değerler
-  }
-
   auth.onAuthStateChanged(user => {
     if (!user) {
       window.location.href = "login.html";
     } else {
-      renderDetailCategoryCheckboxes();
-      loadProject();
+      const params = new URLSearchParams(window.location.search);
+      projectId = params.get("id");
+      if (projectId) {
+        renderDetailCategoryCheckboxes();
+        loadProject();
+      } else {
+        alert("Proje ID'si yok.");
+        goBack();
+      }
     }
   });
 
