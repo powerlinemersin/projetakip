@@ -218,27 +218,55 @@
     
     auth.onAuthStateChanged(u=>{if(!u){window.location.href="login.html";}else{const p=new URLSearchParams(window.location.search);projectId=p.get("id");if(projectId){loadProject();}else{alert("Proje ID yok.");goBack();}}});
     
-    async function getOrFetchRates(dateString) {
-        if (!dateString) {console.warn("Kur çekmek için tarih belirtilmedi."); return null;}
-        if (fetchedRatesCache[dateString]) { console.log("Kur önbellekten alındı:", dateString, fetchedRatesCache[dateString]); return fetchedRatesCache[dateString]; }
-        try {
-            const getRatesFunction = functions.region('europe-west1').httpsCallable('getExchangeRateForDate');
-            const result = await getRatesFunction({ date: dateString });
-            if (result.data && result.data.success) {
-                fetchedRatesCache[dateString] = result.data.rates; 
-                console.log(`Firebase Function'dan kur çekildi (${result.data.source} - ${dateString}):`, result.data.rates);
-                return result.data.rates;
-            } else {
-                console.error("Kur bilgisi alınamadı (fonksiyon başarısız):", result.data?.message || "Bilinmeyen fonksiyon hatası");
-                fetchedRatesCache[dateString] = {error: result.data?.message || "Bilinmeyen fonksiyon hatası"}; // Hatalı sonucu da önbelleğe al
-                return null;
-            }
-        } catch (error) {
-            console.error(`Firebase Function (${dateString}) çağrılırken hata:`, error.message || error);
-            fetchedRatesCache[dateString] = {error: error.message || "Çağrı hatası"};
+    // project-detail.html içindeki <script> etiketinin içinde
+// Mevcut getOrFetchRates fonksiyonunu bununla değiştirin:
+
+async function getOrFetchRates(dateString) {
+    if (!dateString) {
+        console.warn("Kur çekmek için tarih belirtilmedi.");
+        // İlgili UI elemanlarını 'N/A' veya 'Hata' olarak güncelle
+        // Örnek:
+        // const usdRateSpan = document.getElementById('someUsdRateSpan');
+        // if (usdRateSpan) usdRateSpan.textContent = 'N/A';
+        return null;
+    }
+
+    if (fetchedRatesCache[dateString]) {
+        console.log("Kur önbellekten alındı:", dateString, fetchedRatesCache[dateString]);
+        if (fetchedRatesCache[dateString].error) { // Önbellekte hata varsa null dön
+             console.warn(`Önbellekte ${dateString} için hata kaydı var:`, fetchedRatesCache[dateString].error);
+             return null;
+        }
+        return fetchedRatesCache[dateString];
+    }
+
+    try {
+        // .region('europe-west1') KISMI KALDIRILDI
+        const getRatesFunction = functions.httpsCallable('getExchangeRateForDate');
+        console.log(`Firebase Function çağrılıyor: getExchangeRateForDate, Tarih: ${dateString}`);
+        const result = await getRatesFunction({ date: dateString });
+        console.log("Firebase Function sonucu:", result);
+
+        if (result.data && result.data.success && result.data.rates) {
+            fetchedRatesCache[dateString] = result.data.rates;
+            console.log(`Firebase Function'dan kur çekildi (${result.data.source} - ${dateString}):`, result.data.rates);
+            return result.data.rates;
+        } else {
+            const errorMessage = result.data?.message || result.data?.error || "Bilinmeyen fonksiyon hatası";
+            console.error("Kur bilgisi alınamadı (fonksiyon başarısız):", errorMessage, result.data);
+            fetchedRatesCache[dateString] = { error: errorMessage }; // Hata mesajını önbelleğe al
             return null;
         }
+    } catch (error) {
+        console.error(`Firebase Function (${dateString}) çağrılırken istemci tarafı hata:`, error);
+        let detailedErrorMessage = error.message || "Bilinmeyen çağrı hatası";
+        if (error.details) {
+            detailedErrorMessage += ` Detaylar: ${JSON.stringify(error.details)}`;
+        }
+        fetchedRatesCache[dateString] = { error: detailedErrorMessage };
+        return null;
     }
+}
 
     async function fetchRatesAndUpdateCalculations(displayDivId, dateString, isContract = false) {
         const displayDiv = document.getElementById(displayDivId);
